@@ -488,7 +488,6 @@ export const createProductVariant = async (
       message: "Product variant created successfully.",
     });
   } catch (error: any) {
-    console.log(error, "createProductVariant");
     await cleanupUploadedFiles(req);
     next(error);
   }
@@ -510,6 +509,8 @@ export const updateProductVariant = async (
       stock,
       isPrimary,
       isActive,
+      existingImages,
+      imageLayout,
     } = req.body;
     const files = (req as any).files as Express.Multer.File[] | undefined;
     const imageFilenames =
@@ -547,6 +548,8 @@ export const updateProductVariant = async (
         stock,
         isPrimary,
         isActive,
+        existingImages,
+        imageLayout,
         ...(imageFilenames.length > 0 && { imageFilenames }),
       }
     );

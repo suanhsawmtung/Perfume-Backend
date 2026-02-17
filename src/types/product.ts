@@ -85,6 +85,8 @@ export type UpdateProductVariantParams = {
   discount?: number | string;
   stock?: number | string;
   imageFilenames?: string[];
+  existingImages?: string[];
+  imageLayout?: string[];
   isPrimary?: boolean;
   isActive?: boolean;
 };

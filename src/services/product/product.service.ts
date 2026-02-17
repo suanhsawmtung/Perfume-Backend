@@ -19,7 +19,6 @@ import { findBrandById } from "../brand/brand.helpers";
 import {
   buildProductWhere,
   createProductVariantRecord,
-  createVariantImages,
   deleteProductRecord,
   deleteProductVariantRecord,
   deleteVariantImages,
@@ -38,7 +37,7 @@ import {
   unsetOtherPrimaryVariants,
   updateProductRecord,
   updateProductVariantRecord,
-  updateVariantInventory,
+  updateVariantInventory
 } from "./product.helpers";
 
 export const listProducts = async ({
@@ -567,17 +566,91 @@ export const updateProductVariant = async (
       : {}),
   });
 
+  if (updated.isPrimary) {
+    await unsetOtherPrimaryVariants({
+      productId: Number(updated.productId),
+      variantId: updated.id,
+    });
+  }
+
   await updateVariantInventory(existingVariant.id, stockNum);
 
-  if (params.imageFilenames && params.imageFilenames.length > 0) {
-    const existingImages = await findVariantImages(existingVariant.id);
-    for (const image of existingImages) {
-      const imagePath = getFilePath("uploads", "images", "product", image.path);
-      await removeFile(imagePath);
+  // Handle images using Fixed Slot Sync (Orders 0-3)
+  if (params.imageLayout) {
+    const currentImages = await findVariantImages(existingVariant.id);
+    const layout = params.imageLayout; // Expected length 4
+    const newFiles = [...(params.imageFilenames || [])];
+    
+    // 1. Identify records that are being kept vs those available for reuse/deletion
+    const keptPaths = layout.filter(item => item !== "__NEW__" && item !== "__EMPTY__");
+    const availableRecords = currentImages.filter(img => !keptPaths.includes(img.path));
+    
+    const processedIds = new Set<number>();
+
+    // 2. Process layout from 0 to 3
+    for (let i = 0; i < 4; i++) {
+        const target = layout[i];
+        if (!target || target === "__EMPTY__") continue;
+
+        if (target === "__NEW__") {
+            const newPath = newFiles.shift();
+            if (newPath) {
+                // Prefer reusing a record that was exactly at this order
+                const exactMatchIdx = availableRecords.findIndex(r => r.order === i);
+                const recordToReuse = exactMatchIdx !== -1 
+                    ? availableRecords.splice(exactMatchIdx, 1)[0] 
+                    : availableRecords.shift();
+
+                if (recordToReuse) {
+                    // Cleanup old file
+                    const oldFilePath = getFilePath("uploads", "images", "product", recordToReuse.path);
+                    await removeFile(oldFilePath);
+
+                    await prisma.image.update({
+                        where: { id: recordToReuse.id },
+                        data: {
+                            path: newPath,
+                            order: i,
+                            isPrimary: i === 0
+                        }
+                    });
+                    processedIds.add(recordToReuse.id);
+                } else {
+                    const newRecord = await prisma.image.create({
+                        data: {
+                            path: newPath,
+                            order: i,
+                            isPrimary: i === 0,
+                            productVariantId: existingVariant.id
+                        }
+                    });
+                    processedIds.add(newRecord.id);
+                }
+            }
+        } else {
+            // It's an existing path
+            const record = currentImages.find(img => img.path === target);
+            if (record) {
+                await prisma.image.update({
+                    where: { id: record.id },
+                    data: {
+                        order: i,
+                        isPrimary: i === 0
+                    }
+                });
+                processedIds.add(record.id);
+            }
+        }
     }
 
-    await deleteVariantImages(existingVariant.id);
-    await createVariantImages(existingVariant.id, params.imageFilenames);
+    // 3. Delete any remaining available records that weren't reused
+    for (const record of availableRecords) {
+        if (!processedIds.has(record.id)) {
+            const oldFilePath = getFilePath("uploads", "images", "product", record.path);
+            await removeFile(oldFilePath);
+            await prisma.image.delete({ where: { id: record.id } });
+        }
+    }
   }
 
   const detail = await findProductVariantDetail(updated.slug);
@@ -616,7 +689,7 @@ export const deleteProductVariant = async (
     });
   }
 
-  if (existingVariant.isPrimary) {
+  if (existingVariant.isPrimary && product._count.variants > 1) {
     throw createError({
       message: "Primary variant cannot be deleted.",
       status: 400,

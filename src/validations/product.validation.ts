@@ -169,6 +169,15 @@ const productVariantValidation = [
     .toBoolean()
     .isBoolean()
     .withMessage("isActive must be a boolean."),
+  body("imageLayout")
+    .optional()
+    .isArray()
+    .withMessage("imageLayout must be an array.")
+    .custom((value) => {
+      if (!Array.isArray(value)) return false;
+      return value.length === 4;
+    })
+    .withMessage("imageLayout must have exactly 4 slots."),
 ];
 
 export const createProductVariantValidation = productVariantValidation;

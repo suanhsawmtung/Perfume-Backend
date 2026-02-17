@@ -14,9 +14,9 @@ datasource db {
 
 model Product {
   id            Int           @id @default(autoincrement())
-  name          String        @db.VarChar(255) // e.g., "JPG Le Male"
+  name          String        @db.VarChar(255)
   slug          String        @unique @db.VarChar(255)
-  concentration Concentration // "Eau de Toilette", "Eau de Parfum"
+  concentration Concentration
   gender        Gender
   description   String
   rating        Decimal       @default(0) @db.Decimal(2, 1)
@@ -99,11 +99,13 @@ model Order {
   totalPrice      Decimal            @db.Decimal(10, 2)
   status          OrderStatus        @default(PENDING)
   paymentStatus   PaymentStatus      @default(UNPAID)
+  source          OrderSource        @default(CUSTOMER)
   customerName    String?            @db.VarChar(100)
   customerPhone   String?            @db.VarChar(15)
   customerAddress String?            @db.VarChar(255)
   customerNotes   String?            @db.VarChar(500)
-  rejectedReason  String?            @db.VarChar(255)
+  rejectedReason  String?            @db.VarChar(500)
+  cancelledReason String?            @db.VarChar(500)
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
   User            User               @relation(fields: [userId], references: [id])
@@ -231,10 +233,16 @@ enum Status {
 }
 
 enum OrderStatus {
-  PENDING
-  REJECTED
-  ACCEPTED
-  DONE
+  PENDING        // Created, waiting for action/payment
+  ACCEPTED       // Confirmed by admin
+  REJECTED       // Rejected by admin (invalid, fraud, etc.)
+  CANCELLED      // Cancelled by customer or admin
+  DONE           // Completed / delivered
+}
+
+enum OrderSource {
+  CUSTOMER
+  ADMIN
 }
 
 enum PaymentStatus {

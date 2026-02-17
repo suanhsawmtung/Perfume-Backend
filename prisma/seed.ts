@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Concentration, Gender, Role, VariantSource } from "@prisma/client";
+import { Concentration, Gender, OrderStatus, PaymentStatus, Role, VariantSource } from "@prisma/client";
 import { hash } from "../src/lib/hash";
 import { prisma } from "../src/lib/prisma";
 import { createSlug, ensureUniqueSlug } from "../src/utils/common";
@@ -464,6 +464,80 @@ export async function main() {
       },
     });
     console.log(`Created/Updated post: ${postData.title}`);
+  }
+
+  // Seed Orders
+  console.log("Seeding Orders...");
+  await prisma.productsOnOrders.deleteMany({});
+  await prisma.order.deleteMany({});
+
+  const allProductVariants = await prisma.productVariant.findMany({
+    include: { product: true },
+  });
+
+  const allClients = await prisma.user.findMany({
+    where: { role: Role.USER },
+  });
+
+  if (allClients.length > 0 && allProductVariants.length > 0) {
+    for (let i = 0; i < 20; i++) {
+        const randomUser = allClients[Math.floor(Math.random() * allClients.length)]!;
+        const orderStatusValues = Object.values(OrderStatus);
+        const paymentStatusValues = Object.values(PaymentStatus);
+        const status = orderStatusValues[Math.floor(Math.random() * orderStatusValues.length)] as OrderStatus;
+        const paymentStatus = paymentStatusValues[Math.floor(Math.random() * paymentStatusValues.length)] as PaymentStatus;
+        
+        // Create an order
+        const createdOrder = await prisma.order.create({
+            data: {
+                userId: randomUser.id,
+                code: faker.string.alphanumeric({ length: 15, casing: 'upper' }),
+                totalPrice: 0, // Will update later
+                status: status,
+                paymentStatus: paymentStatus,
+                customerName: `${randomUser.firstName ?? ""} ${randomUser.lastName ?? ""}`.trim().slice(0, 100) || "Anonymous",
+                customerPhone: (randomUser.phone || faker.phone.number()).slice(0, 15),
+                customerAddress: faker.location.streetAddress().slice(0, 255),
+                customerNotes: faker.lorem.sentence().slice(0, 500),
+                ...(status === 'REJECTED' ? { rejectedReason: faker.lorem.sentence().slice(0, 255) } : {})
+            }
+        });
+
+        // Add 1-5 random products to the order
+        const numberOfProducts = Math.floor(Math.random() * 5) + 1;
+        let orderTotal = 0;
+
+        for (let j = 0; j < numberOfProducts; j++) {
+             const randomVariant = allProductVariants[Math.floor(Math.random() * allProductVariants.length)]!;
+             const quantity = Math.floor(Math.random() * 3) + 1;
+             const price = Number(randomVariant.price) - (Number(randomVariant.price) * Number(randomVariant.discount) / 100);
+
+             await prisma.productsOnOrders.create({
+                 data: {
+                     orderId: createdOrder.id,
+                     productId: randomVariant.productId, // Note: schema says productId but logic implies using variant. Assuming ProductsOnOrders links to Product, but usually it links to Variant in e-commerce. If schema strictly links to Product, we use variant.productId. 
+                     // Wait, checking schema provided in prompt:
+                     // model ProductsOnOrders { ... productId Int ... product Product ... }
+                     // It links to Product, not Variant. 
+                     // However, price usually depends on variant. 
+                     // I will use randomVariant.productId and the calculated price from the variant.
+                     quantity: quantity,
+                     price: price
+                 }
+             });
+             orderTotal += price * quantity;
+        }
+
+        // Update order total price
+        await prisma.order.update({
+            where: { id: createdOrder.id },
+            data: { totalPrice: orderTotal }
+        });
+        
+        console.log(`Created order: ${createdOrder.code} for user: ${randomUser.email}`);
+    }
+  } else {
+      console.log("Skipping order seeding: Not enough users or product variants.");
   }
 
   console.log("Seed completed successfully!");

@@ -220,6 +220,15 @@ export const findProductVariantsSummary = async (slug: string) => {
 export const findProductBySlug = async (slug: string) => {
   return await prisma.product.findFirst({
     where: { slug, deletedAt: null },
+    include: {
+      _count: {
+        select: {
+          variants: {
+            where: { deletedAt: null },
+          },
+        },
+      },
+    },
   });
 };
 

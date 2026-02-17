@@ -11,6 +11,8 @@ export const errorCode = {
   notFound: "Error_NotFound",
   notAllowed: "Error_NotAllowed",
   maintenance: "Error_Maintenance",
+  retry: "Error_Retry",
+  retryAndLogout: "Error_RetryAndLogout",
 };
 
 // Error codes for auth processes: register, verify-otp, verify-password-otp, confirm-password, reset-password
