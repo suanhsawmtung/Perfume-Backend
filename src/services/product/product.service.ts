@@ -19,6 +19,7 @@ import { findBrandById } from "../brand/brand.helpers";
 import {
   buildProductWhere,
   createProductVariantRecord,
+  decrementVariantInventory,
   deleteProductRecord,
   deleteProductVariantRecord,
   deleteVariantImages,
@@ -31,13 +32,13 @@ import {
   findVariantImages,
   generateUniqueVariantSku,
   generateUniqueVariantSlug,
+  incrementVariantInventory,
   insertProduct,
   requireSlug,
   requireVariantSlug,
   unsetOtherPrimaryVariants,
   updateProductRecord,
-  updateProductVariantRecord,
-  updateVariantInventory
+  updateProductVariantRecord
 } from "./product.helpers";
 
 export const listProducts = async ({
@@ -573,7 +574,13 @@ export const updateProductVariant = async (
     });
   }
 
-  await updateVariantInventory(existingVariant.id, stockNum);
+  // await updateVariantInventory(existingVariant.id, stockNum);
+  const newStock = stockNum - existingVariant.stock;
+  if(newStock < 0){
+    await decrementVariantInventory(existingVariant.id, Math.abs(newStock));
+  }else {
+    await incrementVariantInventory(existingVariant.id, newStock);
+  }
 
   // Handle images using Fixed Slot Sync (Orders 0-3)
   if (params.imageLayout) {

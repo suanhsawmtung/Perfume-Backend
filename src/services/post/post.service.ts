@@ -9,7 +9,8 @@ import {
 import { createError, createSlug, ensureUniqueSlug } from "../../utils/common";
 import { getFilePath, removeFile } from "../../utils/file";
 import { findCategoryById } from "../category/category.helpers";
-import { assertPostMutable, assertPostReadable, buildPostWhere, deletePostRecord, findPostBySlug, findPostByTitle, findPostByTitleExcludingId, findPostDetail, getRoleOrThrow, insertPost, requireAuthenticatedUserId, requireSlug, updatePostRecord } from "./post.helpers";
+import { getRoleOrThrow } from "../user/user.helpers";
+import { assertPostMutable, assertPostReadable, buildPostWhere, deletePostRecord, findPostBySlug, findPostByTitle, findPostByTitleExcludingId, findPostDetail, insertPost, requireAuthenticatedUserId, requireSlug, updatePostRecord } from "./post.helpers";
 
 export const listPosts = async ({
   pageSize,

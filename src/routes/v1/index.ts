@@ -23,8 +23,6 @@ router.use("/auth", authLimiter, authRoutes);
 
 router.use("/admin/users", normalLimiter, adminUserRoutes);
 router.use("/admin/setting", normalLimiter, adminSettingRoutes);
-// router.use("/admin/types", normalLimiter, adminTypeRoutes);
-// router.use("/admin/materials", normalLimiter, adminMaterialRoutes);
 router.use("/admin/brands", normalLimiter, adminBrandRoutes);
 router.use("/admin/categories", normalLimiter, adminCategoryRoutes);
 router.use("/admin/posts", normalLimiter, adminPostRoutes);

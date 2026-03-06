@@ -1,0 +1,24 @@
+﻿src/services/material.service.ts(17,23): error TS2724: '"C:/Users/Suan/Projects/Perfume/perfume-backend/node_modules/.pnpm/@prisma+client@7.4.2_prisma_763ff890fc7711df3a9380833b478e18/node_modules/.prisma/client/index".Prisma' has no exported member named 'MaterialWhereInput'. Did you mean 'ImageWhereInput'?
+src/services/material.service.ts(27,30): error TS2339: Property 'material' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'.
+src/services/material.service.ts(36,30): error TS2339: Property 'material' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'.
+src/services/material.service.ts(59,23): error TS2339: Property 'material' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'.
+src/services/material.service.ts(68,23): error TS2339: Property 'material' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'.
+src/services/material.service.ts(77,23): error TS2339: Property 'material' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'.
+src/services/material.service.ts(83,23): error TS2339: Property 'material' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'.
+src/services/material.service.ts(89,30): error TS2724: '"C:/Users/Suan/Projects/Perfume/perfume-backend/node_modules/.pnpm/@prisma+client@7.4.2_prisma_763ff890fc7711df3a9380833b478e18/node_modules/.prisma/client/index".Prisma' has no exported member named 'MaterialCreateInput'. Did you mean 'ImageCreateInput'?
+src/services/material.service.ts(91,23): error TS2339: Property 'material' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'.
+src/services/material.service.ts(98,30): error TS2724: '"C:/Users/Suan/Projects/Perfume/perfume-backend/node_modules/.pnpm/@prisma+client@7.4.2_prisma_763ff890fc7711df3a9380833b478e18/node_modules/.prisma/client/index".Prisma' has no exported member named 'MaterialUpdateInput'. Did you mean 'ImageUpdateInput'?
+src/services/material.service.ts(100,23): error TS2339: Property 'material' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'.
+src/services/material.service.ts(107,23): error TS2339: Property 'material' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'.
+src/services/type.service.ts(17,23): error TS2724: '"C:/Users/Suan/Projects/Perfume/perfume-backend/node_modules/.pnpm/@prisma+client@7.4.2_prisma_763ff890fc7711df3a9380833b478e18/node_modules/.prisma/client/index".Prisma' has no exported member named 'TypeWhereInput'. Did you mean 'OtpWhereInput'?
+src/services/type.service.ts(27,30): error TS2339: Property 'type' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'.
+src/services/type.service.ts(36,30): error TS2339: Property 'type' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'.
+src/services/type.service.ts(59,23): error TS2339: Property 'type' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'.
+src/services/type.service.ts(68,23): error TS2339: Property 'type' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'.
+src/services/type.service.ts(77,23): error TS2339: Property 'type' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'.
+src/services/type.service.ts(83,23): error TS2339: Property 'type' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'.
+src/services/type.service.ts(88,57): error TS2724: '"C:/Users/Suan/Projects/Perfume/perfume-backend/node_modules/.pnpm/@prisma+client@7.4.2_prisma_763ff890fc7711df3a9380833b478e18/node_modules/.prisma/client/index".Prisma' has no exported member named 'TypeCreateInput'. Did you mean 'OtpCreateInput'?
+src/services/type.service.ts(89,23): error TS2339: Property 'type' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'.
+src/services/type.service.ts(96,26): error TS2724: '"C:/Users/Suan/Projects/Perfume/perfume-backend/node_modules/.pnpm/@prisma+client@7.4.2_prisma_763ff890fc7711df3a9380833b478e18/node_modules/.prisma/client/index".Prisma' has no exported member named 'TypeUpdateInput'. Did you mean 'OtpUpdateInput'?
+src/services/type.service.ts(98,23): error TS2339: Property 'type' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'.
+src/services/type.service.ts(105,23): error TS2339: Property 'type' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'.

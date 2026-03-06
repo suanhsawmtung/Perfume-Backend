@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Concentration, Gender, OrderStatus, PaymentStatus, Role, VariantSource } from "@prisma/client";
+import { Concentration, Gender, OrderItemType, OrderStatus, PaymentStatus, Role, VariantSource } from "@prisma/client";
 import { hash } from "../src/lib/hash";
 import { prisma } from "../src/lib/prisma";
 import { createSlug, ensureUniqueSlug } from "../src/utils/common";
@@ -468,7 +468,7 @@ export async function main() {
 
   // Seed Orders
   console.log("Seeding Orders...");
-  await prisma.productsOnOrders.deleteMany({});
+  await prisma.orderItem.deleteMany({});
   await prisma.order.deleteMany({});
 
   const allProductVariants = await prisma.productVariant.findMany({
@@ -512,15 +512,11 @@ export async function main() {
              const quantity = Math.floor(Math.random() * 3) + 1;
              const price = Number(randomVariant.price) - (Number(randomVariant.price) * Number(randomVariant.discount) / 100);
 
-             await prisma.productsOnOrders.create({
+             await prisma.orderItem.create({
                  data: {
                      orderId: createdOrder.id,
-                     productId: randomVariant.productId, // Note: schema says productId but logic implies using variant. Assuming ProductsOnOrders links to Product, but usually it links to Variant in e-commerce. If schema strictly links to Product, we use variant.productId. 
-                     // Wait, checking schema provided in prompt:
-                     // model ProductsOnOrders { ... productId Int ... product Product ... }
-                     // It links to Product, not Variant. 
-                     // However, price usually depends on variant. 
-                     // I will use randomVariant.productId and the calculated price from the variant.
+                     itemId: randomVariant.id,
+                     itemType: OrderItemType.PRODUCT_VARIANT,
                      quantity: quantity,
                      price: price
                  }

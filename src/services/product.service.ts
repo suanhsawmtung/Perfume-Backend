@@ -132,7 +132,7 @@ export const getProductBySlug = async (slug: string) => {
         select: {
           wishlists: true,
           ratings: true,
-          orders: true,
+          // orders: true,
           variants: true,
         },
       },

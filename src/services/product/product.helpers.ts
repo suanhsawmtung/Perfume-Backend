@@ -22,7 +22,7 @@ const parseBoolean = (value: any) => {
 export const parseProductQueryParams = (
   query: any
 ): ParseProductQueryParamsResult => {
-  const pageSizeParam = Number(query.pageSize);
+  const pageSizeParam = Number(query.limit);
   const pageSize =
     Number.isNaN(pageSizeParam) || pageSizeParam <= 0
       ? 10
@@ -185,7 +185,6 @@ export const findProductDetail = async (slug: string) => {
         select: {
           wishlists: true,
           ratings: true,
-          orders: true,
           variants: true,
         },
       },
@@ -240,6 +239,12 @@ export const findProductByName = async (name: string) => {
 
 export const findProductById = async (id: number) => {
   return await prisma.product.findFirst({
+    where: { id, deletedAt: null },
+  });
+};
+
+export const findProductVariantById = async (id: number) => {
+  return await prisma.productVariant.findFirst({
     where: { id, deletedAt: null },
   });
 };
@@ -420,31 +425,64 @@ export const findVariantInventory = async (productVariantId: number) => {
   });
 };
 
-export const createVariantInventory = async (
-  productVariantId: number,
-  quantity: number
-) => {
+export const createVariantInventory = async ({
+  productVariantId,
+  quantity,
+  reserved = 0,
+}: {
+  productVariantId: number;
+  quantity: number;
+  reserved?: number;
+}) => {
   return await prisma.inventory.create({
     data: {
       productVariantId,
       quantity,
-      reserved: 0,
+      reserved,
     },
   });
 };
 
-export const updateVariantInventory = async (
+export const updateVariantInventory = async ({
+  id,
+  data
+}: {
+  id: number;
+  data: Prisma.InventoryUpdateInput;
+}) => {
+  return await prisma.inventory.update({
+    where: { id },
+    data,
+  });
+};
+
+export const incrementVariantInventory = async (
   productVariantId: number,
   quantity: number
 ) => {
   const existingInventory = await findVariantInventory(productVariantId);
   if (!existingInventory) {
-    return await createVariantInventory(productVariantId, quantity);
+    return await createVariantInventory({ productVariantId, quantity });
   }
 
   return await prisma.inventory.update({
     where: { id: existingInventory.id },
-    data: { quantity },
+    data: { quantity: existingInventory.quantity + quantity },
+  });
+};
+
+export const decrementVariantInventory = async (
+  productVariantId: number,
+  quantity: number
+) => {
+  const existingInventory = await findVariantInventory(productVariantId);
+  if (!existingInventory) {
+    return await createVariantInventory({ productVariantId, quantity });
+  }
+
+  return await prisma.inventory.update({
+    where: { id: existingInventory.id },
+    data: { quantity: existingInventory.quantity - quantity },
   });
 };
 

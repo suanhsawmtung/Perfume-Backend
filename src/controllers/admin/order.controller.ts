@@ -1,17 +1,11 @@
 import { NextFunction, Response } from "express";
 import { errorCode } from "../../../config/error-code";
-import {
-  getAllOrders,
-  parseOrderQueryParams,
-  validateAndCreateOrder,
-  validateAndDeleteOrder,
-  validateAndGetOrderByCode,
-  validateAndUpdateOrder,
-} from "../../services/order.service";
+import { parseOrderQueryParams } from "../../services/order/order.helpers";
+import * as OrderService from "../../services/order/order.service";
 import { CustomRequest } from "../../types/common";
 import { createError } from "../../utils/common";
 
-export const getAllOrdersController = async (
+export const listOrders = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
@@ -24,7 +18,7 @@ export const getAllOrdersController = async (
       currentPage,
       totalPages,
       pageSize,
-    } = await getAllOrders(queryParams);
+    } = await OrderService.listOrders(queryParams);
 
     res.status(200).json({
       success: true,
@@ -41,7 +35,7 @@ export const getAllOrdersController = async (
   }
 };
 
-export const getOrderByCodeController = async (
+export const getOrder = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
@@ -58,7 +52,7 @@ export const getOrderByCodeController = async (
       return next(error);
     }
 
-    const order = await validateAndGetOrderByCode(code);
+    const order = await OrderService.getOrderDetail(code);
 
     res.status(200).json({
       success: true,
@@ -70,34 +64,39 @@ export const getOrderByCodeController = async (
   }
 };
 
-export const createOrderController = async (
+export const createOrder = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const {
-      totalPrice,
       status,
       paymentStatus,
       customerName,
       customerPhone,
       customerAddress,
       customerNotes,
-      products,
+      rejectedReason,
+      cancelledReason,
+      items,
       userId,
+      source,
     } = req.body;
 
-    const order = await validateAndCreateOrder({
-      totalPrice,
+    const order = await OrderService.createOrder({
       status,
       paymentStatus,
       customerName,
       customerPhone,
       customerAddress,
       customerNotes,
-      products,
+      rejectedReason,
+      cancelledReason,
+      items,
       userId,
+      source,
+      image: req.file?.filename,
       ...(req.userId && { authenticatedUserId: req.userId }),
     });
 
@@ -111,7 +110,7 @@ export const createOrderController = async (
   }
 };
 
-export const updateOrderController = async (
+export const updateOrder = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
@@ -129,7 +128,6 @@ export const updateOrderController = async (
     }
 
     const {
-      totalPrice,
       status,
       paymentStatus,
       customerName,
@@ -137,12 +135,13 @@ export const updateOrderController = async (
       customerAddress,
       customerNotes,
       rejectedReason,
-      products,
+      cancelledReason,
+      items,
       userId,
+      source,
     } = req.body;
 
-    const order = await validateAndUpdateOrder(code, {
-      totalPrice,
+    const order = await OrderService.updateOrder(code, {
       status,
       paymentStatus,
       customerName,
@@ -150,8 +149,11 @@ export const updateOrderController = async (
       customerAddress,
       customerNotes,
       rejectedReason,
-      products,
+      cancelledReason,
+      items,
       userId,
+      source,
+      image: req.file?.filename,
     });
 
     res.status(200).json({
@@ -164,7 +166,7 @@ export const updateOrderController = async (
   }
 };
 
-export const deleteOrderController = async (
+export const deleteOrder = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
@@ -181,7 +183,7 @@ export const deleteOrderController = async (
       return next(error);
     }
 
-    await validateAndDeleteOrder(code);
+    await OrderService.deleteOrder(code);
 
     res.status(200).json({
       success: true,
@@ -189,6 +191,7 @@ export const deleteOrderController = async (
       message: "Order deleted successfully.",
     });
   } catch (error: any) {
+    console.log(error);
     next(error);
   }
 };

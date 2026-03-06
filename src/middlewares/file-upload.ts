@@ -158,6 +158,12 @@ export const uploadProductImages = createMulterArrayMiddleware(
   "product"
 );
 
+export const uploadOrderImage = createMulterMiddleware(
+  createUpload("order"),
+  "image",
+  "order"
+);
+
 // Default export for backward compatibility (profile images)
 const upload = createMulterMiddleware(createUpload(""), "avatar", "");
 

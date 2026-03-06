@@ -66,6 +66,17 @@ app.use(
 
 app.use("/product", express.static(path.resolve("uploads/images/product")));
 
+app.use(
+  "/order",
+  express.static("uploads/images/order", {
+    setHeaders: (res) => {
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    },
+  })
+);
+
+app.use("/order", express.static(path.resolve("uploads/images/order")));
+
 app.use(isMaintenanceMode).use(routes);
 
 const errorHandler: ErrorRequestHandler = async (

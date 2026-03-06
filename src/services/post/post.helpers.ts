@@ -3,7 +3,7 @@ import { errorCode } from "../../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { BuildPostWhereParams, ParsePostQueryParamsResult } from "../../types/post";
 import { createError } from "../../utils/common";
-import { findUserRoleById } from "../user/user.helpers";
+import { getRoleOrThrow } from "../user/user.helpers";
 
 export const buildPostWhere = async ({
   authenticatedUserId,
@@ -218,19 +218,6 @@ export const requireAuthenticatedUserId = (authenticatedUserId?: number) => {
   }
 
   return authenticatedUserId;
-};
-
-export const getRoleOrThrow = async (authenticatedUserId: number) => {
-  const role = await findUserRoleById(authenticatedUserId);
-  if (!role) {
-    throw createError({
-      message: "User not found.",
-      status: 404,
-      code: errorCode.notFound,
-    });
-  }
-
-  return role;
 };
 
 export const assertPostReadable = (

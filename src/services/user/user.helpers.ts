@@ -17,7 +17,7 @@ const userOmit = {
 export const parseUserQueryParams = (
   query: any
 ): ParseUserQueryParamsResult => {
-  const pageSizeParam = Number(query.pageSize);
+  const pageSizeParam = Number(query.limit);
   const pageSize =
     Number.isNaN(pageSizeParam) || pageSizeParam <= 0
       ? 10
@@ -150,6 +150,19 @@ export const findUserRoleById = async (id: number) => {
       },
     })
   )?.role;
+};
+
+export const getRoleOrThrow = async (authenticatedUserId: number) => {
+  const role = await findUserRoleById(authenticatedUserId);
+  if (!role) {
+    throw createError({
+      message: "User not found.",
+      status: 404,
+      code: errorCode.notFound,
+    });
+  }
+
+  return role;
 };
 
 export const findUserByEmail = async (email: string) => {

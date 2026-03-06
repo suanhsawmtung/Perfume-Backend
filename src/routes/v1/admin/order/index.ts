@@ -1,15 +1,20 @@
 import { Role } from "@prisma/client";
 import express, { Router } from "express";
 import {
-  createOrderController,
-  deleteOrderController,
-  getAllOrdersController,
-  getOrderByCodeController,
-  updateOrderController,
+  createOrder,
+  deleteOrder,
+  getOrder,
+  listOrders,
+  updateOrder,
 } from "../../../../controllers/admin/order.controller";
 import { permit } from "../../../../middlewares/check-permissions";
 import { isAuthenticated } from "../../../../middlewares/ensure-authenticated";
 import { handleValidationError } from "../../../../middlewares/error-handler";
+import {
+  handleMulterError,
+  uploadOrderImage,
+} from "../../../../middlewares/file-upload";
+import { parseJsonFields } from "../../../../middlewares/parse-json-fields";
 import {
   createOrderValidation,
   updateOrderValidation,
@@ -21,39 +26,45 @@ router.get(
   "/",
   isAuthenticated,
   permit(true, Role.ADMIN),
-  getAllOrdersController
+  listOrders
 );
 
 router.post(
   "/",
   isAuthenticated,
   permit(true, Role.ADMIN),
+  uploadOrderImage,
+  handleMulterError,
+  parseJsonFields(["items"]),
   createOrderValidation,
   handleValidationError,
-  createOrderController
+  createOrder
 );
 
 router.get(
   "/:code",
   isAuthenticated,
   permit(true, Role.ADMIN),
-  getOrderByCodeController
+  getOrder
 );
 
 router.patch(
   "/:code",
   isAuthenticated,
   permit(true, Role.ADMIN),
+  uploadOrderImage,
+  handleMulterError,
+  parseJsonFields(["items"]),
   updateOrderValidation,
   handleValidationError,
-  updateOrderController
+  updateOrder
 );
 
 router.delete(
   "/:code",
   isAuthenticated,
   permit(true, Role.ADMIN),
-  deleteOrderController
+  deleteOrder
 );
 
 export default router;

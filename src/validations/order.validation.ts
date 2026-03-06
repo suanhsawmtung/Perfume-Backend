@@ -1,12 +1,7 @@
-import { OrderStatus, PaymentStatus } from "@prisma/client";
+import { OrderItemType, OrderStatus, PaymentStatus } from "@prisma/client";
 import { body } from "express-validator";
 
 const orderValidation = [
-  body("totalPrice")
-    .notEmpty()
-    .withMessage("Total price is required.")
-    .isFloat({ min: 0 })
-    .withMessage("Total price must be a positive number."),
   body("status")
     .optional()
     .isIn(Object.values(OrderStatus))
@@ -46,28 +41,29 @@ const orderValidation = [
     .trim()
     .isLength({ max: 255 })
     .withMessage("Rejected reason must be at most 255 characters."),
-  body("products")
+  body("items")
     .isArray({ min: 1 })
     .withMessage(
-      "Products array is required and must contain at least one product."
+      "Order items array is required and must contain at least one item."
     )
-    .custom((products) => {
-      if (!Array.isArray(products)) {
+    .custom((items) => {
+      if (!Array.isArray(items)) {
         return false;
       }
-      return products.every((product: any) => {
+      return items.every((item: any) => {
         return (
-          typeof product.productId === "number" &&
-          product.productId > 0 &&
-          typeof product.quantity === "number" &&
-          product.quantity > 0 &&
-          typeof product.price === "number" &&
-          product.price >= 0
+          typeof item.itemId === "number" &&
+          item.itemId > 0 &&
+          typeof item.quantity === "number" &&
+          item.quantity > 0 &&
+          typeof item.price === "number" &&
+          item.price >= 0 &&
+          Object.values(OrderItemType).includes(item.itemType)
         );
       });
     })
     .withMessage(
-      "Each product must have productId (positive integer), quantity (positive integer), and price (non-negative number)."
+      "Each item must have itemId (positive integer), quantity (positive integer), and price (non-negative number)."
     ),
 ];
 
@@ -82,3 +78,4 @@ const updateOrderValidation = [
 ];
 
 export { updateOrderValidation };
+
