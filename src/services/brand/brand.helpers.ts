@@ -64,6 +64,19 @@ export const findBrandBySlug = async (slug: string) => {
   });
 };
 
+export const findBrandBySlugWithProductCount = async (slug: string) => {
+  return await prisma.brand.findUnique({
+    where: { slug },
+    include: {
+      _count: {
+        select: {
+          products: true,
+        },
+      },
+    },
+  });
+};
+
 export const findBrandById = async (id: number) => {
   return await prisma.brand.findUnique({
     where: { id },

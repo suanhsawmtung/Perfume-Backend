@@ -9,6 +9,7 @@ import {
   findBrandByName,
   findBrandByNameExcludingId,
   findBrandBySlug,
+  findBrandBySlugWithProductCount,
   requireSlug,
   updateBrandRecord,
 } from "./brand.helpers";
@@ -66,7 +67,7 @@ export const listPublicBrands = async () => {
 
 export const getBrandDetail = async (slug: string) => {
   const normalizedSlug = requireSlug(slug);
-  const brand = await findBrandBySlug(normalizedSlug);
+  const brand = await findBrandBySlugWithProductCount(normalizedSlug);
 
   if (!brand) {
     throw createError({
@@ -143,13 +144,21 @@ export const updateBrand = async (slug: string, params: UpdateBrandParams) => {
 
 export const deleteBrand = async (slug: string) => {
   const normalizedSlug = requireSlug(slug);
-  const existing = await findBrandBySlug(normalizedSlug);
+  const existing = await findBrandBySlugWithProductCount(normalizedSlug);
 
   if (!existing) {
     throw createError({
       message: "Brand not found.",
       status: 404,
       code: errorCode.notFound,
+    });
+  }
+
+  if (existing._count.products > 0) {
+    throw createError({
+      message: "Brand cannot be deleted as it is already being used in some products.",
+      status: 400,
+      code: errorCode.invalid,
     });
   }
 

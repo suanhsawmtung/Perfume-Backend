@@ -13,6 +13,7 @@ import {
   findCategoryByName,
   findCategoryByNameExcludingId,
   findCategoryBySlug,
+  findCategoryBySlugWithPostCount,
   requireSlug,
   updateCategoryRecord
 } from "./category.helpers";
@@ -70,7 +71,7 @@ export const listPublicCategories = async () => {
 
 export const getCategoryDetail = async (slug: string) => {
   const normalizedSlug = requireSlug(slug);
-  const category = await findCategoryBySlug(normalizedSlug);
+  const category = await findCategoryBySlugWithPostCount(normalizedSlug);
 
   if (!category) {
     throw createError({
@@ -150,13 +151,21 @@ export const updateCategory = async (
 
 export const deleteCategory = async (slug: string) => {
   const normalizedSlug = requireSlug(slug);
-  const existing = await findCategoryBySlug(normalizedSlug);
+  const existing = await findCategoryBySlugWithPostCount(normalizedSlug);
 
   if (!existing) {
     throw createError({
       message: "Category not found.",
       status: 404,
       code: errorCode.notFound,
+    });
+  }
+
+  if (existing._count.posts > 0) {
+    throw createError({
+      message: "Category cannot be deleted as it is already being used in some posts.",
+      status: 400,
+      code: errorCode.invalid,
     });
   }
 

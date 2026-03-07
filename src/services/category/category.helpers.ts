@@ -64,6 +64,19 @@ export const findCategoryBySlug = async (slug: string) => {
   });
 };
 
+export const findCategoryBySlugWithPostCount = async (slug: string) => {
+  return await prisma.category.findUnique({
+    where: { slug },
+    include: {
+      _count: {
+        select: {
+          posts: true,
+        },
+      },
+    },
+  });
+};
+
 export const findCategoryById = async (id: number) => {
   return await prisma.category.findUnique({
     where: { id },
