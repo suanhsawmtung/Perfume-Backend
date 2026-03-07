@@ -383,6 +383,14 @@ export const createProductVariant = async (
     });
   }
 
+  if (discountNum > priceNum) {
+    throw createError({
+      message: "Discount cannot be greater than price.",
+      status: 400,
+      code: errorCode.invalid,
+    });
+  }
+
   const stockNum = params.stock !== undefined ? Number(params.stock) : 0;
   if (isNaN(stockNum) || stockNum < 0) {
     throw createError({
@@ -527,6 +535,14 @@ export const updateProductVariant = async (
   if (isNaN(discountNum) || discountNum < 0) {
     throw createError({
       message: "Invalid discount.",
+      status: 400,
+      code: errorCode.invalid,
+    });
+  }
+
+  if (discountNum > priceNum) {
+    throw createError({
+      message: "Discount cannot be greater than price.",
       status: 400,
       code: errorCode.invalid,
     });

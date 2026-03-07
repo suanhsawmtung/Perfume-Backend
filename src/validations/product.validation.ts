@@ -154,7 +154,14 @@ const productVariantValidation = [
   body("discount")
     .optional()
     .isFloat({ min: 0 })
-    .withMessage("Discount must be a positive number."),
+    .withMessage("Discount must be a positive number.")
+    .custom((value, { req }) => {
+      const price = parseFloat(req.body.price);
+      if (value !== undefined && value > price) {
+        throw new Error("Discount cannot be greater than price.");
+      }
+      return true;
+    }),
   body("stock")
     .optional()
     .isInt({ min: 0 })
