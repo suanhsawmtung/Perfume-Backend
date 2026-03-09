@@ -2,44 +2,65 @@ import { VariantSource } from "@prisma/client";
 import { errorCode } from "../../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import {
-  CreateProductParams,
-  CreateProductVariantParams,
-  ListProductsParams,
-  UpdateProductNewParams,
-  UpdateProductVariantParams,
+    CreateProductParams,
+    CreateProductVariantParams,
+    ListProductsParams,
+    UpdateProductNewParams,
+    UpdateProductVariantParams,
 } from "../../types/product";
 import {
-  createError,
-  createSlug,
-  ensureUniqueSlug,
-  normalizeBoolean,
+    createError,
+    createSlug,
+    ensureUniqueSlug,
+    normalizeBoolean,
 } from "../../utils/common";
 import { getFilePath, removeFile } from "../../utils/file";
 import { findBrandById } from "../brand/brand.helpers";
 import {
-  buildProductWhere,
-  createProductVariantRecord,
-  decrementVariantInventory,
-  deleteProductRecord,
-  deleteProductVariantRecord,
-  deleteVariantImages,
-  findProductByName,
-  findProductByNameExcludingId,
-  findProductBySlug,
-  findProductDetail,
-  findProductVariantDetail,
-  findProductVariantsSummary,
-  findVariantImages,
-  generateUniqueVariantSku,
-  generateUniqueVariantSlug,
-  incrementVariantInventory,
-  insertProduct,
-  requireSlug,
-  requireVariantSlug,
-  unsetOtherPrimaryVariants,
-  updateProductRecord,
-  updateProductVariantRecord
+    buildProductWhere,
+    createProductVariantRecord,
+    decrementVariantInventory,
+    deleteProductRecord,
+    deleteProductVariantRecord,
+    deleteVariantImages,
+    findProductByName,
+    findProductByNameExcludingId,
+    findProductBySlug,
+    findProductDetail,
+    findProductVariantDetail,
+    findProductVariantsSummary,
+    findVariantImages,
+    generateUniqueVariantSku,
+    generateUniqueVariantSlug,
+    incrementVariantInventory,
+    insertProduct,
+    requireSlug,
+    requireVariantSlug,
+    unsetOtherPrimaryVariants,
+    updateProductRecord,
+    updateProductVariantRecord,
 } from "./product.helpers";
+
+export const listPublicProducts = async (limit?: number, cursor?: number) => {
+  return await prisma.product.findMany({
+    where: {
+      deletedAt: null,
+    },
+    ...(limit ? { take: limit } : {}),
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      brand: {
+        select: {
+          name: true,
+        },
+      },
+    },
+    orderBy: { id: "asc" },
+  });
+};
 
 export const listProducts = async ({
   pageSize,

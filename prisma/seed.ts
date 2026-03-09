@@ -206,7 +206,21 @@ const posts = [
 export async function main() {
   console.log("Starting seed...");
 
-  // Seed Materials
+  console.log("Cleaning up database...");
+  await prisma.review.deleteMany({});
+  await prisma.orderItem.deleteMany({});
+  await prisma.order.deleteMany({});
+  await prisma.productRating.deleteMany({});
+  await prisma.productWishlist.deleteMany({});
+  await prisma.post.deleteMany({});
+  await prisma.inventory.deleteMany({});
+  await prisma.image.deleteMany({});
+  await prisma.productVariant.deleteMany({});
+  await prisma.product.deleteMany({});
+  await prisma.user.deleteMany({ where: { role: Role.USER } });
+  console.log("Cleanup completed.");
+
+  // Seed Categories
   // console.log("Seeding Materials...");
   // for (const material of materials) {
   //   await prisma.material.upsert({
@@ -264,10 +278,6 @@ export async function main() {
 
   // Seed Products and Variants
   console.log("Seeding Products and Variants...");
-  await prisma.inventory.deleteMany({});
-  await prisma.image.deleteMany({});
-  await prisma.productVariant.deleteMany({});
-  await prisma.product.deleteMany({});
 
   for (const productData of products) {
     const brand = await prisma.brand.findUnique({
@@ -395,13 +405,6 @@ export async function main() {
 
   // Seed Regular Users
   console.log("Seeding Regular Users...");
-  // Delete old regular users (USER role) before creating new ones
-  const deletedUsers = await prisma.user.deleteMany({
-    where: {
-      role: Role.USER,
-    },
-  });
-  console.log(`Deleted ${deletedUsers.count} old regular users`);
 
   for (const user of users) {
     await prisma.user.create({
@@ -417,9 +420,6 @@ export async function main() {
 
   // Seed Posts
   console.log("Seeding Posts...");
-  // Delete all existing posts before creating new ones
-  const deletedPosts = await prisma.post.deleteMany({});
-  console.log(`Deleted ${deletedPosts.count} old posts`);
 
   // Only use admin and author users as post authors
   const authorIds = [adminUser.id, authorUser.id];
@@ -468,8 +468,6 @@ export async function main() {
 
   // Seed Orders
   console.log("Seeding Orders...");
-  await prisma.orderItem.deleteMany({});
-  await prisma.order.deleteMany({});
 
   const allProductVariants = await prisma.productVariant.findMany({
     include: { product: true },
@@ -534,6 +532,33 @@ export async function main() {
     }
   } else {
       console.log("Skipping order seeding: Not enough users or product variants.");
+  }
+
+  // Seed Reviews
+  console.log("Seeding Reviews...");
+  await prisma.review.deleteMany({});
+
+  const allProducts = await prisma.product.findMany();
+
+  if (allProducts.length > 0 && allClients.length >= 2) {
+    for (const product of allProducts) {
+      // Pick 2 random unique users from allClients
+      const selectedUsers = faker.helpers.arrayElements(allClients, 2);
+
+      for (const user of selectedUsers) {
+        await prisma.review.create({
+          data: {
+            content: faker.lorem.paragraph(),
+            isPublish: true,
+            userId: user.id,
+            productId: product.id,
+          },
+        });
+      }
+      console.log(`Created 2 reviews for product: ${product.name}`);
+    }
+  } else {
+    console.log("Skipping review seeding: Not enough products or users.");
   }
 
   console.log("Seed completed successfully!");
