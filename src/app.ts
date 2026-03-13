@@ -88,6 +88,8 @@ const errorHandler: ErrorRequestHandler = async (
   // Clean up uploaded files if any error occurs
   await cleanupUploadedFiles(req as any);
 
+  console.log(error);
+
   const status = error.status;
   const message = error.message ?? "Server Error";
   const errorCode = error.code ?? "Error_Code";

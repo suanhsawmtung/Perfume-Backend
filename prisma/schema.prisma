@@ -252,7 +252,6 @@ model ProductRating {
   userId    Int
   productId Int
   rating    Int      @db.SmallInt
-  comment   String?  @db.VarChar(500)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

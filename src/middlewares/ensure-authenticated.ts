@@ -60,7 +60,7 @@ export const isAuthenticated = (
       const error = createError({
         message: "This user does not exist.",
         status: 404,
-        code: errorCode.notFound,
+        code: errorCode.authNotFound,
       });
 
       return next(error);
@@ -72,7 +72,7 @@ export const isAuthenticated = (
       const error = createError({
         message: "This user does not exist.",
         status: 404,
-        code: errorCode.notFound,
+        code: errorCode.authNotFound,
       });
 
       return next(error);
@@ -152,7 +152,7 @@ export const isAuthenticated = (
         const error = createError({
           message: "This user does not exist.",
           status: 404,
-          code: errorCode.notFound,
+          code: errorCode.authNotFound,
         });
 
         return next(error);

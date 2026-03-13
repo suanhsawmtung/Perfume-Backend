@@ -561,6 +561,42 @@ export async function main() {
     console.log("Skipping review seeding: Not enough products or users.");
   }
 
+  // Seed Product Ratings
+  console.log("Seeding Product Ratings...");
+  if (allProducts.length > 0 && allClients.length >= 2) {
+    for (const product of allProducts) {
+      // Pick 2-4 random unique users from allClients to give ratings
+      const raterCount = faker.number.int({ min: 2, max: Math.min(allClients.length, 4) });
+      const raters = faker.helpers.arrayElements(allClients, raterCount);
+
+      let totalRating = 0;
+      for (const user of raters) {
+        const ratingValue = faker.number.int({ min: 1, max: 5 });
+        await prisma.productRating.create({
+          data: {
+            userId: user.id,
+            productId: product.id,
+            rating: ratingValue,
+          },
+        });
+        totalRating += ratingValue;
+      }
+
+      // Update product with average rating and count
+      await prisma.product.update({
+        where: { id: product.id },
+        data: {
+          rating: totalRating / raterCount,
+          ratingCount: raterCount,
+        },
+      });
+
+      console.log(`Created ${raterCount} ratings for product: ${product.name}`);
+    }
+  } else {
+    console.log("Skipping product rating seeding: Not enough products or users.");
+  }
+
   console.log("Seed completed successfully!");
 }
 
