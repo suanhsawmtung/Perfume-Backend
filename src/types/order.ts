@@ -1,11 +1,11 @@
-import { OrderItemType, OrderSource, OrderStatus, PaymentStatus } from "@prisma/client";
+import { OrderItemType, OrderPaymentStatus, OrderSource, OrderStatus } from "@prisma/client";
 
 export type ListOrdersParams = {
   pageSize: number;
   offset: number;
   search?: string | undefined;
   status?: OrderStatus | undefined;
-  paymentStatus?: PaymentStatus | undefined;
+  paymentStatus?: OrderPaymentStatus | undefined;
   source?: OrderSource | undefined;
   userId?: number | undefined;
 };
@@ -14,7 +14,7 @@ export type CreateOrderParams = {
   totalPrice?: number | string;
   source?: OrderSource;
   status?: OrderStatus;
-  paymentStatus?: PaymentStatus;
+  paymentStatus?: OrderPaymentStatus;
   customerName?: string;
   customerPhone?: string;
   customerAddress?: string;
@@ -41,7 +41,7 @@ export type UpdateOrderParams = {
   totalPrice?: number | string;
   source?: OrderSource;
   status?: OrderStatus;
-  paymentStatus?: PaymentStatus;
+  paymentStatus?: OrderPaymentStatus;
   customerName?: string;
   customerPhone?: string;
   customerAddress?: string;
@@ -68,7 +68,7 @@ export type ParseOrderQueryParamsResult = {
   offset: number;
   search?: string | undefined;
   status?: OrderStatus | undefined;
-  paymentStatus?: PaymentStatus | undefined;
+  paymentStatus?: OrderPaymentStatus | undefined;
   source?: OrderSource | undefined;
   userId?: number | undefined;
 };

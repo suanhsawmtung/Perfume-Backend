@@ -1,4 +1,4 @@
-import { OrderItemType, OrderSource, OrderStatus, PaymentStatus, Prisma, Role } from "@prisma/client";
+import { OrderItemType, OrderPaymentStatus, OrderSource, OrderStatus, Prisma, Role } from "@prisma/client";
 import { errorCode } from "../../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { generateCode } from "../../lib/unique-key-generator";
@@ -13,7 +13,7 @@ export const orderStatusTransitions: Record<OrderStatus, readonly OrderStatus[]>
   CANCELLED: [],
 } as const;
 
-export const paymentStatusTransitions: Record<PaymentStatus, readonly PaymentStatus[]> = {
+export const paymentStatusTransitions: Record<OrderPaymentStatus, readonly OrderPaymentStatus[]> = {
   PENDING: ["UNPAID", "FAILED", "PAID"],
   UNPAID: ["PENDING", "FAILED"],
   PAID: ["PARTIALLY_REFUNDED", "REFUNDED"],
@@ -23,8 +23,8 @@ export const paymentStatusTransitions: Record<PaymentStatus, readonly PaymentSta
 } as const;
 
 interface StatusConfig {
-  allowedPaymentStatus: readonly PaymentStatus[];
-  defaultPaymentStatus: PaymentStatus;
+  allowedPaymentStatus: readonly OrderPaymentStatus[];
+  defaultPaymentStatus: OrderPaymentStatus;
 }
 
 export const orderStatusConfig: Record<OrderStatus, StatusConfig> = {
@@ -126,13 +126,13 @@ export const parseOrderQueryParams = (
     }
   }
 
-  let paymentStatus: PaymentStatus | undefined;
+  let paymentStatus: OrderPaymentStatus | undefined;
   if (typeof query.paymentStatus === "string") {
     const paymentStatusValue = query.paymentStatus.toUpperCase();
     if (
-      Object.values(PaymentStatus).includes(paymentStatusValue as PaymentStatus)
+      Object.values(OrderPaymentStatus).includes(paymentStatusValue as OrderPaymentStatus)
     ) {
-      paymentStatus = paymentStatusValue as PaymentStatus;
+      paymentStatus = paymentStatusValue as OrderPaymentStatus;
     }
   }
 
@@ -166,7 +166,7 @@ export const parseOrderQueryParams = (
 export const buildOrderWhere = (params: {
   search?: string;
   status?: OrderStatus;
-  paymentStatus?: PaymentStatus;
+  paymentStatus?: OrderPaymentStatus;
   source?: OrderSource;
   userId?: number;
 }): Prisma.OrderWhereInput => {

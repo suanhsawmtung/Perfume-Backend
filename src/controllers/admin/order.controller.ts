@@ -191,7 +191,6 @@ export const deleteOrder = async (
       message: "Order deleted successfully.",
     });
   } catch (error: any) {
-    console.log(error);
     next(error);
   }
 };

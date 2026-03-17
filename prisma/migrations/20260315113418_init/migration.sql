@@ -11,7 +11,7 @@ CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED', 'CANCELLED
 CREATE TYPE "OrderSource" AS ENUM ('CUSTOMER', 'ADMIN');
 
 -- CreateEnum
-CREATE TYPE "PaymentStatus" AS ENUM ('UNPAID', 'PAID', 'PENDING', 'FAILED', 'REFUNDED');
+CREATE TYPE "OrderPaymentStatus" AS ENUM ('UNPAID', 'PAID', 'PENDING', 'FAILED', 'REFUNDED', 'PARTIALLY_REFUNDED');
 
 -- CreateEnum
 CREATE TYPE "PostStatus" AS ENUM ('DRAFT', 'PUBLISHED', 'ARCHIVED');
@@ -30,6 +30,15 @@ CREATE TYPE "VariantSource" AS ENUM ('ORIGINAL', 'DECANT');
 
 -- CreateEnum
 CREATE TYPE "OrderItemType" AS ENUM ('PRODUCT_VARIANT', 'BUNDLE');
+
+-- CreateEnum
+CREATE TYPE "PaymentMethod" AS ENUM ('BANK_TRANSFER', 'CASH', 'CARD', 'E_WALLET');
+
+-- CreateEnum
+CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'SUCCESS', 'FAILED', 'VOIDED');
+
+-- CreateEnum
+CREATE TYPE "RefundStatus" AS ENUM ('PENDING', 'SUCCESS', 'FAILED', 'VOIDED');
 
 -- CreateTable
 CREATE TABLE "Product" (
@@ -94,6 +103,19 @@ CREATE TABLE "Image" (
 );
 
 -- CreateTable
+CREATE TABLE "Review" (
+    "id" SERIAL NOT NULL,
+    "content" TEXT NOT NULL,
+    "isPublish" BOOLEAN NOT NULL DEFAULT false,
+    "userId" INTEGER NOT NULL,
+    "productId" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Review_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "BundleSet" (
     "id" SERIAL NOT NULL,
     "name" VARCHAR(255) NOT NULL,
@@ -128,7 +150,6 @@ CREATE TABLE "Order" (
     "code" VARCHAR(15) NOT NULL,
     "totalPrice" DECIMAL(10,2) NOT NULL,
     "status" "OrderStatus" NOT NULL DEFAULT 'PENDING',
-    "paymentStatus" "PaymentStatus" NOT NULL DEFAULT 'PENDING',
     "source" "OrderSource" NOT NULL DEFAULT 'CUSTOMER',
     "customerName" VARCHAR(100),
     "customerPhone" VARCHAR(15),
@@ -139,6 +160,8 @@ CREATE TABLE "Order" (
     "image" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+    "paymentStatus" "OrderPaymentStatus" NOT NULL DEFAULT 'PENDING',
 
     CONSTRAINT "Order_pkey" PRIMARY KEY ("id")
 );
@@ -154,6 +177,36 @@ CREATE TABLE "OrderItem" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "OrderItem_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Payment" (
+    "id" TEXT NOT NULL,
+    "orderId" INTEGER NOT NULL,
+    "method" "PaymentMethod" NOT NULL,
+    "amount" DECIMAL(10,2) NOT NULL,
+    "status" "PaymentStatus" NOT NULL DEFAULT 'PENDING',
+    "reference" TEXT,
+    "note" TEXT,
+    "paidAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Payment_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Refund" (
+    "id" SERIAL NOT NULL,
+    "orderId" INTEGER NOT NULL,
+    "amount" DECIMAL(10,2) NOT NULL,
+    "reason" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+    "status" "RefundStatus" NOT NULL DEFAULT 'PENDING',
+
+    CONSTRAINT "Refund_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -231,7 +284,6 @@ CREATE TABLE "ProductRating" (
     "userId" INTEGER NOT NULL,
     "productId" INTEGER NOT NULL,
     "rating" SMALLINT NOT NULL,
-    "comment" VARCHAR(500),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -280,6 +332,15 @@ CREATE UNIQUE INDEX "ProductVariant_slug_key" ON "ProductVariant"("slug");
 CREATE UNIQUE INDEX "ProductVariant_sku_key" ON "ProductVariant"("sku");
 
 -- CreateIndex
+CREATE INDEX "Review_productId_idx" ON "Review"("productId");
+
+-- CreateIndex
+CREATE INDEX "Review_userId_idx" ON "Review"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Review_userId_productId_key" ON "Review"("userId", "productId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "BundleSet_slug_key" ON "BundleSet"("slug");
 
 -- CreateIndex
@@ -290,6 +351,9 @@ CREATE UNIQUE INDEX "Order_code_key" ON "Order"("code");
 
 -- CreateIndex
 CREATE INDEX "OrderItem_itemId_itemType_idx" ON "OrderItem"("itemId", "itemType");
+
+-- CreateIndex
+CREATE INDEX "Payment_orderId_idx" ON "Payment"("orderId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Otp_email_key" ON "Otp"("email");
@@ -331,6 +395,12 @@ ALTER TABLE "Inventory" ADD CONSTRAINT "Inventory_productVariantId_fkey" FOREIGN
 ALTER TABLE "Image" ADD CONSTRAINT "Image_productVariantId_fkey" FOREIGN KEY ("productVariantId") REFERENCES "ProductVariant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Review" ADD CONSTRAINT "Review_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Review" ADD CONSTRAINT "Review_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "BundleSetItem" ADD CONSTRAINT "BundleSetItem_bundleSetId_fkey" FOREIGN KEY ("bundleSetId") REFERENCES "BundleSet"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -343,19 +413,25 @@ ALTER TABLE "Order" ADD CONSTRAINT "Order_userId_fkey" FOREIGN KEY ("userId") RE
 ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Payment" ADD CONSTRAINT "Payment_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Refund" ADD CONSTRAINT "Refund_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Post" ADD CONSTRAINT "Post_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Post" ADD CONSTRAINT "Post_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProductWishlist" ADD CONSTRAINT "ProductWishlist_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "ProductWishlist" ADD CONSTRAINT "ProductWishlist_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProductRating" ADD CONSTRAINT "ProductRating_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ProductWishlist" ADD CONSTRAINT "ProductWishlist_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ProductRating" ADD CONSTRAINT "ProductRating_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductRating" ADD CONSTRAINT "ProductRating_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

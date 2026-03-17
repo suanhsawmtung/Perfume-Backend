@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,90 +7,76 @@ datasource db {
 }
 
 model Product {
-  id            Int           @id @default(autoincrement())
-  name          String        @db.VarChar(255)
-  slug          String        @unique @db.VarChar(255)
+  id            Int               @id @default(autoincrement())
+  name          String            @db.VarChar(255)
+  slug          String            @unique @db.VarChar(255)
   concentration Concentration
   gender        Gender
   description   String
-  rating        Decimal       @default(0) @db.Decimal(2, 1)
-  ratingCount   Int           @default(0)
-  // remainingLiquidMl Int           @default(0)
-  isActive      Boolean       @default(true)
-  isLimited     Boolean       @default(false)
+  rating        Decimal           @default(0) @db.Decimal(2, 1)
+  ratingCount   Int               @default(0)
+  isActive      Boolean           @default(true)
+  isLimited     Boolean           @default(false)
   releasedYear  Int?
   brandId       Int
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
   deletedAt     DateTime?
-
-  brand     Brand             @relation(fields: [brandId], references: [id])
-  variants  ProductVariant[]
-  wishlists ProductWishlist[]
-  ratings   ProductRating[]
-  reviews   Review[]
+  brand         Brand             @relation(fields: [brandId], references: [id])
+  ratings       ProductRating[]
+  variants      ProductVariant[]
+  wishlists     ProductWishlist[]
+  reviews       Review[]
 }
 
 model ProductVariant {
-  id        Int           @id @default(autoincrement())
-  slug      String        @unique @db.VarChar(255)
-  productId Int
-  sku       String        @unique
-  size      Int
-  source    VariantSource @default(ORIGINAL)
-  price     Decimal       @db.Decimal(10, 2)
-  discount  Decimal       @default(0) @db.Decimal(10, 2)
-  stock     Int           @default(0)
-  images    Image[]
-  isPrimary Boolean       @default(false)
-  isActive  Boolean       @default(true)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  deletedAt DateTime?
-
-  product     Product         @relation(fields: [productId], references: [id])
+  id          Int             @id @default(autoincrement())
+  slug        String          @unique @db.VarChar(255)
+  productId   Int
+  sku         String          @unique
+  size        Int
+  source      VariantSource   @default(ORIGINAL)
+  price       Decimal         @db.Decimal(10, 2)
+  discount    Decimal         @default(0) @db.Decimal(10, 2)
+  stock       Int             @default(0)
+  isPrimary   Boolean         @default(false)
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  deletedAt   DateTime?
   bundleSets  BundleSetItem[]
+  images      Image[]
   inventories Inventory[]
+  product     Product         @relation(fields: [productId], references: [id])
 }
 
 model Inventory {
-  id               Int @id @default(autoincrement())
+  id               Int            @id @default(autoincrement())
   productVariantId Int
-  // warehouseId     Int
-  quantity         Int @default(0)
-  reserved         Int @default(0)
-
-  variant ProductVariant @relation(fields: [productVariantId], references: [id])
-  // warehouse       Warehouse       @relation(fields: [warehouseId], references: [id])
+  quantity         Int            @default(0)
+  reserved         Int            @default(0)
+  variant          ProductVariant @relation(fields: [productVariantId], references: [id])
 }
 
 model Image {
-  id        Int     @id @default(autoincrement())
-  path      String  @db.VarChar(255)
-  isPrimary Boolean @default(false)
-  order     Int     @default(0)
-
+  id               Int             @id @default(autoincrement())
+  path             String          @db.VarChar(255)
+  isPrimary        Boolean         @default(false)
+  order            Int             @default(0)
   productVariantId Int?
-  // bundleSetId      Int?
-
-  productVariant ProductVariant? @relation(fields: [productVariantId], references: [id], onDelete: Cascade)
-  // bundleSet       BundleSet?      @relation(fields: [bundleSetId], references: [id], onDelete: Cascade)
+  productVariant   ProductVariant? @relation(fields: [productVariantId], references: [id], onDelete: Cascade)
 }
 
 model Review {
-  id Int @id @default(autoincrement())
-
+  id        Int      @id @default(autoincrement())
   content   String
-  isPublish Boolean @default(false)
-
+  isPublish Boolean  @default(false)
   userId    Int
   productId Int
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
   @@index([productId])
@@ -104,84 +84,96 @@ model Review {
 }
 
 model BundleSet {
-  id          Int     @id @default(autoincrement())
-  name        String  @db.VarChar(255) // e.g. "Versace Eros Duo Set"
-  slug        String  @unique @db.VarChar(255)
+  id          Int             @id @default(autoincrement())
+  name        String          @db.VarChar(255)
+  slug        String          @unique @db.VarChar(255)
   gender      Gender
-  status      Status  @default(ACTIVE)
+  status      Status          @default(ACTIVE)
   description String?
-  price       Decimal @db.Decimal(10, 2)
-  discount    Decimal @default(0) @db.Decimal(10, 2)
-  stock       Int     @default(0)
-  isActive    Boolean @default(true)
-
-  // images      Image[]
-  items BundleSetItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  price       Decimal         @db.Decimal(10, 2)
+  discount    Decimal         @default(0) @db.Decimal(10, 2)
+  stock       Int             @default(0)
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  items       BundleSetItem[]
 }
 
 model BundleSetItem {
-  id               Int @id @default(autoincrement())
+  id               Int            @id @default(autoincrement())
   bundleSetId      Int
   productVariantId Int
-  quantity         Int @default(1) @db.SmallInt
-
-  bundleSet      BundleSet      @relation(fields: [bundleSetId], references: [id], onDelete: Cascade)
-  productVariant ProductVariant @relation(fields: [productVariantId], references: [id])
+  quantity         Int            @default(1) @db.SmallInt
+  bundleSet        BundleSet      @relation(fields: [bundleSetId], references: [id], onDelete: Cascade)
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
 
   @@unique([bundleSetId, productVariantId])
 }
 
 model Order {
-  id              Int           @id @default(autoincrement())
+  id              Int                @id @default(autoincrement())
   userId          Int
-  code            String        @unique @db.VarChar(15)
-  totalPrice      Decimal       @db.Decimal(10, 2)
-  status          OrderStatus   @default(PENDING)
-  paymentStatus   PaymentStatus @default(PENDING)
-  source          OrderSource   @default(CUSTOMER)
-  customerName    String?       @db.VarChar(100)
-  customerPhone   String?       @db.VarChar(15)
-  customerAddress String?       @db.VarChar(255)
-  customerNotes   String?       @db.VarChar(500)
-  rejectedReason  String?       @db.VarChar(500)
-  cancelledReason String?       @db.VarChar(500)
+  code            String             @unique @db.VarChar(15)
+  totalPrice      Decimal            @db.Decimal(10, 2)
+  status          OrderStatus        @default(PENDING)
+  source          OrderSource        @default(CUSTOMER)
+  customerName    String?            @db.VarChar(100)
+  customerPhone   String?            @db.VarChar(15)
+  customerAddress String?            @db.VarChar(255)
+  customerNotes   String?            @db.VarChar(500)
+  rejectedReason  String?            @db.VarChar(500)
+  cancelledReason String?            @db.VarChar(500)
   image           String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
   deletedAt       DateTime?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  user            User          @relation(fields: [userId], references: [id])
+  paymentStatus   OrderPaymentStatus @default(PENDING)
+  user            User               @relation(fields: [userId], references: [id])
   orderItems      OrderItem[]
+  payments        Payment[]
   refunds         Refund[]
 }
 
 model OrderItem {
-  id      Int @id @default(autoincrement())
-  orderId Int
-
-  itemId   Int
-  itemType OrderItemType
-
-  quantity Int     @db.SmallInt
-  price    Decimal @db.Decimal(10, 2)
-
-  order Order @relation(fields: [orderId], references: [id])
-
-  createdAt DateTime @default(now())
+  id        Int           @id @default(autoincrement())
+  orderId   Int
+  itemId    Int
+  itemType  OrderItemType
+  quantity  Int           @db.SmallInt
+  price     Decimal       @db.Decimal(10, 2)
+  createdAt DateTime      @default(now())
+  order     Order         @relation(fields: [orderId], references: [id])
 
   @@index([itemId, itemType])
 }
 
-model Refund {
-  id        Int      @id @default(autoincrement())
+model Payment {
+  id        String        @id @default(cuid())
   orderId   Int
-  amount    Decimal  @db.Decimal(10, 2)
+  method    PaymentMethod
+  amount    Decimal       @db.Decimal(10, 2)
+  status    PaymentStatus @default(PENDING)
+  reference String?
+  note      String?
+  paidAt    DateTime?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  deletedAt DateTime?
+  order     Order         @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+}
+
+model Refund {
+  id        Int          @id @default(autoincrement())
+  orderId   Int
+  amount    Decimal      @db.Decimal(10, 2)
   reason    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  order     Order    @relation(fields: [orderId], references: [id])
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  deletedAt DateTime?
+  status    RefundStatus @default(PENDING)
+  order     Order        @relation(fields: [orderId], references: [id])
 }
 
 model Otp {
@@ -240,9 +232,8 @@ model ProductWishlist {
   productId Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  user    User    @relation(fields: [userId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, productId])
 }
@@ -254,9 +245,8 @@ model ProductRating {
   rating    Int      @db.SmallInt
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  user    User    @relation(fields: [userId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, productId])
 }
@@ -281,8 +271,8 @@ model User {
   deletedAt         DateTime?
   orders            Order[]
   posts             Post[]
-  wishlists         ProductWishlist[]
   ratings           ProductRating[]
+  wishlists         ProductWishlist[]
   reviews           Review[]
 }
 
@@ -305,11 +295,11 @@ enum Status {
 }
 
 enum OrderStatus {
-  PENDING // Created, waiting for action/payment
-  ACCEPTED // Confirmed by admin
-  REJECTED // Rejected by admin (invalid, fraud, etc.)
-  CANCELLED // Cancelled by customer or admin
-  DONE // Completed / delivered
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+  DONE
 }
 
 enum OrderSource {
@@ -317,7 +307,7 @@ enum OrderSource {
   ADMIN
 }
 
-enum PaymentStatus {
+enum OrderPaymentStatus {
   UNPAID
   PAID
   PENDING
@@ -353,8 +343,8 @@ enum BundleAudience {
 }
 
 enum VariantSource {
-  ORIGINAL // factory sealed bottle
-  DECANT // manually decanted
+  ORIGINAL
+  DECANT
 }
 
 enum OrderItemType {
@@ -362,76 +352,23 @@ enum OrderItemType {
   BUNDLE
 }
 
-// model Warehouse {
-//   id        Int        @id @default(autoincrement())
-//   name      String     @db.VarChar(100)
-//   code      String     @unique @db.VarChar(20)
-//   address   String
-//   city      String
-//   country   String
+enum PaymentMethod {
+  BANK_TRANSFER
+  CASH
+  CARD
+  E_WALLET
+}
 
-//   inventories Inventory[]
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  VOIDED
+}
 
-//   createdAt DateTime   @default(now())
-//   updatedAt DateTime   @updatedAt
-// }
-
-// model BundleSet {
-//   id          Int      @id @default(autoincrement())
-//   name        String   @db.VarChar(255) // e.g. "Versace Eros Duo Set"
-//   slug        String   @unique @db.VarChar(255)
-// gender      Gender
-// status       Status    @default(ACTIVE)
-//   description String?
-//   price       Decimal  @db.Decimal(10,2)
-//   discount    Decimal  @default(0) @db.Decimal(10,2)
-//   stock       Int      @default(0)
-//   isActive    Boolean  @default(true)
-
-//   images      Image[]
-//   items       BundleSetItem[]
-
-//   createdAt   DateTime @default(now())
-//   updatedAt   DateTime @updatedAt
-// }
-
-// model Product {
-//   id          Int                @id @default(autoincrement())
-//   name        String             @db.VarChar(255)
-//   slug        String             @unique @db.VarChar(255)
-//   description String
-//   price       Decimal            @db.Decimal(10, 2)
-//   discount    Decimal            @default(0) @db.Decimal(10, 2)
-//   rating      Int                @default(0) @db.SmallInt
-//   inventory   Int                @default(0)
-//   status      Status             @default(ACTIVE)
-//   materialId  Int
-//   typeId      Int
-//   brandId     Int
-//   createdAt   DateTime           @default(now())
-//   updatedAt   DateTime           @updatedAt
-//   material    Material           @relation(fields: [materialId], references: [id])
-//   type        Type               @relation(fields: [typeId], references: [id])
-//   brand       Brand              @relation(fields: [brandId], references: [id])
-//   orders      ProductsOnOrders[]
-//   images      Image[]
-//   users       User[]
-// }
-
-// model Material {
-//   id        Int       @id @default(autoincrement())
-//   name      String    @db.VarChar(52)
-//   slug      String    @unique @db.VarChar(100)
-//   createdAt DateTime  @default(now())
-//   updatedAt DateTime  @updatedAt
-//   products  Product[]
-// }
-
-// model Type {
-//   id        Int       @id @default(autoincrement())
-//   name      String    @db.VarChar(52)
-//   slug      String    @unique @db.VarChar(100)
-//   createdAt DateTime  @default(now())
-//   updatedAt DateTime  @updatedAt
-//   products  Product[]
-// }
+enum RefundStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  VOIDED
+}

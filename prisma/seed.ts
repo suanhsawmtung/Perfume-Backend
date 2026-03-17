@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Concentration, Gender, OrderItemType, OrderStatus, PaymentStatus, Role, VariantSource } from "@prisma/client";
+import { Concentration, Gender, OrderItemType, OrderPaymentStatus, OrderStatus, Role, VariantSource } from "@prisma/client";
 import { hash } from "../src/lib/hash";
 import { prisma } from "../src/lib/prisma";
 import { createSlug, ensureUniqueSlug } from "../src/utils/common";
@@ -209,6 +209,8 @@ export async function main() {
   console.log("Cleaning up database...");
   await prisma.review.deleteMany({});
   await prisma.orderItem.deleteMany({});
+  await prisma.refund.deleteMany({});
+  await prisma.payment.deleteMany({});
   await prisma.order.deleteMany({});
   await prisma.productRating.deleteMany({});
   await prisma.productWishlist.deleteMany({});
@@ -481,9 +483,9 @@ export async function main() {
     for (let i = 0; i < 20; i++) {
         const randomUser = allClients[Math.floor(Math.random() * allClients.length)]!;
         const orderStatusValues = Object.values(OrderStatus);
-        const paymentStatusValues = Object.values(PaymentStatus);
+        const paymentStatusValues = Object.values(OrderPaymentStatus);
         const status = orderStatusValues[Math.floor(Math.random() * orderStatusValues.length)] as OrderStatus;
-        const paymentStatus = paymentStatusValues[Math.floor(Math.random() * paymentStatusValues.length)] as PaymentStatus;
+        const paymentStatus = paymentStatusValues[Math.floor(Math.random() * paymentStatusValues.length)] as OrderPaymentStatus;
         
         // Create an order
         const createdOrder = await prisma.order.create({

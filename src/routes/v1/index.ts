@@ -11,6 +11,8 @@ import adminPostRoutes from "./admin/post";
 import adminProductRoutes from "./admin/product";
 import adminProductRatingRoutes from "./admin/product-rating";
 import adminReviewRoutes from "./admin/review";
+import adminRefundRoutes from "./admin/refund";
+import adminPaymentRoutes from "./admin/payment";
 import adminSettingRoutes from "./admin/setting";
 import adminUserRoutes from "./admin/user";
 import authRoutes from "./auth";
@@ -34,6 +36,8 @@ router.use("/admin/products", normalLimiter, adminProductRoutes);
 router.use("/admin/orders", normalLimiter, adminOrderRoutes);
 router.use("/admin/reviews", normalLimiter, adminReviewRoutes);
 router.use("/admin/product-ratings", normalLimiter, adminProductRatingRoutes);
+router.use("/admin/refunds", normalLimiter, adminRefundRoutes);
+router.use("/admin/payments", normalLimiter, adminPaymentRoutes);
 
 router.use("/auth-check", authCheckLimiter, authCheckRoutes);
 router.use("/brands", brandRoutes);

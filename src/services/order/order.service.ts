@@ -1,4 +1,4 @@
-import { OrderItemType, OrderSource, OrderStatus, PaymentStatus } from "@prisma/client";
+import { OrderItemType, OrderPaymentStatus, OrderSource, OrderStatus } from "@prisma/client";
 import { errorCode } from "../../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import {
@@ -194,7 +194,7 @@ export const createOrder = async (params: CreateOrderParams) => {
         totalPrice: calculatedTotalPrice,
         source: effectiveSource,
         status: status || OrderStatus.PENDING,
-        paymentStatus: paymentStatus || PaymentStatus.UNPAID,
+        paymentStatus: paymentStatus || OrderPaymentStatus.UNPAID,
         customerName: customerName ? customerName.trim() : null,
         customerPhone: customerPhone ? customerPhone.trim() : null,
         customerAddress: customerAddress ? customerAddress.trim() : null,
@@ -359,7 +359,7 @@ export const updateOrder = async (code: string, params: UpdateOrderParams) => {
 
   // Validation: Payment Status Compatibility
   const effectiveStatus = (newStatus || existingOrder.status) as OrderStatus;
-  const effectivePaymentStatus = (newPaymentStatus || existingOrder.paymentStatus) as PaymentStatus;
+  const effectivePaymentStatus = (newPaymentStatus || existingOrder.paymentStatus) as OrderPaymentStatus;
   const statusConfig = orderStatusConfig[effectiveStatus];
   if (statusConfig && !statusConfig.allowedPaymentStatus.includes(effectivePaymentStatus)) {
     throw createError({
@@ -371,8 +371,8 @@ export const updateOrder = async (code: string, params: UpdateOrderParams) => {
 
   // Validation: Payment Status Transition
   if (newPaymentStatus !== undefined && newPaymentStatus !== existingOrder.paymentStatus) {
-    const allowedPaymentTransitions = paymentStatusTransitions[existingOrder.paymentStatus as PaymentStatus];
-    if (!allowedPaymentTransitions || !allowedPaymentTransitions.includes(newPaymentStatus as PaymentStatus)) {
+    const allowedPaymentTransitions = paymentStatusTransitions[existingOrder.paymentStatus as OrderPaymentStatus];
+    if (!allowedPaymentTransitions || !allowedPaymentTransitions.includes(newPaymentStatus as OrderPaymentStatus)) {
       throw createError({
         message: `Payment status transition from ${existingOrder.paymentStatus} to ${newPaymentStatus} is not allowed.`,
         status: 400,
@@ -495,7 +495,7 @@ export const updateOrder = async (code: string, params: UpdateOrderParams) => {
     if (
       isNowCancelled &&
       paymentStatusChanged &&
-      newPaymentStatus === PaymentStatus.REFUNDED
+      newPaymentStatus === OrderPaymentStatus.REFUNDED
     ) {
       await tx.refund.create({
         data: {
