@@ -148,13 +148,13 @@ model OrderItem {
 }
 
 model Payment {
-  id        String        @id @default(cuid())
+  id        Int           @id @default(autoincrement())
   orderId   Int
   method    PaymentMethod
   amount    Decimal       @db.Decimal(10, 2)
   status    PaymentStatus @default(PENDING)
-  reference String?
-  note      String?
+  reference String?       @db.VarChar(255)
+  note      String?       @db.VarChar(255)
   paidAt    DateTime?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt

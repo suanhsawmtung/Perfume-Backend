@@ -17,10 +17,6 @@ export const createRefundValidation = [
     .withMessage("Reason must be a string.")
     .isLength({ max: 500 })
     .withMessage("Reason must be at most 500 characters."),
-  body("status")
-    .optional()
-    .isIn(["PENDING", "SUCCESS", "FAILED", "VOIDED"])
-    .withMessage("Invalid refund status."),
 ];
 
 export const updateRefundValidation = [
@@ -30,8 +26,4 @@ export const updateRefundValidation = [
     .withMessage("Reason must be a string.")
     .isLength({ max: 500 })
     .withMessage("Reason must be at most 500 characters."),
-  body("status")
-    .optional()
-    .isIn(["PENDING", "SUCCESS", "FAILED", "VOIDED"])
-    .withMessage("Invalid refund status."),
 ];

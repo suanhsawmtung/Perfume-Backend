@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, RefundStatus } from "@prisma/client";
 import { errorCode } from "../../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import type {
@@ -73,7 +73,7 @@ export const getRefundDetail = async (id: number) => {
 };
 
 export const createRefund = async (params: CreateRefundParams) => {
-  const { orderCode, amount, reason, status } = params;
+  const { orderCode, amount, reason } = params;
 
   const order = await findOrderRecordByCode(orderCode);
 
@@ -85,9 +85,54 @@ export const createRefund = async (params: CreateRefundParams) => {
     });
   }
 
-  if (Number(order.totalPrice) < Number(amount)) {
+  // Calculate total already paid for this order (successful payments)
+  const totalPaidAggregate = await prisma.payment.aggregate({
+    where: {
+      orderId: order.id,
+      status: "SUCCESS",
+      deletedAt: null,
+    },
+    _sum: {
+      amount: true,
+    },
+  });
+
+  const totalPaidAmount = Number(totalPaidAggregate._sum.amount || 0);
+
+  if (totalPaidAmount === 0) {
     throw createError({
-      message: "Refund amount is greater than order total price.",
+      message: `No successful payments found for this order. Cannot create a refund.`,
+      status: 400,
+      code: errorCode.invalid,
+    });
+  }
+
+  // Calculate total already refunded for this order (successful refunds)
+  const totalRefundedAggregate = await prisma.refund.aggregate({
+    where: {
+      orderId: order.id,
+      status: RefundStatus.SUCCESS,
+      deletedAt: null,
+    },
+    _sum: {
+      amount: true,
+    },
+  });
+
+  const totalRefundedAmount = Number(totalRefundedAggregate._sum.amount || 0);
+  const remainingRefundableBalance = totalPaidAmount - totalRefundedAmount;
+
+  if (remainingRefundableBalance === 0) {
+    throw createError({
+      message: `Already fully refunded for this order based on the total paid amount of ${totalPaidAmount}.`,
+      status: 400,
+      code: errorCode.invalid,
+    });
+  }
+
+  if (Number(amount) > remainingRefundableBalance) {
+    throw createError({
+      message: `The requested refund amount of ${amount} exceeds the remaining refundable balance of ${remainingRefundableBalance} (Total Paid: ${totalPaidAmount}, Total Refunded: ${totalRefundedAmount}).`,
       status: 400,
       code: errorCode.invalid,
     });
@@ -97,12 +142,12 @@ export const createRefund = async (params: CreateRefundParams) => {
     order: { connect: { id: order.id } },
     amount,
     reason: reason ?? null,
-    status: status ?? "PENDING",
+    status: RefundStatus.SUCCESS,
   });
 };
 
 export const updateRefund = async (id: number, params: UpdateRefundParams) => {
-  const { reason, status } = params;
+  const { reason } = params;
 
   const existing = await findRefundById(id);
   if (!existing) {
@@ -117,10 +162,6 @@ export const updateRefund = async (id: number, params: UpdateRefundParams) => {
 
   if (reason !== undefined) {
     data.reason = reason ?? null;
-  }
-
-  if (status !== undefined) {
-    data.status = status;
   }
 
   return await updateRefundRecord(id, data);

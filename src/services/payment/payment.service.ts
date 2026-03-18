@@ -1,12 +1,13 @@
+import { PaymentStatus, Prisma } from "@prisma/client";
 import { errorCode } from "../../../config/error-code";
 import { prisma } from "../../lib/prisma";
-import { Prisma } from "@prisma/client";
 import {
   CreatePaymentParams,
   ListPaymentsParams,
   UpdatePaymentParams,
 } from "../../types/payment";
 import { createError } from "../../utils/common";
+import { findOrderRecordByCode } from "../order/order.helpers";
 import {
   buildPaymentWhereClause,
   createPaymentRecord,
@@ -68,26 +69,63 @@ export const getPaymentDetail = async (id: string) => {
 };
 
 export const createPayment = async (params: CreatePaymentParams) => {
-  const { orderId, method, amount, status, reference, note, paidAt } = params;
+  const { orderCode, method, amount, reference, note, paidAt } = params;
 
-  // Check if order exists
-  const order = await prisma.order.findUnique({
-    where: { id: orderId }
-  });
+  // Check if order exists using orderCode
+  const order = await findOrderRecordByCode(orderCode);
 
   if (!order) {
     throw createError({
-      message: "Order not found. Cannot create payment for a non-existent order.",
+      message: `Order with code "${orderCode}" not found. Cannot create payment.`,
       status: 404,
       code: errorCode.notFound,
     });
   }
 
+  if (Number(order.totalPrice) < Number(amount)) {
+    throw createError({
+      message: `Payment amount (${amount}) exceeds order total price (${order.totalPrice}).`,
+      status: 400,
+      code: errorCode.invalid,
+    });
+  }
+
+  // Calculate total already paid for this order (successful payments)
+  const totalPaidAggregate = await prisma.payment.aggregate({
+    where: {
+      orderId: order.id,
+      status: "SUCCESS",
+      deletedAt: null,
+    },
+    _sum: {
+      amount: true,
+    },
+  });
+
+  const totalPaidAmount = Number(totalPaidAggregate._sum.amount || 0);
+  const remainingBalance = Number(order.totalPrice) - totalPaidAmount;
+
+  if (remainingBalance === 0) {
+    throw createError({
+      message: `Already paid for this order completely. Total paid: ${totalPaidAmount}.`,
+      status: 400,
+      code: errorCode.invalid,
+    });
+  }
+
+  if (Number(amount) > remainingBalance) {
+    throw createError({
+      message: `You already paid ${totalPaidAmount} for this order. The remaining balance is ${remainingBalance}. Your requested payment of ${amount} exceeds this balance.`,
+      status: 400,
+      code: errorCode.invalid,
+    });
+  }
+
   return await createPaymentRecord({
-    order: { connect: { id: orderId } },
+    order: { connect: { id: order.id } },
     method,
     amount,
-    status: status || "PENDING",
+    status: PaymentStatus.SUCCESS,
     reference: reference ?? null,
     note: note ?? null,
     paidAt: paidAt ? new Date(paidAt) : null,
@@ -95,7 +133,7 @@ export const createPayment = async (params: CreatePaymentParams) => {
 };
 
 export const updatePayment = async (id: string, params: UpdatePaymentParams) => {
-  const { status, reference, note } = params;
+  const { reference, note, paidAt, method } = params;
 
   const existing = await findPaymentById(id);
   if (!existing) {
@@ -108,16 +146,20 @@ export const updatePayment = async (id: string, params: UpdatePaymentParams) => 
 
   const data: Prisma.PaymentUpdateInput = {};
 
-  if (status !== undefined) {
-    data.status = status;
-  }
-
   if (reference !== undefined) {
     data.reference = reference ?? null;
   }
 
   if (note !== undefined) {
     data.note = note ?? null;
+  }
+
+  if(paidAt !== undefined) {
+    data.paidAt = paidAt ? new Date(paidAt) : null;
+  }
+
+  if(method !== undefined) {
+    data.method = method;
   }
 
   return await updatePaymentRecord(id, data);

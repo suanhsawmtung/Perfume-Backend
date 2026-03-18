@@ -20,10 +20,8 @@ export interface CreateRefundParams {
   orderCode: string;
   amount: number;
   reason?: string;
-  status?: RefundStatus;
 }
 
 export interface UpdateRefundParams {
-  status?: RefundStatus;
   reason?: string;
 }
