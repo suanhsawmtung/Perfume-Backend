@@ -1,6 +1,6 @@
+import { PaymentMethod, PaymentStatus, Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
 import { ParsePaymentQueryParamsResult } from "../../types/payment";
-import { PaymentMethod, PaymentStatus, Prisma } from "@prisma/client";
 
 export const parsePaymentQueryParams = (query: any): ParsePaymentQueryParamsResult => {
   const pageSizeParam = Number(query.limit || query.pageSize);
@@ -76,7 +76,7 @@ export const buildPaymentWhereClause = (params: {
   return where;
 };
 
-export const findPaymentById = async (id: string) => {
+export const findPaymentById = async (id: number) => {
   return await prisma.payment.findFirst({
     where: {
       id,
@@ -107,7 +107,7 @@ export const createPaymentRecord = async (data: Prisma.PaymentCreateInput) => {
   });
 };
 
-export const updatePaymentRecord = async (id: string, data: Prisma.PaymentUpdateInput) => {
+export const updatePaymentRecord = async (id: number, data: Prisma.PaymentUpdateInput) => {
   return await prisma.payment.update({
     where: { id },
     data,
@@ -122,7 +122,7 @@ export const updatePaymentRecord = async (id: string, data: Prisma.PaymentUpdate
   });
 };
 
-export const deletePaymentRecord = async (id: string) => {
+export const deletePaymentRecord = async (id: number) => {
   return await prisma.payment.update({
     where: { id },
     data: {

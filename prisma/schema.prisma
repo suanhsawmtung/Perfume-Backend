@@ -176,6 +176,32 @@ model Refund {
   order     Order        @relation(fields: [orderId], references: [id])
 }
 
+model Transaction {
+  id Int @id @default(autoincrement())
+
+  // Core
+  type      TransactionType
+  direction TransactionDirection
+  amount    Decimal              @db.Decimal(12, 2)
+  // currency    String               @default("USD")
+
+  // Optional info
+  source    String // REQUIRED: where money comes from
+  reference String? // receipt / external reference
+  note      String?
+
+  // Audit
+  createdById Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  createdBy User? @relation(fields: [createdById], references: [id])
+
+  @@index([type])
+  @@index([direction])
+}
+
 model Otp {
   id            Int      @id @default(autoincrement())
   email         String   @unique @db.VarChar(255)
@@ -274,6 +300,7 @@ model User {
   ratings           ProductRating[]
   wishlists         ProductWishlist[]
   reviews           Review[]
+  transactions      Transaction[]
 }
 
 model Setting {
@@ -371,4 +398,18 @@ enum RefundStatus {
   SUCCESS
   FAILED
   VOIDED
+}
+
+enum TransactionDirection {
+  IN // money in
+  OUT // money out
+}
+
+enum TransactionType {
+  PAYMENT
+  REFUND
+  ADJUSTMENT
+  EXPENSE
+  WITHDRAWAL
+  OTHER
 }

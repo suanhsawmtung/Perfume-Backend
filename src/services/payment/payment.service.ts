@@ -54,7 +54,7 @@ export const listPayments = async (params: ListPaymentsParams) => {
   };
 };
 
-export const getPaymentDetail = async (id: string) => {
+export const getPaymentDetail = async (id: number) => {
   const payment = await findPaymentById(id);
 
   if (!payment) {
@@ -132,7 +132,7 @@ export const createPayment = async (params: CreatePaymentParams) => {
   });
 };
 
-export const updatePayment = async (id: string, params: UpdatePaymentParams) => {
+export const updatePayment = async (id: number, params: UpdatePaymentParams) => {
   const { reference, note, paidAt, method } = params;
 
   const existing = await findPaymentById(id);
@@ -165,7 +165,7 @@ export const updatePayment = async (id: string, params: UpdatePaymentParams) => 
   return await updatePaymentRecord(id, data);
 };
 
-export const deletePayment = async (id: string) => {
+export const deletePayment = async (id: number) => {
   const existing = await findPaymentById(id);
   if (!existing) {
     throw createError({
