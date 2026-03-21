@@ -2,10 +2,10 @@ import { Role } from "@prisma/client";
 import express, { Router } from "express";
 import {
   createRefund,
-  deleteRefund,
   getRefundDetail,
   listRefunds,
   updateRefund,
+  voidRefund
 } from "../../../../controllers/admin/refund.controller";
 import { permit } from "../../../../middlewares/check-permissions";
 import { isAuthenticated } from "../../../../middlewares/ensure-authenticated";
@@ -49,11 +49,11 @@ router.patch(
   updateRefund
 );
 
-router.delete(
-  "/:id", 
+router.patch(
+  "/:id/void", 
   isAuthenticated, 
   permit(true, Role.ADMIN), 
-  deleteRefund
+  voidRefund
 );
 
 export default router;

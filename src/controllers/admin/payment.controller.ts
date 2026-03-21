@@ -98,7 +98,7 @@ export const updatePayment = async (
   }
 };
 
-export const deletePayment = async (
+export const voidPayment = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
@@ -106,21 +106,21 @@ export const deletePayment = async (
   try {
     const id = Number(req.params.id);
 
-    if (!id) {
+    if (isNaN(id)) {
       const error = createError({
-        message: "Payment ID is required.",
+        message: "Valid Payment ID is required.",
         status: 400,
         code: errorCode.invalid,
       });
       return next(error);
     }
 
-    await PaymentService.deletePayment(id);
+    await PaymentService.voidPayment(id);
 
     return res.status(200).json({
       success: true,
       data: null,
-      message: "Payment deleted successfully.",
+      message: "Payment voided successfully.",
     });
   } catch (error: any) {
     next(error);

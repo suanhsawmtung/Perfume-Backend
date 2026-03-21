@@ -11,11 +11,10 @@ import { findOrderRecordByCode } from "../order/order.helpers";
 import {
   buildRefundWhere,
   createRefundRecord,
-  deleteRefundRecord,
   findRefundById,
   findRefundByIdWithOrder,
   parseRefundQueryParams,
-  updateRefundRecord,
+  updateRefundRecord
 } from "./refund.helpers";
 
 export const listRefunds = async (params: ListRefundsParams) => {
@@ -167,7 +166,7 @@ export const updateRefund = async (id: number, params: UpdateRefundParams) => {
   return await updateRefundRecord(id, data);
 };
 
-export const deleteRefund = async (id: number) => {
+export const voidRefund = async (id: number) => {
   const existing = await findRefundById(id);
   if (!existing) {
     throw createError({
@@ -177,5 +176,5 @@ export const deleteRefund = async (id: number) => {
     });
   }
 
-  await deleteRefundRecord(id);
+  await updateRefundRecord(id, { status: RefundStatus.VOIDED });
 };

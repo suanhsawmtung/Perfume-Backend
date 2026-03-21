@@ -155,12 +155,3 @@ export const updateTransactionRecord = async (id: number, data: Prisma.Transacti
     },
   });
 };
-
-export const deleteTransactionRecord = async (id: number) => {
-  return await prisma.transaction.update({
-    where: { id },
-    data: {
-      deletedAt: new Date(),
-    },
-  });
-};

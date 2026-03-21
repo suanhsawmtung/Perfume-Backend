@@ -2,10 +2,9 @@ import { Role } from "@prisma/client";
 import express, { Router } from "express";
 import {
   createTransaction,
-  deleteTransaction,
   getTransactionDetail,
   listTransactions,
-  updateTransaction,
+  updateTransaction
 } from "../../../../controllers/admin/transaction.controller";
 import { permit } from "../../../../middlewares/check-permissions";
 import { isAuthenticated } from "../../../../middlewares/ensure-authenticated";
@@ -47,13 +46,6 @@ router.patch(
   updateTransactionValidation,
   handleValidationError,
   updateTransaction
-);
-
-router.delete(
-  "/:id",
-  isAuthenticated,
-  permit(true, Role.ADMIN),
-  deleteTransaction
 );
 
 export default router;

@@ -2,10 +2,10 @@ import { Role } from "@prisma/client";
 import express, { Router } from "express";
 import {
   createPayment,
-  deletePayment,
   getPaymentDetail,
   listPayments,
   updatePayment,
+  voidPayment
 } from "../../../../controllers/admin/payment.controller";
 import { permit } from "../../../../middlewares/check-permissions";
 import { isAuthenticated } from "../../../../middlewares/ensure-authenticated";
@@ -49,11 +49,11 @@ router.patch(
   updatePayment
 );
 
-router.delete(
-  "/:id",
+router.patch(
+  "/:id/void",
   isAuthenticated,
   permit(true, Role.ADMIN),
-  deletePayment
+  voidPayment
 );
 
 export default router;

@@ -10,10 +10,9 @@ import { createError } from "../../utils/common";
 import {
   buildTransactionWhereClause,
   createTransactionRecord,
-  deleteTransactionRecord,
   findTransactionById,
   parseTransactionsQueryParams,
-  updateTransactionRecord,
+  updateTransactionRecord
 } from "./transaction.helpers";
 
 export const listTransactions = async (params: ListTransactionsParams) => {
@@ -123,17 +122,4 @@ export const updateTransaction = async (id: number, params: UpdateTransactionPar
   }
 
   return await updateTransactionRecord(id, data);
-};
-
-export const deleteTransaction = async (id: number) => {
-  const existing = await findTransactionById(id);
-  if (!existing) {
-    throw createError({
-      message: "Transaction not found.",
-      status: 404,
-      code: errorCode.notFound,
-    });
-  }
-
-  await deleteTransactionRecord(id);
 };

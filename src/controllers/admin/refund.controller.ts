@@ -98,7 +98,7 @@ export const updateRefund = async (
   }
 };
 
-export const deleteRefund = async (
+export const voidRefund = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
@@ -115,12 +115,12 @@ export const deleteRefund = async (
       return next(error);
     }
 
-    await RefundService.deleteRefund(id);
+    await RefundService.voidRefund(id);
 
     return res.status(200).json({
       success: true,
       data: null,
-      message: "Refund deleted successfully.",
+      message: "Refund voided successfully.",
     });
   } catch (error: any) {
     next(error);

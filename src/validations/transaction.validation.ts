@@ -43,14 +43,10 @@ export const updateTransactionValidation = [
     .withMessage("Source must be at most 255 characters."),
   body("reference")
     .optional()
-    .isString()
-    .withMessage("Reference must be a string.")
     .isLength({ max: 255 })
     .withMessage("Reference must be at most 255 characters."),
   body("note")
     .optional()
-    .isString()
-    .withMessage("Note must be a string.")
     .isLength({ max: 500 })
     .withMessage("Note must be at most 500 characters."),
 ];

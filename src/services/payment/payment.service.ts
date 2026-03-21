@@ -11,10 +11,9 @@ import { findOrderRecordByCode } from "../order/order.helpers";
 import {
   buildPaymentWhereClause,
   createPaymentRecord,
-  deletePaymentRecord,
   findPaymentById,
   parsePaymentQueryParams,
-  updatePaymentRecord,
+  updatePaymentRecord
 } from "./payment.helpers";
 
 export const listPayments = async (params: ListPaymentsParams) => {
@@ -165,7 +164,7 @@ export const updatePayment = async (id: number, params: UpdatePaymentParams) => 
   return await updatePaymentRecord(id, data);
 };
 
-export const deletePayment = async (id: number) => {
+export const voidPayment = async (id: number) => {
   const existing = await findPaymentById(id);
   if (!existing) {
     throw createError({
@@ -175,5 +174,5 @@ export const deletePayment = async (id: number) => {
     });
   }
 
-  await deletePaymentRecord(id);
+  await updatePaymentRecord(id, { status: PaymentStatus.VOIDED });
 };

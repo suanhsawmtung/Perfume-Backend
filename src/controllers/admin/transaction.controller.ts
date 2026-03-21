@@ -101,32 +101,3 @@ export const updateTransaction = async (
     next(error);
   }
 };
-
-export const deleteTransaction = async (
-  req: CustomRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const id = Number(req.params.id);
-
-    if (isNaN(id)) {
-      const error = createError({
-        message: "Valid Transaction ID is required.",
-        status: 400,
-        code: errorCode.invalid,
-      });
-      return next(error);
-    }
-
-    await TransactionService.deleteTransaction(id);
-
-    return res.status(200).json({
-      success: true,
-      data: null,
-      message: "Transaction deleted successfully.",
-    });
-  } catch (error: any) {
-    next(error);
-  }
-};
