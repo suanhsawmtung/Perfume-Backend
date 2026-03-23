@@ -87,6 +87,8 @@ export const findPaymentById = async (id: number) => {
         select: {
           id: true,
           code: true,
+          totalPrice: true,
+          source: true,
         },
       },
     },

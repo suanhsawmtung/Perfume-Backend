@@ -1,4 +1,4 @@
-import { OrderItemType, OrderPaymentStatus, OrderStatus } from "@prisma/client";
+import { OrderItemType, OrderStatus } from "@prisma/client";
 import { body } from "express-validator";
 
 const orderValidation = [
@@ -7,14 +7,6 @@ const orderValidation = [
     .isIn(Object.values(OrderStatus))
     .withMessage(
       `Status must be one of: ${Object.values(OrderStatus).join(", ")}.`
-    ),
-  body("paymentStatus")
-    .optional()
-    .isIn(Object.values(OrderPaymentStatus))
-    .withMessage(
-      `Payment status must be one of: ${Object.values(OrderPaymentStatus).join(
-        ", "
-      )}.`
     ),
   body("customerName")
     .optional()

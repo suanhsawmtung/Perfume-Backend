@@ -49,3 +49,11 @@ export const updatePaymentValidation = [
     .isLength({ max: 500 })
     .withMessage("Note must be at most 500 characters."),
 ];
+
+export const processPaymentValidation = [
+  body("status")
+    .notEmpty()
+    .withMessage("Status is required.")
+    .isIn(["SUCCESS", "FAILED"])
+    .withMessage("Status must be one of: SUCCESS, FAILED."),
+];

@@ -126,3 +126,40 @@ export const voidPayment = async (
     next(error);
   }
 };
+
+export const processPayment = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const id = Number(req.params.id);
+    const { status } = req.body;
+
+    if (isNaN(id)) {
+      throw createError({
+        message: "Valid Payment ID is required.",
+        status: 400,
+        code: errorCode.invalid,
+      });
+    }
+
+    if (!status) {
+      throw createError({
+        message: "Status is required.",
+        status: 400,
+        code: errorCode.invalid,
+      });
+    }
+
+    const payment = await PaymentService.processPayment(id, status);
+
+    return res.status(200).json({
+      success: true,
+      data: { payment },
+      message: "Payment processed successfully.",
+    });
+  } catch (error: any) {
+    next(error);
+  }
+};

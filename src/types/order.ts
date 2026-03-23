@@ -12,9 +12,7 @@ export type ListOrdersParams = {
 
 export type CreateOrderParams = {
   totalPrice?: number | string;
-  source?: OrderSource;
   status?: OrderStatus;
-  paymentStatus?: OrderPaymentStatus;
   customerName?: string;
   customerPhone?: string;
   customerAddress?: string;
@@ -41,7 +39,6 @@ export type UpdateOrderParams = {
   totalPrice?: number | string;
   source?: OrderSource;
   status?: OrderStatus;
-  paymentStatus?: OrderPaymentStatus;
   customerName?: string;
   customerPhone?: string;
   customerAddress?: string;

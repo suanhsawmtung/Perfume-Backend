@@ -72,7 +72,6 @@ export const createOrder = async (
   try {
     const {
       status,
-      paymentStatus,
       customerName,
       customerPhone,
       customerAddress,
@@ -81,12 +80,10 @@ export const createOrder = async (
       cancelledReason,
       items,
       userId,
-      source,
     } = req.body;
 
     const order = await OrderService.createOrder({
       status,
-      paymentStatus,
       customerName,
       customerPhone,
       customerAddress,
@@ -95,7 +92,6 @@ export const createOrder = async (
       cancelledReason,
       items,
       userId,
-      source,
       image: req.file?.filename,
       ...(req.userId && { authenticatedUserId: req.userId }),
     });
@@ -129,7 +125,6 @@ export const updateOrder = async (
 
     const {
       status,
-      paymentStatus,
       customerName,
       customerPhone,
       customerAddress,
@@ -138,12 +133,10 @@ export const updateOrder = async (
       cancelledReason,
       items,
       userId,
-      source,
     } = req.body;
 
     const order = await OrderService.updateOrder(code, {
       status,
-      paymentStatus,
       customerName,
       customerPhone,
       customerAddress,
@@ -152,7 +145,6 @@ export const updateOrder = async (
       cancelledReason,
       items,
       userId,
-      source,
       image: req.file?.filename,
     });
 

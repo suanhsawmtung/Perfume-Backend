@@ -1,4 +1,10 @@
-import { PaymentStatus, Prisma } from "@prisma/client";
+import {
+  PaymentStatus,
+  Prisma,
+  RefundStatus,
+  TransactionDirection,
+  TransactionType,
+} from "@prisma/client";
 import { errorCode } from "../../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import {
@@ -7,10 +13,9 @@ import {
   UpdatePaymentParams,
 } from "../../types/payment";
 import { createError } from "../../utils/common";
-import { findOrderRecordByCode } from "../order/order.helpers";
+import { calculateOrderPaymentStatus, findOrderRecordByCode } from "../order/order.helpers";
 import {
   buildPaymentWhereClause,
-  createPaymentRecord,
   findPaymentById,
   parsePaymentQueryParams,
   updatePaymentRecord
@@ -120,14 +125,57 @@ export const createPayment = async (params: CreatePaymentParams) => {
     });
   }
 
-  return await createPaymentRecord({
-    order: { connect: { id: order.id } },
-    method,
-    amount,
-    status: PaymentStatus.SUCCESS,
-    reference: reference ?? null,
-    note: note ?? null,
-    paidAt: paidAt ? new Date(paidAt) : null,
+  // Calculate totalRefundedAmount (to avoid duplicate query in transaction if passed)
+  const totalRefundedAggregate = await prisma.refund.aggregate({
+    where: {
+      orderId: order.id,
+      status: RefundStatus.SUCCESS,
+      deletedAt: null,
+    },
+    _sum: {
+      amount: true,
+    },
+  });
+  const totalRefundedAmount = Number(totalRefundedAggregate._sum.amount || 0);
+
+  return await prisma.$transaction(async (tx) => {
+    const payment = await tx.payment.create({
+      data: {
+        order: { connect: { id: order.id } },
+        method,
+        amount,
+        status: PaymentStatus.SUCCESS,
+        reference: reference ?? null,
+        note: note ?? null,
+        paidAt: paidAt ? new Date(paidAt) : null,
+      },
+    });
+
+    // Create Transaction record
+    await tx.transaction.create({
+      data: {
+        type: TransactionType.PAYMENT,
+        direction: TransactionDirection.IN,
+        amount: amount,
+        source: `Order: ${order.code}`,
+        reference: reference ?? null,
+        note: note ?? null,
+      },
+    });
+
+    const newTotalPaidAmount = totalPaidAmount + Number(amount);
+    const newStatus = calculateOrderPaymentStatus(
+      Number(order.totalPrice),
+      newTotalPaidAmount,
+      totalRefundedAmount
+    );
+
+    await tx.order.update({
+      where: { id: order.id },
+      data: { paymentStatus: newStatus },
+    });
+
+    return payment;
   });
 };
 
@@ -174,5 +222,149 @@ export const voidPayment = async (id: number) => {
     });
   }
 
-  await updatePaymentRecord(id, { status: PaymentStatus.VOIDED });
+  if (existing.status === PaymentStatus.VOIDED) {
+    throw createError({
+      message: "This payment is already voided.",
+      status: 400,
+      code: errorCode.invalid,
+    });
+  }
+
+  return await prisma.$transaction(async (tx) => {
+    await tx.payment.update({
+      where: { id },
+      data: { status: PaymentStatus.VOIDED },
+    });
+
+    // Create REVERSAL Transaction
+    await tx.transaction.create({
+      data: {
+        type: TransactionType.REVERSAL,
+        direction: TransactionDirection.OUT,
+        amount: existing.amount,
+        source: `Payment Reversal: Order: ${existing.order.code}`,
+        reference: existing.reference,
+        note: `Voided payment ${existing.id}`,
+      },
+    });
+
+    const [totalPaid, totalRefunded] = await Promise.all([
+      tx.payment.aggregate({
+        where: {
+          orderId: existing.orderId,
+          status: PaymentStatus.SUCCESS,
+          deletedAt: null,
+        },
+        _sum: { amount: true },
+      }),
+      tx.refund.aggregate({
+        where: {
+          orderId: existing.orderId,
+          status: RefundStatus.SUCCESS,
+          deletedAt: null,
+        },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    const newStatus = calculateOrderPaymentStatus(
+      Number(existing.order.totalPrice),
+      Number(totalPaid._sum.amount || 0),
+      Number(totalRefunded._sum.amount || 0)
+    );
+
+    await tx.order.update({
+      where: { id: existing.orderId },
+      data: { paymentStatus: newStatus },
+    });
+  });
+};
+
+export const processPayment = async (id: number, status: "SUCCESS" | "FAILED") => {
+  if (!["SUCCESS", "FAILED"].includes(status)) {
+    throw createError({
+      message: "Invalid status update. Only SUCCESS or FAILED are allowed.",
+      status: 400,
+      code: errorCode.invalid,
+    });
+  }
+
+  const existing = await findPaymentById(id);
+  if (!existing) {
+    throw createError({
+      message: "Payment not found.",
+      status: 404,
+      code: errorCode.notFound,
+    });
+  }
+
+  if (existing.status !== PaymentStatus.PENDING) {
+    throw createError({
+      message: `Cannot process this payment. Current status is ${existing.status}, but it must be PENDING.`,
+      status: 400,
+      code: errorCode.invalid,
+    });
+  }
+
+  if (existing.order.source !== "CUSTOMER") {
+    throw createError({
+      message: "Only payments from customer orders can be processed. This order source is " + existing.order.source + ".",
+      status: 400,
+      code: errorCode.invalid,
+    });
+  }
+
+  return await prisma.$transaction(async (tx) => {
+    const updatedPayment = await tx.payment.update({
+      where: { id },
+      data: { status },
+    });
+
+    if (status === PaymentStatus.SUCCESS) {
+      // Create Transaction record
+      await tx.transaction.create({
+        data: {
+          type: TransactionType.PAYMENT,
+          direction: TransactionDirection.IN,
+          amount: existing.amount,
+          source: `Order: ${existing.order.code}`,
+          reference: existing.reference,
+          note: existing.note,
+        },
+      });
+
+      // Recalculate order payment status
+      const [totalPaid, totalRefunded] = await Promise.all([
+        tx.payment.aggregate({
+          where: {
+            orderId: existing.orderId,
+            status: PaymentStatus.SUCCESS,
+            deletedAt: null,
+          },
+          _sum: { amount: true },
+        }),
+        tx.refund.aggregate({
+          where: {
+            orderId: existing.orderId,
+            status: RefundStatus.SUCCESS,
+            deletedAt: null,
+          },
+          _sum: { amount: true },
+        }),
+      ]);
+
+      const newStatus = calculateOrderPaymentStatus(
+        Number(existing.order.totalPrice),
+        Number(totalPaid._sum.amount || 0),
+        Number(totalRefunded._sum.amount || 0)
+      );
+
+      await tx.order.update({
+        where: { id: existing.orderId },
+        data: { paymentStatus: newStatus },
+      });
+    }
+
+    return updatedPayment;
+  });
 };

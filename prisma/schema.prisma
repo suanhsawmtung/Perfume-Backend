@@ -127,7 +127,7 @@ model Order {
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
   deletedAt       DateTime?
-  paymentStatus   OrderPaymentStatus @default(PENDING)
+  paymentStatus   OrderPaymentStatus @default(UNPAID)
   user            User               @relation(fields: [userId], references: [id])
   orderItems      OrderItem[]
   payments        Payment[]
@@ -324,10 +324,13 @@ enum Status {
 enum OrderStatus {
   PENDING
   ACCEPTED
+  SHIPPED
+  DELIVERED
+  DONE
   REJECTED
   CANCELLED
-  DONE
 }
+
 
 enum OrderSource {
   CUSTOMER
@@ -336,8 +339,8 @@ enum OrderSource {
 
 enum OrderPaymentStatus {
   UNPAID
+  PARTIALLY_PAID
   PAID
-  PENDING
   FAILED
   REFUNDED
   PARTIALLY_REFUNDED
@@ -409,6 +412,7 @@ enum TransactionType {
   PAYMENT
   REFUND
   ADJUSTMENT
+  REVERSAL
   EXPENSE
   WITHDRAWAL
   OTHER

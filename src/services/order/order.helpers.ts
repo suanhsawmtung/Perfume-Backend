@@ -1,54 +1,54 @@
-import { OrderItemType, OrderPaymentStatus, OrderSource, OrderStatus, Prisma, Role } from "@prisma/client";
+import { OrderItemType, OrderPaymentStatus, OrderSource, OrderStatus, PaymentStatus, Prisma, RefundStatus } from "@prisma/client";
 import { errorCode } from "../../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { generateCode } from "../../lib/unique-key-generator";
 import { ParseOrderQueryParamsResult } from "../../types/order";
 import { createError } from "../../utils/common";
 
-export const orderStatusTransitions: Record<OrderStatus, readonly OrderStatus[]> = {
-  PENDING: ["ACCEPTED", "REJECTED"],
-  ACCEPTED: ["DONE", "CANCELLED"],
-  DONE: [],
-  REJECTED: [],
-  CANCELLED: [],
-} as const;
+// export const orderStatusTransitions: Record<OrderStatus, readonly OrderStatus[]> = {
+//   PENDING: ["ACCEPTED", "REJECTED"],
+//   ACCEPTED: ["DONE", "CANCELLED"],
+//   DONE: [],
+//   REJECTED: [],
+//   CANCELLED: [],
+// } as const;
 
-export const paymentStatusTransitions: Record<OrderPaymentStatus, readonly OrderPaymentStatus[]> = {
-  PENDING: ["UNPAID", "FAILED", "PAID"],
-  UNPAID: ["PENDING", "FAILED"],
-  PAID: ["PARTIALLY_REFUNDED", "REFUNDED"],
-  PARTIALLY_REFUNDED: ["REFUNDED"],
-  FAILED: ["PENDING", "UNPAID"], // allow retry
-  REFUNDED: [],
-} as const;
+// export const orderPaymentStatusTransitions: Record<OrderPaymentStatus, readonly OrderPaymentStatus[]> = {
+//   PENDING: ["UNPAID", "FAILED", "PAID"],
+//   UNPAID: ["PENDING", "FAILED"],
+//   PAID: ["PARTIALLY_REFUNDED", "REFUNDED"],
+//   PARTIALLY_REFUNDED: ["REFUNDED"],
+//   FAILED: ["PENDING", "UNPAID"], // allow retry
+//   REFUNDED: [],
+// } as const;
 
-interface StatusConfig {
-  allowedPaymentStatus: readonly OrderPaymentStatus[];
-  defaultPaymentStatus: OrderPaymentStatus;
-}
+// interface StatusConfig {
+//   allowedPaymentStatus: readonly OrderPaymentStatus[];
+//   defaultPaymentStatus: OrderPaymentStatus;
+// }
 
-export const orderStatusConfig: Record<OrderStatus, StatusConfig> = {
-  PENDING: {
-    allowedPaymentStatus: ["PENDING"],
-    defaultPaymentStatus: "PENDING",
-  },
-  ACCEPTED: {
-    allowedPaymentStatus: ["PAID"],
-    defaultPaymentStatus: "PAID",
-  },
-  DONE: {
-    allowedPaymentStatus: ["PAID"],
-    defaultPaymentStatus: "PAID",
-  },
-  REJECTED: {
-    allowedPaymentStatus: ["UNPAID", "FAILED", "PENDING"],
-    defaultPaymentStatus: "PENDING",
-  },
-  CANCELLED: {
-    allowedPaymentStatus: ["PAID", "REFUNDED", "PARTIALLY_REFUNDED"],
-    defaultPaymentStatus: "PAID",
-  },
-} as const;
+// export const orderStatusConfig: Record<OrderStatus, StatusConfig> = {
+//   PENDING: {
+//     allowedPaymentStatus: ["PENDING"],
+//     defaultPaymentStatus: "PENDING",
+//   },
+//   ACCEPTED: {
+//     allowedPaymentStatus: ["PAID"],
+//     defaultPaymentStatus: "PAID",
+//   },
+//   DONE: {
+//     allowedPaymentStatus: ["PAID"],
+//     defaultPaymentStatus: "PAID",
+//   },
+//   REJECTED: {
+//     allowedPaymentStatus: ["UNPAID", "FAILED", "PENDING"],
+//     defaultPaymentStatus: "PENDING",
+//   },
+//   CANCELLED: {
+//     allowedPaymentStatus: ["PAID", "REFUNDED", "PARTIALLY_REFUNDED"],
+//     defaultPaymentStatus: "PAID",
+//   },
+// } as const;
 
 // Generate unique order code (max 15 characters)
 export const generateOrderCode = (): string => {
@@ -211,24 +211,12 @@ export const buildOrderWhere = (params: {
 export const findOrderRecordByCode = async (code: string) => {
   return await prisma.order.findUnique({
     where: { code, deletedAt: null },
-    include: {
-      user: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          phone: true,
-          email: true,
-        },
-      },
-      orderItems: true,
-    },
   });
 };
 
-export const findOrderRecordById = async (id: number) => {
-  return await prisma.order.findUnique({
-    where: { id, deletedAt: null },
+export const findOrderWithDetailsByCode = async (code: string) => {
+  const order = await prisma.order.findUnique({
+    where: { code, deletedAt: null },
     include: {
       user: {
         select: {
@@ -240,8 +228,26 @@ export const findOrderRecordById = async (id: number) => {
         },
       },
       orderItems: true,
+      payments: true,
+      refunds: true,
     },
   });
+
+  if (!order) return null;
+
+  const totalPaidAmount = order.payments
+    .filter((p) => p.status === PaymentStatus.SUCCESS && !p.deletedAt)
+    .reduce((sum, p) => sum + Number(p.amount), 0);
+
+  const totalRefundAmount = order.refunds
+    .filter((r) => r.status === RefundStatus.SUCCESS && !r.deletedAt)
+    .reduce((sum, r) => sum + Number(r.amount), 0);
+
+  return {
+    ...order,
+    totalPaidAmount,
+    totalRefundAmount,
+  };
 };
 
 export const insertOrderRecord = async (data: Prisma.OrderCreateInput) => {
@@ -313,24 +319,6 @@ export const requireOrderCode = (code: string) => {
   return code.trim();
 };
 
-export const assertOrderSourceAllowed = (source: OrderSource, role: Role) => {
-  if (source === OrderSource.ADMIN && role !== Role.ADMIN) {
-    throw createError({
-      message: "Only ADMIN can create/access ADMIN source orders.",
-      status: 403,
-      code: errorCode.notAllowed,
-    });
-  }
-
-  if (source === OrderSource.CUSTOMER && role !== Role.USER) {
-    throw createError({
-      message: "Only USERS can create/access CUSTOMER source orders.",
-      status: 403,
-      code: errorCode.notAllowed,
-    });
-  }
-};
-
 export const reserveInventory = async (
   id: number,
   orderItem: {
@@ -343,4 +331,27 @@ export const reserveInventory = async (
     where: { id: id },
     data: { reserved: { increment: orderItem.reservedQuantity } },
   });
+};
+
+export const calculateOrderPaymentStatus = (
+  totalPrice: number,
+  totalPaidAmount: number,
+  totalRefundAmount: number
+): OrderPaymentStatus => {
+  if (totalRefundAmount > 0) {
+    if (totalRefundAmount >= totalPaidAmount) {
+      return OrderPaymentStatus.REFUNDED;
+    }
+    return OrderPaymentStatus.PARTIALLY_REFUNDED;
+  }
+
+  if (totalPaidAmount >= totalPrice) {
+    return OrderPaymentStatus.PAID;
+  }
+
+  if (totalPaidAmount > 0) {
+    return OrderPaymentStatus.PARTIALLY_PAID;
+  }
+
+  return OrderPaymentStatus.UNPAID;
 };

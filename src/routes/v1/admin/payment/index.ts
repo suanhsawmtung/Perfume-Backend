@@ -4,6 +4,7 @@ import {
   createPayment,
   getPaymentDetail,
   listPayments,
+  processPayment,
   updatePayment,
   voidPayment
 } from "../../../../controllers/admin/payment.controller";
@@ -12,6 +13,7 @@ import { isAuthenticated } from "../../../../middlewares/ensure-authenticated";
 import { handleValidationError } from "../../../../middlewares/error-handler";
 import {
   createPaymentValidation,
+  processPaymentValidation,
   updatePaymentValidation,
 } from "../../../../validations/payment.validation";
 
@@ -54,6 +56,15 @@ router.patch(
   isAuthenticated,
   permit(true, Role.ADMIN),
   voidPayment
+);
+
+router.patch(
+  "/:id/process",
+  isAuthenticated,
+  permit(true, Role.ADMIN),
+  processPaymentValidation,
+  handleValidationError,
+  processPayment
 );
 
 export default router;
