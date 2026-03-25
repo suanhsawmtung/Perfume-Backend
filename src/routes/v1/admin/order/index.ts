@@ -10,10 +10,6 @@ import {
 import { permit } from "../../../../middlewares/check-permissions";
 import { isAuthenticated } from "../../../../middlewares/ensure-authenticated";
 import { handleValidationError } from "../../../../middlewares/error-handler";
-import {
-  handleMulterError,
-  uploadOrderImage,
-} from "../../../../middlewares/file-upload";
 import { parseJsonFields } from "../../../../middlewares/parse-json-fields";
 import {
   createOrderValidation,
@@ -33,8 +29,8 @@ router.post(
   "/",
   isAuthenticated,
   permit(true, Role.ADMIN),
-  uploadOrderImage,
-  handleMulterError,
+  // uploadOrderImage,
+  // handleMulterError,
   parseJsonFields(["items"]),
   createOrderValidation,
   handleValidationError,
@@ -52,8 +48,8 @@ router.patch(
   "/:code",
   isAuthenticated,
   permit(true, Role.ADMIN),
-  uploadOrderImage,
-  handleMulterError,
+  // uploadOrderImage,
+  // handleMulterError,
   parseJsonFields(["items"]),
   updateOrderValidation,
   handleValidationError,

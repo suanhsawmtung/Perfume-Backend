@@ -4,8 +4,8 @@ import {
   createPayment,
   getPaymentDetail,
   listPayments,
-  processPayment,
   updatePayment,
+  verifyPayment,
   voidPayment
 } from "../../../../controllers/admin/payment.controller";
 import { permit } from "../../../../middlewares/check-permissions";
@@ -13,8 +13,8 @@ import { isAuthenticated } from "../../../../middlewares/ensure-authenticated";
 import { handleValidationError } from "../../../../middlewares/error-handler";
 import {
   createPaymentValidation,
-  processPaymentValidation,
   updatePaymentValidation,
+  verifyPaymentValidation
 } from "../../../../validations/payment.validation";
 
 const router: Router = express.Router();
@@ -59,12 +59,12 @@ router.patch(
 );
 
 router.patch(
-  "/:id/process",
+  "/:id/verify",
   isAuthenticated,
   permit(true, Role.ADMIN),
-  processPaymentValidation,
+  verifyPaymentValidation,
   handleValidationError,
-  processPayment
+  verifyPayment
 );
 
 export default router;

@@ -94,6 +94,22 @@ export const createPayment = async (params: CreatePaymentParams) => {
     });
   }
 
+  const pendingPaymentCount = await prisma.payment.count({
+    where: {
+      orderId: order.id,
+      status: "PENDING",
+      deletedAt: null,
+    },
+  });
+
+  if (pendingPaymentCount > 0) {
+    throw createError({
+      message: "There is a pending payment for this order. Please verify it first.",
+      status: 400,
+      code: errorCode.invalid,
+    });
+  }
+
   // Calculate total already paid for this order (successful payments)
   const totalPaidAggregate = await prisma.payment.aggregate({
     where: {
@@ -230,6 +246,14 @@ export const voidPayment = async (id: number) => {
     });
   }
 
+  if (existing.status !== PaymentStatus.SUCCESS) {
+    throw createError({
+      message: "Only SUCCESS payment can be voided.",
+      status: 400,
+      code: errorCode.invalid,
+    });
+  }
+
   return await prisma.$transaction(async (tx) => {
     await tx.payment.update({
       where: { id },
@@ -280,7 +304,7 @@ export const voidPayment = async (id: number) => {
   });
 };
 
-export const processPayment = async (id: number, status: "SUCCESS" | "FAILED") => {
+export const verifyPayment = async (id: number, status: "SUCCESS" | "FAILED") => {
   if (!["SUCCESS", "FAILED"].includes(status)) {
     throw createError({
       message: "Invalid status update. Only SUCCESS or FAILED are allowed.",
@@ -300,7 +324,7 @@ export const processPayment = async (id: number, status: "SUCCESS" | "FAILED") =
 
   if (existing.status !== PaymentStatus.PENDING) {
     throw createError({
-      message: `Cannot process this payment. Current status is ${existing.status}, but it must be PENDING.`,
+      message: `Cannot verify this payment. Current status is ${existing.status}, but it must be PENDING.`,
       status: 400,
       code: errorCode.invalid,
     });

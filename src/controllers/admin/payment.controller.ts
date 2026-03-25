@@ -127,7 +127,7 @@ export const voidPayment = async (
   }
 };
 
-export const processPayment = async (
+export const verifyPayment = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
@@ -152,7 +152,7 @@ export const processPayment = async (
       });
     }
 
-    const payment = await PaymentService.processPayment(id, status);
+    const payment = await PaymentService.verifyPayment(id, status);
 
     return res.status(200).json({
       success: true,

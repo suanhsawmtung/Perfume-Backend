@@ -69,7 +69,10 @@ export const enrichOrderItems = async (orderItems: any[]) => {
     where: { id: { in: variantIds } },
     include: {
       product: {
-        include: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
           brand: true,
         },
       },
@@ -94,6 +97,22 @@ export const enrichOrder = async (order: any) => {
   if (order.orderItems) {
     order.orderItems = await enrichOrderItems(order.orderItems);
   }
+
+  // // Ensure total fields are present for consistency
+  // if (order.totalPaidAmount === undefined) {
+  //   const payments = order.payments || [];
+  //   order.totalPaidAmount = payments
+  //     .filter((p: any) => p.status === PaymentStatus.SUCCESS && !p.deletedAt)
+  //     .reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+  // }
+
+  // if (order.totalRefundAmount === undefined) {
+  //   const refunds = order.refunds || [];
+  //   order.totalRefundAmount = refunds
+  //     .filter((r: any) => r.status === RefundStatus.SUCCESS && !r.deletedAt)
+  //     .reduce((sum: number, r: any) => sum + Number(r.amount), 0);
+  // }
+
   return order;
 };
 
@@ -214,6 +233,15 @@ export const findOrderRecordByCode = async (code: string) => {
   });
 };
 
+export const findOrderRecordWithItemsByCode = async (code: string) => {
+  return await prisma.order.findUnique({
+    where: { code, deletedAt: null },
+    include: {
+      orderItems: true,
+    },
+  });
+};
+
 export const findOrderWithDetailsByCode = async (code: string) => {
   const order = await prisma.order.findUnique({
     where: { code, deletedAt: null },
@@ -223,6 +251,7 @@ export const findOrderWithDetailsByCode = async (code: string) => {
           id: true,
           firstName: true,
           lastName: true,
+          username: true,
           phone: true,
           email: true,
         },

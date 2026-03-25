@@ -50,7 +50,7 @@ export const updatePaymentValidation = [
     .withMessage("Note must be at most 500 characters."),
 ];
 
-export const processPaymentValidation = [
+export const verifyPaymentValidation = [
   body("status")
     .notEmpty()
     .withMessage("Status is required.")

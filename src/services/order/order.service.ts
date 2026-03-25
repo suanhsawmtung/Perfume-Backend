@@ -14,6 +14,7 @@ import {
   enrichOrder,
   enrichOrders,
   findOrderRecordByCode,
+  findOrderRecordWithItemsByCode,
   findOrderWithDetailsByCode,
   generateOrderCode,
   requireOrderCode
@@ -61,11 +62,11 @@ export const listOrders = async ({
           id: true,
           firstName: true,
           lastName: true,
+          username: true,
           phone: true,
           email: true,
         },
       },
-      orderItems: true,
     },
   });
 
@@ -115,6 +116,22 @@ export const createOrder = async (params: CreateOrderParams) => {
         code: errorCode.invalid,
       });
     }
+  }
+
+  if (status === OrderStatus.REJECTED && !rejectedReason?.trim()) {
+    throw createError({
+      message: "Rejected reason is required when status is REJECTED.",
+      status: 400,
+      code: errorCode.invalid,
+    });
+  }
+
+  if (status === OrderStatus.CANCELLED && !cancelledReason?.trim()) {
+    throw createError({
+      message: "Cancelled reason is required when status is CANCELLED.",
+      status: 400,
+      code: errorCode.invalid,
+    });
   }
 
   // Validate userId if provided, otherwise use authenticated user
@@ -218,10 +235,11 @@ export const updateOrder = async (code: string, params: UpdateOrderParams) => {
     customerAddress,
     customerNotes,
     rejectedReason,
+    cancelledReason,
     items,
   } = params;
 
-  const existingOrder = await findOrderRecordByCode(code);
+  const existingOrder = await findOrderRecordWithItemsByCode(code);
   if (!existingOrder) {
     throw createError({
       message: "Order not found.",
@@ -240,6 +258,30 @@ export const updateOrder = async (code: string, params: UpdateOrderParams) => {
         code: errorCode.invalid,
       });
     }
+
+    if (existingOrder.source === OrderSource.CUSTOMER && newStatus === OrderStatus.CANCELLED) {
+      throw createError({
+        message: "You cannot cancel the customer sourced order.",
+        status: 400,
+        code: errorCode.invalid,
+      });
+    }
+  }
+
+  if (newStatus === OrderStatus.REJECTED && !rejectedReason?.trim()) {
+    throw createError({
+      message: "Rejected reason is required when status is REJECTED.",
+      status: 400,
+      code: errorCode.invalid,
+    });
+  }
+
+  if (newStatus === OrderStatus.CANCELLED && !cancelledReason?.trim()) {
+    throw createError({
+      message: "Cancelled reason is required when status is CANCELLED.",
+      status: 400,
+      code: errorCode.invalid,
+    });
   }
 
   // 2. Validation: Field Locking
@@ -251,24 +293,43 @@ export const updateOrder = async (code: string, params: UpdateOrderParams) => {
     OrderStatus.REJECTED,
   ].includes(existingOrder.status as "SHIPPED" | "DELIVERED" | "DONE" | "CANCELLED" | "REJECTED");
 
-  const hasFulfillmentData = 
-    customerName !== undefined || 
-    customerPhone !== undefined || 
-    customerAddress !== undefined || 
-    customerNotes !== undefined || 
-    items !== undefined;
+  const isNameChanged = customerName !== undefined && customerName.trim() !== (existingOrder.customerName || "");
+  const isPhoneChanged = customerPhone !== undefined && customerPhone.trim() !== (existingOrder.customerPhone || "");
+  const isAddressChanged = customerAddress !== undefined && customerAddress.trim() !== (existingOrder.customerAddress || "");
+  const isNotesChanged = customerNotes !== undefined && (customerNotes?.trim() || "") !== (existingOrder.customerNotes || "");
+  const initialItems = existingOrder.orderItems || [];
+  const isItemsChanged = items !== undefined && (
+    items.length !== initialItems.length ||
+    items.some((item, index) => {
+      const original = initialItems[index];
+      return (
+        !original ||
+        item.itemId !== original.itemId ||
+        item.itemType !== original.itemType ||
+        item.quantity !== original.quantity ||
+        Number(item.price) !== Number(original.price)
+      );
+    })
+  );
+
+  const hasActualFulfillmentChanges = 
+    isNameChanged || 
+    isPhoneChanged || 
+    isAddressChanged || 
+    isNotesChanged || 
+    isItemsChanged;
 
   // Rule for ADMIN Source: Lock fulfillment fields if status is SHIPPED or higher
-  if (existingOrder.source === OrderSource.ADMIN && isLockedStatus && hasFulfillmentData) {
+  if (existingOrder.source === OrderSource.ADMIN && isLockedStatus && hasActualFulfillmentChanges) {
     throw createError({
-      message: `Cannot modify order details when status is ${existingOrder.status}.`,
+      message: `Cannot modify order details server when status is ${existingOrder.status}.`,
       status: 400,
       code: errorCode.invalid,
     });
   }
 
   // Rule for CUSTOMER Source: Always lock fulfillment fields except status/rejectedReason
-  if (existingOrder.source === OrderSource.CUSTOMER && hasFulfillmentData) {
+  if (existingOrder.source === OrderSource.CUSTOMER && hasActualFulfillmentChanges) {
     throw createError({
       message: "Admin cannot modify fulfillment details for customer-originated orders.",
       status: 400,
@@ -280,13 +341,14 @@ export const updateOrder = async (code: string, params: UpdateOrderParams) => {
     const updateData: any = {};
 
     if (newStatus !== undefined) updateData.status = newStatus;
-    if (customerName !== undefined) updateData.customerName = customerName.trim();
-    if (customerPhone !== undefined) updateData.customerPhone = customerPhone.trim();
-    if (customerAddress !== undefined) updateData.customerAddress = customerAddress.trim();
-    if (customerNotes !== undefined) updateData.customerNotes = customerNotes.trim();
+    if (isNameChanged) updateData.customerName = customerName!.trim();
+    if (isPhoneChanged) updateData.customerPhone = customerPhone!.trim();
+    if (isAddressChanged) updateData.customerAddress = customerAddress!.trim();
+    if (isNotesChanged) updateData.customerNotes = customerNotes!.trim();
     if (rejectedReason !== undefined) updateData.rejectedReason = rejectedReason.trim();
+    if (cancelledReason !== undefined) updateData.cancelledReason = cancelledReason.trim();
 
-    const updatedOrder = await tx.order.update({
+    await tx.order.update({
       where: { id: existingOrder.id },
       data: updateData,
     });
