@@ -71,7 +71,6 @@ export type CreateProductVariantParams = {
   source?: VariantSource;
   price: number | string;
   discount?: number | string;
-  stock?: number | string;
   imageFilenames?: string[];
   isPrimary?: boolean;
   isActive?: boolean;
@@ -83,7 +82,6 @@ export type UpdateProductVariantParams = {
   source?: VariantSource;
   price: number | string;
   discount?: number | string;
-  stock?: number | string;
   imageFilenames?: string[];
   existingImages?: string[];
   imageLayout?: string[];

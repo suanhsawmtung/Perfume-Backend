@@ -162,10 +162,6 @@ const productVariantValidation = [
       }
       return true;
     }),
-  body("stock")
-    .optional()
-    .isInt({ min: 0 })
-    .withMessage("Stock must be a non-negative integer."),
   body("isPrimary")
     .optional()
     .toBoolean()

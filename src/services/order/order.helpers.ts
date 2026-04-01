@@ -356,10 +356,10 @@ export const reserveInventory = async (
     reservedQuantity: number;
   }
 ) => {
-  await prisma.inventory.update({
-    where: { id: id },
-    data: { reserved: { increment: orderItem.reservedQuantity } },
-  });
+  // await prisma.inventory.update({
+  //   where: { id: id },
+  //   data: { reserved: { increment: orderItem.reservedQuantity } },
+  // });
 };
 
 export const calculateOrderPaymentStatus = (

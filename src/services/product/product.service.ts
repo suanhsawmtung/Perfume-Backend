@@ -2,43 +2,41 @@ import { VariantSource } from "@prisma/client";
 import { errorCode } from "../../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import {
-    CreateProductParams,
-    CreateProductVariantParams,
-    ListProductsParams,
-    UpdateProductNewParams,
-    UpdateProductVariantParams,
+  CreateProductParams,
+  CreateProductVariantParams,
+  ListProductsParams,
+  UpdateProductNewParams,
+  UpdateProductVariantParams,
 } from "../../types/product";
 import {
-    createError,
-    createSlug,
-    ensureUniqueSlug,
-    normalizeBoolean,
+  createError,
+  createSlug,
+  ensureUniqueSlug,
+  normalizeBoolean,
 } from "../../utils/common";
 import { getFilePath, removeFile } from "../../utils/file";
 import { findBrandById } from "../brand/brand.helpers";
 import {
-    buildProductWhere,
-    createProductVariantRecord,
-    decrementVariantInventory,
-    deleteProductRecord,
-    deleteProductVariantRecord,
-    deleteVariantImages,
-    findProductByName,
-    findProductByNameExcludingId,
-    findProductBySlug,
-    findProductDetail,
-    findProductVariantDetail,
-    findProductVariantsSummary,
-    findVariantImages,
-    generateUniqueVariantSku,
-    generateUniqueVariantSlug,
-    incrementVariantInventory,
-    insertProduct,
-    requireSlug,
-    requireVariantSlug,
-    unsetOtherPrimaryVariants,
-    updateProductRecord,
-    updateProductVariantRecord,
+  buildProductWhere,
+  createProductVariantRecord,
+  deleteProductRecord,
+  deleteProductVariantRecord,
+  deleteVariantImages,
+  findProductByName,
+  findProductByNameExcludingId,
+  findProductBySlug,
+  findProductDetail,
+  findProductVariantDetail,
+  findProductVariantsSummary,
+  findVariantImages,
+  generateUniqueVariantSku,
+  generateUniqueVariantSlug,
+  insertProduct,
+  requireSlug,
+  requireVariantSlug,
+  unsetOtherPrimaryVariants,
+  updateProductRecord,
+  updateProductVariantRecord
 } from "./product.helpers";
 
 export const listPublicProducts = async (limit?: number, cursor?: number) => {
@@ -412,15 +410,6 @@ export const createProductVariant = async (
     });
   }
 
-  const stockNum = params.stock !== undefined ? Number(params.stock) : 0;
-  if (isNaN(stockNum) || stockNum < 0) {
-    throw createError({
-      message: "Invalid stock.",
-      status: 400,
-      code: errorCode.invalid,
-    });
-  }
-
   const isPrimary = normalizeBoolean(params.isPrimary, false);
   const isActive = normalizeBoolean(params.isActive, true);
 
@@ -447,17 +436,10 @@ export const createProductVariant = async (
     source,
     price: priceNum,
     discount: discountNum,
-    stock: stockNum,
     isPrimary,
     isActive,
     product: {
       connect: { id: product.id },
-    },
-    inventories: {
-      create: {
-        quantity: stockNum,
-        reserved: 0,
-      },
     },
     images: {
       create:
@@ -569,15 +551,6 @@ export const updateProductVariant = async (
     });
   }
 
-  const stockNum = params.stock !== undefined ? Number(params.stock) : 0;
-  if (isNaN(stockNum) || stockNum < 0) {
-    throw createError({
-      message: "Invalid stock.",
-      status: 400,
-      code: errorCode.invalid,
-    });
-  }
-
   const source =
     params.source ?? existingVariant.source ?? VariantSource.ORIGINAL;
   const nextSku = await generateUniqueVariantSku(product.id, sizeNum);
@@ -595,7 +568,6 @@ export const updateProductVariant = async (
     source,
     price: priceNum,
     discount: discountNum,
-    stock: stockNum,
     ...(typeof params.isPrimary === "boolean"
       ? { isPrimary: params.isPrimary }
       : {}),
@@ -609,14 +581,6 @@ export const updateProductVariant = async (
       productId: Number(updated.productId),
       variantId: updated.id,
     });
-  }
-
-  // await updateVariantInventory(existingVariant.id, stockNum);
-  const newStock = stockNum - existingVariant.stock;
-  if(newStock < 0){
-    await decrementVariantInventory(existingVariant.id, Math.abs(newStock));
-  }else {
-    await incrementVariantInventory(existingVariant.id, newStock);
   }
 
   // Handle images using Fixed Slot Sync (Orders 0-3)

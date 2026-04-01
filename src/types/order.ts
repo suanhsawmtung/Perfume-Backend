@@ -17,22 +17,13 @@ export type CreateOrderParams = {
   customerPhone?: string;
   customerAddress?: string;
   customerNotes?: string;
-  rejectedReason?: string;
-  cancelledReason?: string;
   items?: Array<{
     itemId: number | string;
     itemType: OrderItemType;
     quantity: number | string;
     price: number | string;
   }>;
-  products?: Array<{
-    productId: number | string;
-    quantity: number | string;
-    price: number | string;
-  }>;
   userId?: number | string;
-  authenticatedUserId?: number;
-  image?: string | undefined;
 };
 
 export type UpdateOrderParams = {

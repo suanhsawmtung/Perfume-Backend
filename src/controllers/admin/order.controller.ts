@@ -76,10 +76,7 @@ export const createOrder = async (
       customerPhone,
       customerAddress,
       customerNotes,
-      rejectedReason,
-      cancelledReason,
       items,
-      userId,
     } = req.body;
 
     const order = await OrderService.createOrder({
@@ -88,12 +85,8 @@ export const createOrder = async (
       customerPhone,
       customerAddress,
       customerNotes,
-      rejectedReason,
-      cancelledReason,
       items,
-      userId,
-      image: req.file?.filename,
-      ...(req.userId && { authenticatedUserId: req.userId }),
+      ...(req.userId && { userId: req.userId }),
     });
 
     res.status(201).json({
@@ -132,7 +125,6 @@ export const updateOrder = async (
       rejectedReason,
       cancelledReason,
       items,
-      userId,
     } = req.body;
 
     const order = await OrderService.updateOrder(code, {
@@ -144,7 +136,6 @@ export const updateOrder = async (
       rejectedReason,
       cancelledReason,
       items,
-      userId,
       image: req.file?.filename,
     });
 
@@ -158,31 +149,3 @@ export const updateOrder = async (
   }
 };
 
-export const deleteOrder = async (
-  req: CustomRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { code } = req.params;
-
-    if (!code) {
-      const error = createError({
-        message: "Order code is required.",
-        status: 400,
-        code: errorCode.invalid,
-      });
-      return next(error);
-    }
-
-    await OrderService.deleteOrder(code);
-
-    res.status(200).json({
-      success: true,
-      data: null,
-      message: "Order deleted successfully.",
-    });
-  } catch (error: any) {
-    next(error);
-  }
-};

@@ -2,10 +2,9 @@ import { Role } from "@prisma/client";
 import express, { Router } from "express";
 import {
   createOrder,
-  deleteOrder,
   getOrder,
   listOrders,
-  updateOrder,
+  updateOrder
 } from "../../../../controllers/admin/order.controller";
 import { permit } from "../../../../middlewares/check-permissions";
 import { isAuthenticated } from "../../../../middlewares/ensure-authenticated";
@@ -54,13 +53,6 @@ router.patch(
   updateOrderValidation,
   handleValidationError,
   updateOrder
-);
-
-router.delete(
-  "/:code",
-  isAuthenticated,
-  permit(true, Role.ADMIN),
-  deleteOrder
 );
 
 export default router;

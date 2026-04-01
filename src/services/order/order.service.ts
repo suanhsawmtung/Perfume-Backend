@@ -1,4 +1,4 @@
-import { OrderItemType, OrderPaymentStatus, OrderSource, OrderStatus } from "@prisma/client";
+import { InventoryType, OrderItemType, OrderPaymentStatus, OrderSource, OrderStatus, ReservationStatus } from "@prisma/client";
 import { errorCode } from "../../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import {
@@ -10,10 +10,8 @@ import { createError } from "../../utils/common";
 import { findUserById } from "../user/user.helpers";
 import {
   buildOrderWhere,
-  deleteOrderRecord,
   enrichOrder,
   enrichOrders,
-  findOrderRecordByCode,
   findOrderRecordWithItemsByCode,
   findOrderWithDetailsByCode,
   generateOrderCode,
@@ -100,11 +98,8 @@ export const createOrder = async (params: CreateOrderParams) => {
     customerPhone,
     customerAddress,
     customerNotes,
-    rejectedReason,
-    cancelledReason,
     items,
     userId,
-    authenticatedUserId,
   } = params;
 
   if (status) {
@@ -118,44 +113,23 @@ export const createOrder = async (params: CreateOrderParams) => {
     }
   }
 
-  if (status === OrderStatus.REJECTED && !rejectedReason?.trim()) {
+  if(!userId){
     throw createError({
-      message: "Rejected reason is required when status is REJECTED.",
-      status: 400,
-      code: errorCode.invalid,
+      message: "You must be logged in to create an order.",
+      status: 401,
+      code: errorCode.unauthenticated,
     });
   }
 
-  if (status === OrderStatus.CANCELLED && !cancelledReason?.trim()) {
-    throw createError({
-      message: "Cancelled reason is required when status is CANCELLED.",
-      status: 400,
-      code: errorCode.invalid,
-    });
-  }
+  const orderUserId = parseInt(String(userId), 10);
 
-  // Validate userId if provided, otherwise use authenticated user
-  let orderUserId: number;
-  if (userId) {
-    const userIdNum = parseInt(String(userId), 10);
-    const user = await findUserById(userIdNum);
-    if (!user) {
-      throw createError({
-        message: "User not found.",
-        status: 404,
-        code: errorCode.notFound,
-      });
-    }
-    orderUserId = userIdNum;
-  } else {
-    if (!authenticatedUserId) {
-      throw createError({
-        message: "User ID is required.",
-        status: 400,
-        code: errorCode.invalid,
-      });
-    }
-    orderUserId = authenticatedUserId;
+  const user = await findUserById(orderUserId);
+  if (!user) {
+    throw createError({
+      message: "User not found.",
+      status: 404,
+      code: errorCode.notFound,
+    });
   }
 
   if (!items || items.length === 0) {
@@ -171,13 +145,20 @@ export const createOrder = async (params: CreateOrderParams) => {
     let calculatedTotalPrice = 0;
     const verifiedItems = [];
 
-    for (const item of items) {
-      const itemIdNum = parseInt(String(item.itemId), 10);
-      const quantityNum = parseInt(String(item.quantity), 10);
+    const variantIds = items.map(item => Number(item.itemId));
 
-      const variant = await tx.productVariant.findUnique({
-        where: { id: itemIdNum }
-      });
+    const variants = await tx.productVariant.findMany({
+      where: { id: { in: variantIds } },
+    });
+
+    const variantMap = new Map(
+      variants.map(v => [v.id, v])
+    );
+
+    for (const item of items) {
+      const itemIdNum = Number(item.itemId);
+
+      const variant = variantMap.get(itemIdNum);
 
       if (!variant) {
         throw createError({
@@ -187,12 +168,15 @@ export const createOrder = async (params: CreateOrderParams) => {
         });
       }
 
-      calculatedTotalPrice += Number(variant.price) * quantityNum;
+      const quantityNum = Number(item.quantity);
+      const priceNum = Number(item.price);
+
+      calculatedTotalPrice += priceNum * quantityNum;
       verifiedItems.push({
         itemId: itemIdNum,
         itemType: item.itemType || OrderItemType.PRODUCT_VARIANT,
         quantity: quantityNum,
-        price: variant.price,
+        price: priceNum,
       });
     }
 
@@ -209,8 +193,6 @@ export const createOrder = async (params: CreateOrderParams) => {
         customerPhone: customerPhone ? customerPhone.trim() : null,
         customerAddress: customerAddress ? customerAddress.trim() : null,
         customerNotes: customerNotes ? customerNotes.trim() : null,
-        rejectedReason: (status === OrderStatus.REJECTED && rejectedReason) ? rejectedReason.trim() : null,
-        cancelledReason: (status === OrderStatus.CANCELLED && cancelledReason) ? cancelledReason.trim() : null,
         orderItems: {
           create: verifiedItems.map(item => ({
             itemId: item.itemId,
@@ -222,6 +204,35 @@ export const createOrder = async (params: CreateOrderParams) => {
       },
       include: { orderItems: true },
     });
+
+    for(const item of verifiedItems){
+      const updated = await tx.productVariant.updateMany({
+        where: { 
+          id: item.itemId,
+          stock: { gte: item.quantity },
+        },
+        data: {
+          reserved: { increment: item.quantity },
+        },
+      });
+
+      if (updated.count === 0) {
+        throw createError({
+          message: `Product variant not found or stock is not enough`,
+          status: 400,
+          code: errorCode.invalid,
+        });
+      }
+
+      await tx.reservation.create({
+        data: {
+          productVariantId: item.itemId,
+          orderId: order.id,
+          quantity: item.quantity,
+          status: ReservationStatus.ACTIVE,
+        },
+      });
+    }
 
     return await enrichOrder(order);
   });
@@ -248,8 +259,10 @@ export const updateOrder = async (code: string, params: UpdateOrderParams) => {
     });
   }
 
+  const isStatusChanged = newStatus !== undefined && newStatus !== existingOrder.status;
+
   // 1. Validation: Order Status Transition
-  if (newStatus !== undefined && newStatus !== existingOrder.status) {
+  if (isStatusChanged) {
     const allowedTransitions = ORDER_STATUS_FLOW[existingOrder.status as OrderStatus];
     if (!allowedTransitions || !allowedTransitions.includes(newStatus as OrderStatus)) {
       throw createError({
@@ -322,7 +335,7 @@ export const updateOrder = async (code: string, params: UpdateOrderParams) => {
   // Rule for ADMIN Source: Lock fulfillment fields if status is SHIPPED or higher
   if (existingOrder.source === OrderSource.ADMIN && isLockedStatus && hasActualFulfillmentChanges) {
     throw createError({
-      message: `Cannot modify order details server when status is ${existingOrder.status}.`,
+      message: `Cannot modify order details when status is ${existingOrder.status}.`,
       status: 400,
       code: errorCode.invalid,
     });
@@ -340,7 +353,7 @@ export const updateOrder = async (code: string, params: UpdateOrderParams) => {
   return await prisma.$transaction(async (tx) => {
     const updateData: any = {};
 
-    if (newStatus !== undefined) updateData.status = newStatus;
+    if (isStatusChanged) updateData.status = newStatus;
     if (isNameChanged) updateData.customerName = customerName!.trim();
     if (isPhoneChanged) updateData.customerPhone = customerPhone!.trim();
     if (isAddressChanged) updateData.customerAddress = customerAddress!.trim();
@@ -354,15 +367,46 @@ export const updateOrder = async (code: string, params: UpdateOrderParams) => {
     });
 
     // Handle Items Update (Only for ADMIN source in PENDING/ACCEPTED)
-    if (items !== undefined) {
-      let calculatedTotalPrice = 0;
+    if (isItemsChanged) {
+      const orderReservations = await tx.reservation.findMany({
+        where: { 
+          orderId: existingOrder.id,
+          status: ReservationStatus.ACTIVE,
+        },
+      });
+
+      for(const reservation of orderReservations){
+        await tx.productVariant.update({
+          where: { id: reservation.productVariantId },
+          data: { reserved: { decrement: reservation.quantity } },
+        });
+      }
+      
+      await tx.reservation.deleteMany({ 
+        where: { 
+          orderId: existingOrder.id, 
+          status: ReservationStatus.ACTIVE 
+        } 
+      });
+
       await tx.orderItem.deleteMany({ where: { orderId: existingOrder.id } });
 
-      for (const item of items) {
-        const itemIdNum = parseInt(String(item.itemId), 10);
-        const quantityNum = parseInt(String(item.quantity), 10);
+      let calculatedTotalPrice = 0;
 
-        const variant = await tx.productVariant.findUnique({ where: { id: itemIdNum } });
+      const variantIds = items.map(item => Number(item.itemId));
+
+      const variants = await tx.productVariant.findMany({
+        where: { id: { in: variantIds } },
+      });
+
+      const variantMap = new Map(
+        variants.map(v => [v.id, v])
+      );
+
+      for (const item of items) {
+        const itemIdNum = Number(item.itemId);
+
+        const variant = variantMap.get(itemIdNum);
         if (!variant) {
           throw createError({
             message: `Product variant with ID ${item.itemId} not found`,
@@ -370,7 +414,37 @@ export const updateOrder = async (code: string, params: UpdateOrderParams) => {
             code: errorCode.notFound,
           });
         }
-        calculatedTotalPrice += Number(variant.price) * quantityNum;
+
+        const quantityNum = Number(item.quantity);
+        const priceNum = Number(item.price);
+
+        calculatedTotalPrice += priceNum * quantityNum;
+
+        const updated = await tx.productVariant.updateMany({
+          where: { 
+            id: itemIdNum,
+            stock: { gte: quantityNum },
+          },
+          data: { reserved: { increment: quantityNum } },
+        });
+
+        if (updated.count === 0) {
+          throw createError({
+            message: `Product variant not found or stock is not enough`,
+            status: 400,
+            code: errorCode.invalid,
+          });
+        }
+
+        await tx.reservation.create({
+          data: {
+            productVariantId: itemIdNum,
+            orderId: existingOrder.id,
+            quantity: quantityNum,
+            status: ReservationStatus.ACTIVE,
+          },
+        });
+
         await tx.orderItem.create({
           data: {
             orderId: existingOrder.id,
@@ -388,6 +462,145 @@ export const updateOrder = async (code: string, params: UpdateOrderParams) => {
       });
     }
 
+    if(isStatusChanged){
+      // Scenario 1: DONE - Consume reservations
+      if(newStatus === OrderStatus.DONE){
+        const activeReservations = await tx.reservation.findMany({
+          where: { 
+            orderId: existingOrder.id,
+            status: ReservationStatus.ACTIVE,
+          },
+        });
+
+        const variantIds = activeReservations.map(r => r.productVariantId);
+
+        const variants = await tx.productVariant.findMany({
+          where: { id: { in: variantIds } },
+        });
+
+        const variantMap = new Map(
+          variants.map(v => [v.id, v])
+        );
+
+        for(const reservation of activeReservations){
+          const variant = variantMap.get(reservation.productVariantId);
+
+          if (!variant || variant.stock <= 0) {
+            throw createError({
+              message: "Invalid product state",
+              status: 400,
+              code: errorCode.invalid,
+            });
+          }
+
+          const avgCost = Number(variant.totalCost) / parseInt(String(variant.stock), 10);
+
+          const cost = avgCost * parseInt(String(reservation.quantity), 10);
+
+          const updatedVariant = await tx.productVariant.updateMany({
+            where: {
+              id: reservation.productVariantId,
+              stock: { gte: reservation.quantity },
+              reserved: { gte: reservation.quantity },
+            },
+            data: { 
+              stock: { decrement: reservation.quantity },
+              reserved: { decrement: reservation.quantity },
+              totalCost: { decrement: cost },
+            },
+          });
+
+          if (updatedVariant.count === 0) {
+            throw createError({
+              message: `Stock mismatch`,
+              status: 400,
+              code: errorCode.invalid,
+            });
+          }
+
+          await tx.inventory.create({
+            data: {
+              productVariantId: reservation.productVariantId,
+              type: InventoryType.SALE,
+              quantity: reservation.quantity,
+              unitCost: avgCost,
+              totalCost: cost,
+            },
+          });
+        }
+
+        await tx.reservation.updateMany({
+          where: { 
+            orderId: existingOrder.id,
+            status: ReservationStatus.ACTIVE,
+          },
+          data: { status: ReservationStatus.CONSUMED },
+        });
+
+      }
+      // Scenario 2: REJECTED or CANCELLED - Release reservations
+      else if(newStatus === OrderStatus.REJECTED || newStatus === OrderStatus.CANCELLED){
+        const activeReservations = await tx.reservation.findMany({
+          where: { 
+            orderId: existingOrder.id,
+            status: ReservationStatus.ACTIVE,
+          },
+        });
+
+        await tx.reservation.updateMany({
+          where: { 
+            orderId: existingOrder.id,
+            status: ReservationStatus.ACTIVE,
+          },
+          data: { status: ReservationStatus.RELEASED },
+        });
+
+        for(const reservation of activeReservations){
+          await tx.productVariant.update({
+            where: { id: reservation.productVariantId },
+            data: { 
+              reserved: { decrement: reservation.quantity } 
+            },
+          });
+        }
+      }
+      // Scenario 3: REJECTED -> PENDING - Re-activate released reservations
+      else if(existingOrder.status === OrderStatus.REJECTED && newStatus === OrderStatus.PENDING){
+        const releasedReservations = await tx.reservation.findMany({
+          where: { 
+            orderId: existingOrder.id,
+            status: ReservationStatus.RELEASED,
+          },
+        });
+
+        for(const reservation of releasedReservations){
+          // Verify stock before re-activating (Pattern consistent with order creation)
+          const updated = await tx.productVariant.updateMany({
+            where: { 
+              id: reservation.productVariantId,
+              stock: { gte: reservation.quantity },
+            },
+            data: {
+              reserved: { increment: reservation.quantity },
+            },
+          });
+
+          if (updated.count === 0) {
+            throw createError({
+              message: `Cannot return order to PENDING. Product variant stock is no longer sufficient.`,
+              status: 400,
+              code: errorCode.invalid,
+            });
+          }
+
+          await tx.reservation.update({
+            where: { id: reservation.id },
+            data: { status: ReservationStatus.ACTIVE },
+          });
+        }
+      }
+    }
+
     const finalOrder = await tx.order.findUnique({
       where: { id: existingOrder.id },
       include: { orderItems: true }
@@ -395,18 +608,4 @@ export const updateOrder = async (code: string, params: UpdateOrderParams) => {
 
     return await enrichOrder(finalOrder!);
   });
-};
-
-export const deleteOrder = async (code: string) => {
-  const normalizedCode = requireOrderCode(code);
-  const existing = await findOrderRecordByCode(normalizedCode);
-  if (!existing) {
-    throw createError({
-      message: "Order not found",
-      status: 404,
-      code: errorCode.notFound,
-    });
-  }
-
-  await deleteOrderRecord(existing.id);
 };

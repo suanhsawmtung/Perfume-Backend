@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Concentration, Gender, OrderItemType, OrderPaymentStatus, OrderStatus, Role, VariantSource } from "@prisma/client";
+import { Concentration, Gender, InventoryType, OrderItemType, OrderPaymentStatus, OrderStatus, Role, TransactionDirection, TransactionType, VariantSource } from "@prisma/client";
 import { hash } from "../src/lib/hash";
 import { prisma } from "../src/lib/prisma";
 import { createSlug, ensureUniqueSlug } from "../src/utils/common";
@@ -358,11 +358,24 @@ export async function main() {
         },
       });
 
-      await prisma.inventory.create({
+      const unitCost = variantData.price - ((10 * variantData.price) / 100);
+
+      const inventory = await prisma.inventory.create({
         data: {
           productVariantId: variant.id,
           quantity: variantData.stock,
-          reserved: 0,
+          type: InventoryType.PURCHASE,
+          unitCost: unitCost,
+          totalCost: unitCost * variantData.stock,
+        },
+      });
+
+      await prisma.transaction.create({
+        data: {
+          type: TransactionType.EXPENSE,
+          direction: TransactionDirection.OUT,
+          amount: unitCost * variantData.stock,
+          source: `Inventory Purchase: ${inventory.id} at ${new Date().toISOString()}`,
         },
       });
 

@@ -28,11 +28,6 @@ const orderValidation = [
     .trim()
     .isLength({ max: 500 })
     .withMessage("Customer notes must be at most 500 characters."),
-  body("rejectedReason")
-    .optional()
-    .trim()
-    .isLength({ max: 255 })
-    .withMessage("Rejected reason must be at most 255 characters."),
   body("items")
     .isArray({ min: 1 })
     .withMessage(
@@ -63,10 +58,16 @@ export const createOrderValidation = orderValidation;
 
 const updateOrderValidation = [
   ...orderValidation,
-  body("userId")
+  body("rejectedReason")
     .optional()
-    .isInt({ min: 1 })
-    .withMessage("User ID must be a positive integer."),
+    .trim()
+    .isLength({ max: 255 })
+    .withMessage("Rejected reason must be at most 255 characters."),
+  body("cancelledReason")
+    .optional()
+    .trim()
+    .isLength({ max: 255 })
+    .withMessage("Cancelled reason must be at most 255 characters."),
 ];
 
 export { updateOrderValidation };

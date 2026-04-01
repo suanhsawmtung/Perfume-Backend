@@ -438,7 +438,7 @@ export const createVariantInventory = async ({
     data: {
       productVariantId,
       quantity,
-      reserved,
+      // reserved,
     },
   });
 };
