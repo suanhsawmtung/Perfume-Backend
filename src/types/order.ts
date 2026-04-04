@@ -47,7 +47,6 @@ export type UpdateOrderParams = {
     quantity: number | string;
     price: number | string;
   }>;
-  userId?: number | string;
   image?: string | undefined;
 };
 

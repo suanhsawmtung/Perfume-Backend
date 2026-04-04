@@ -1,9 +1,9 @@
 import { PaymentMethod, PaymentStatus, Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
-import { ParsePaymentQueryParamsResult } from "../../types/payment";
+import { ListPaymentsParams, ParsePaymentQueryParamsResult } from "../../types/payment";
 
-export const parsePaymentQueryParams = (query: any): ParsePaymentQueryParamsResult => {
-  const pageSizeParam = Number(query.limit || query.pageSize);
+export const parsePaymentQueryParams = (query: ListPaymentsParams): ParsePaymentQueryParamsResult => {
+  const pageSizeParam = Number(query.limit);
   const pageSize = Number.isNaN(pageSizeParam) || pageSizeParam <= 0 ? 10 : Math.min(pageSizeParam, 50);
 
   const offsetParam = Number(query.offset);
