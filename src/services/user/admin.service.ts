@@ -3,44 +3,27 @@ import { hash } from "../../lib/hash";
 import { prisma } from "../../lib/prisma";
 import { generateCode } from "../../lib/unique-key-generator";
 import {
-    CreateUserParams,
-    ListUsersParams,
-    UpdateUserParams,
-    UpdateUserRoleParams,
-    UpdateUserStatusParams,
+  CreateUserParams,
+  ListUsersParams,
+  UpdateUserParams,
+  UpdateUserRoleParams,
+  UpdateUserStatusParams
 } from "../../types/user";
 import { createError } from "../../utils/common";
 import { getFilePath, removeFile } from "../../utils/file";
 import {
-    buildUserWhere,
-    createUserRecord,
-    deleteUserRecord,
-    findUserByEmail,
-    findUserByEmailExcludingId,
-    findUserByUsername,
-    generateUsername,
-    requireUsername,
-    updateUserRecord,
-    updateUserRoleRecord,
-    updateUserStatusRecord,
+  buildUserWhere,
+  createUserRecord,
+  deleteUserRecord,
+  findUserByEmail,
+  findUserByEmailExcludingId,
+  findUserByUsername,
+  generateUsername,
+  requireUsername,
+  updateUserRecord,
+  updateUserRoleRecord,
+  updateUserStatusRecord
 } from "./user.helpers";
-
-export const listPublicUsers = async (limit?: number, cursor?: number) => {
-  return await prisma.user.findMany({
-    where: {
-      deletedAt: null,
-    },
-    ...(limit ? { take: limit } : {}),
-    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      username: true,
-    },
-    orderBy: { id: "asc" },
-  });
-};
 
 export const listUsers = async ({
   pageSize,

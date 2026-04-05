@@ -58,3 +58,43 @@ export const updateUserStatusValidation = [
     .isIn(Object.values(Status))
     .withMessage(`Status must be one of: ${Object.values(Status).join(", ")}.`),
 ];
+
+export const updateMeValidation = [
+  body("firstName")
+    .optional()
+    .trim()
+    .isLength({ max: 52 })
+    .withMessage("First name must be at most 52 characters."),
+  body("lastName")
+    .optional()
+    .trim()
+    .isLength({ max: 52 })
+    .withMessage("Last name must be at most 52 characters."),
+  body("phone")
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 15 })
+    .withMessage("Phone must be between 1 and 15 characters.")
+    .matches("^[0-9]+$")
+    .withMessage("Phone must contain only numbers."),
+];
+
+export const changePasswordValidation = [
+  body("oldPassword")
+    .notEmpty()
+    .withMessage("Old password is required."),
+  body("newPassword")
+    .notEmpty()
+    .withMessage("New password is required.")
+    .isLength({ min: 6 })
+    .withMessage("New password must be at least 6 characters."),
+  body("confirmPassword")
+    .notEmpty()
+    .withMessage("Confirm password is required.")
+    .custom((value, { req }) => {
+      if (value !== req.body.newPassword) {
+        throw new Error("Password confirmation does not match password.");
+      }
+      return true;
+    }),
+];

@@ -37,6 +37,18 @@ export type UpdateUserStatusParams = {
   status: Status;
 };
 
+export type UpdateMeParams = {
+  firstName?: string | undefined;
+  lastName?: string | undefined;
+  phone?: string | undefined;
+  imageFilename?: string | undefined;
+};
+
+export type ChangePasswordParams = {
+  oldPassword: string;
+  newPassword: string;
+};
+
 export type ParseUserQueryParamsResult = {
   pageSize: number;
   offset: number;

@@ -1,7 +1,7 @@
 import { NextFunction, Response } from "express";
 import { errorCode } from "../../../config/error-code";
+import * as UserService from "../../services/user/admin.service";
 import { parseUserQueryParams } from "../../services/user/user.helpers";
-import * as UserService from "../../services/user/user.service";
 import { CustomRequest } from "../../types/common";
 import { createError } from "../../utils/common";
 
