@@ -58,6 +58,14 @@ export const listInventories = async (params: ListInventoriesParams) => {
 export const createInventory = async (params: CreateInventoryParams & { createdById: number }) => {
   const { productVariantId, type, quantity, unitCost, createdById } = params;
 
+  if (type === InventoryType.SALE) {
+    throw createError({
+      message: "Manual creation of sales records is not allowed",
+      status: 400,
+      code: errorCode.invalid,
+    });
+  }
+
   return await prisma.$transaction(async (tx) => {
     const variant = await tx.productVariant.findUnique({
       where: { id: productVariantId },
