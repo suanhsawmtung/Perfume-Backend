@@ -525,6 +525,7 @@ export const updateOrder = async (code: string, params: UpdateOrderParams) => {
               quantity: reservation.quantity,
               unitCost: avgCost,
               totalCost: cost,
+              createdById: existingOrder.userId,
             },
           });
         }

@@ -6,6 +6,7 @@ import {
 } from "../../middlewares/rate-limiter";
 import adminBrandRoutes from "./admin/brand";
 import adminCategoryRoutes from "./admin/category";
+import adminDashboardRoutes from "./admin/dashboard";
 import adminInventoryRoutes from "./admin/inventory";
 import adminOrderRoutes from "./admin/order";
 import adminPaymentRoutes from "./admin/payment";
@@ -42,6 +43,7 @@ router.use("/admin/refunds", normalLimiter, adminRefundRoutes);
 router.use("/admin/payments", normalLimiter, adminPaymentRoutes);
 router.use("/admin/transactions", normalLimiter, adminTransactionRoutes);
 router.use("/admin/inventories", normalLimiter, adminInventoryRoutes);
+router.use("/admin/dashboard", normalLimiter, adminDashboardRoutes);
 
 router.use("/auth-check", authCheckLimiter, authCheckRoutes);
 router.use("/brands", brandRoutes);

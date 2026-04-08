@@ -71,7 +71,7 @@ model Inventory {
 
   // 🔗 Relations
   productVariant ProductVariant @relation(fields: [productVariantId], references: [id])
-  createdBy      User?          @relation(fields: [createdById], references: [id])
+  createdBy      User?         @relation(fields: [createdById], references: [id])
 
   @@index([productVariantId])
   @@index([type])
