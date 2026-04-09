@@ -36,7 +36,7 @@ export const listBrands = async ({
     where,
     take: pageSize,
     skip: offset,
-    orderBy: { id: "desc" },
+    orderBy: { createdAt: "desc" },
     include: {
       _count: {
         select: {
@@ -61,7 +61,7 @@ export const listPublicBrands = async () => {
       name: true,
       slug: true,
     },
-    orderBy: { id: "asc" },
+    orderBy: { createdAt: "asc" },
   });
 };
 

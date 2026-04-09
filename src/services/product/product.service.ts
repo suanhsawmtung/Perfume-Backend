@@ -56,7 +56,7 @@ export const listPublicProducts = async (limit?: number, cursor?: number) => {
         },
       },
     },
-    orderBy: { id: "asc" },
+    orderBy: { createdAt: "asc" },
   });
 };
 
@@ -87,7 +87,7 @@ export const listProducts = async ({
     where,
     take: pageSize,
     skip: offset,
-    orderBy: { id: "desc" },
+    orderBy: { createdAt: "desc" },
     select: {
       name: true,
       slug: true,

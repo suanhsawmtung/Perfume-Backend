@@ -30,7 +30,7 @@ export const listPublicUsers = async (limit?: number, cursor?: number) => {
       lastName: true,
       username: true,
     },
-    orderBy: { id: "asc" },
+    orderBy: { createdAt: "asc" },
   });
 };
 

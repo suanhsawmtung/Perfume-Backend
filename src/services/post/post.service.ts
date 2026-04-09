@@ -42,7 +42,7 @@ export const listPosts = async ({
     where,
     take: pageSize,
     skip: offset,
-    orderBy: { id: "desc" },
+    orderBy: { createdAt: "desc" },
     include: {
       author: {
         select: {

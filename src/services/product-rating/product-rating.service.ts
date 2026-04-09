@@ -74,7 +74,7 @@ export const listProductRatingSummary = async (
     where,
     take: pageSize,
     skip: offset,
-    orderBy: { id: "desc" },
+    orderBy: { createdAt: "desc" },
     select: {
       id: true,
       name: true,

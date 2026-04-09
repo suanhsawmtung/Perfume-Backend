@@ -15,7 +15,7 @@ export const listInventories = async (params: ListInventoriesParams) => {
       where,
       take: pageSize,
       skip: offset,
-      orderBy: { id: "desc" },
+      orderBy: { createdAt: "desc" },
       include: {
         productVariant: {
           select: {

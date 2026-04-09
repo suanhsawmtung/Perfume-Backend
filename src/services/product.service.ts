@@ -81,7 +81,7 @@ export const getAllProducts = async ({
     where,
     take: pageSize,
     skip: offset,
-    orderBy: { id: "desc" },
+    orderBy: { createdAt: "desc" },
     select: {
       name: true,
       slug: true,

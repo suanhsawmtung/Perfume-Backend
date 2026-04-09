@@ -40,7 +40,7 @@ export const listCategories = async ({
     where,
     take: pageSize,
     skip: offset,
-    orderBy: { id: "desc" },
+    orderBy: { createdAt: "desc" },
     include: {
       _count: {
         select: {
@@ -65,7 +65,7 @@ export const listPublicCategories = async () => {
       name: true,
       slug: true,
     },
-    orderBy: { id: "asc" },
+    orderBy: { createdAt: "asc" },
   });
 };
 

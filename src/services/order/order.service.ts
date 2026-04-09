@@ -53,7 +53,7 @@ export const listOrders = async ({
     where,
     take: pageSize,
     skip: offset,
-    orderBy: { id: "desc" },
+    orderBy: { createdAt: "desc" },
     include: {
       user: {
         select: {

@@ -48,7 +48,7 @@ export const listUsers = async ({
     where,
     take: pageSize,
     skip: offset,
-    orderBy: { id: "desc" },
+    orderBy: { createdAt: "desc" },
     omit: {
       password: true,
       randToken: true,
