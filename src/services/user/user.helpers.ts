@@ -62,7 +62,7 @@ export const buildUserWhere = ({
   role,
   status,
 }: BuildUserWhereParams): Prisma.UserWhereInput => {
-  const whereConditions: Prisma.UserWhereInput[] = [];
+  const whereConditions: Prisma.UserWhereInput[] = [{ deletedAt: null }];
 
   if (authenticatedUserId) {
     whereConditions.push({ id: { not: authenticatedUserId } });
@@ -237,8 +237,10 @@ export const updateUserStatusRecord = async (id: number, status: Status) => {
 };
 
 export const deleteUserRecord = async (id: number) => {
-  return await prisma.user.delete({
+  return await prisma.user.update({
     where: { id },
+    data: { deletedAt: new Date() },
+    omit: userOmit,
   });
 };
 
