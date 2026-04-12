@@ -1,8 +1,10 @@
 import { NextFunction, Response } from "express";
 import { errorCode } from "../../../config/error-code";
-import * as RefundService from "../../services/refund/refund.service";
+import { AdminRefundService } from "../../services/refund/admin.service";
 import { CustomRequest } from "../../types/common";
 import { createError } from "../../utils/common";
+
+const adminRefundService = new AdminRefundService();
 
 export const listRefunds = async (
   req: CustomRequest,
@@ -10,13 +12,8 @@ export const listRefunds = async (
   next: NextFunction
 ) => {
   try {
-    const result = await RefundService.listRefunds(req.query);
-
-    return res.status(200).json({
-      success: true,
-      data: result,
-      message: null,
-    });
+    const result = await adminRefundService.listRefunds(req.query);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -31,21 +28,15 @@ export const getRefundDetail = async (
     const id = Number(req.params.id);
 
     if (isNaN(id)) {
-      const error = createError({
+      throw createError({
         message: "Valid Refund ID is required.",
         status: 400,
         code: errorCode.invalid,
       });
-      return next(error);
     }
 
-    const refund = await RefundService.getRefundDetail(id);
-
-    return res.status(200).json({
-      success: true,
-      data: { refund },
-      message: null,
-    });
+    const result = await adminRefundService.getRefundDetail(id);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -57,13 +48,8 @@ export const createRefund = async (
   next: NextFunction
 ) => {
   try {
-    const refund = await RefundService.createRefund(req.body);
-
-    return res.status(201).json({
-      success: true,
-      data: { refund },
-      message: "Refund created successfully.",
-    });
+    const result = await adminRefundService.createRefund(req.body);
+    return res.status(201).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -78,21 +64,15 @@ export const updateRefund = async (
     const id = Number(req.params.id);
 
     if (isNaN(id)) {
-      const error = createError({
+      throw createError({
         message: "Valid Refund ID is required.",
         status: 400,
         code: errorCode.invalid,
       });
-      return next(error);
     }
 
-    const refund = await RefundService.updateRefund(id, req.body);
-
-    return res.status(200).json({
-      success: true,
-      data: { refund },
-      message: "Refund updated successfully.",
-    });
+    const result = await adminRefundService.updateRefund(id, req.body);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -107,21 +87,15 @@ export const voidRefund = async (
     const id = Number(req.params.id);
 
     if (isNaN(id)) {
-      const error = createError({
+      throw createError({
         message: "Valid Refund ID is required.",
         status: 400,
         code: errorCode.invalid,
       });
-      return next(error);
     }
 
-    await RefundService.voidRefund(id);
-
-    return res.status(200).json({
-      success: true,
-      data: null,
-      message: "Refund voided successfully.",
-    });
+    const result = await adminRefundService.deleteRefund(id);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }

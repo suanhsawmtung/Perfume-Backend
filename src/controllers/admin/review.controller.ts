@@ -1,7 +1,9 @@
 import { NextFunction, Response } from "express";
+import { AdminReviewService } from "../../services/review/admin.service";
 import { parseReviewQueryParams, requireReviewId } from "../../services/review/review.helpers";
-import * as ReviewService from "../../services/review/review.service";
 import { CustomRequest } from "../../types/common";
+
+const adminReviewService = new AdminReviewService();
 
 export const listReviews = async (
   req: CustomRequest,
@@ -11,28 +13,14 @@ export const listReviews = async (
   try {
     const queryParams = parseReviewQueryParams(req.query);
 
-    const {
-      items: reviews,
-      currentPage,
-      totalPages,
-      pageSize,
-    } = await ReviewService.listReviews({
+    const result = await adminReviewService.listReviews({
       ...queryParams,
-      isPublish: queryParams.status === "publish" ? true : queryParams.status === "unpublish" ? false : undefined,
-      username: queryParams.user,
-      productSlug: queryParams.product,
+      isPublish: queryParams.isPublish,
+      username: queryParams.username,
+      productSlug: queryParams.productSlug,
     });
 
-    res.status(200).json({
-      success: true,
-      data: {
-        reviews,
-        currentPage,
-        totalPages,
-        pageSize,
-      },
-      message: null,
-    });
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -45,14 +33,8 @@ export const getReview = async (
 ) => {
   try {
     const id = requireReviewId(Number(req.params.id));
-
-    const review = await ReviewService.getReviewDetail(id);
-
-    res.status(200).json({
-      success: true,
-      data: { review },
-      message: null,
-    });
+    const result = await adminReviewService.getReviewDetail(id);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -65,14 +47,8 @@ export const togglePublishing = async (
 ) => {
   try {
     const id = requireReviewId(Number(req.params.id));
-
-    const review = await ReviewService.togglePublishing(id);
-
-    res.status(200).json({
-      success: true,
-      data: { review },
-      message: `Review ${review.isPublish ? "published" : "unpublished"} successfully.`,
-    });
+    const result = await adminReviewService.togglePublishing(id);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }

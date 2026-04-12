@@ -1,11 +1,11 @@
-import { PostStatus } from "@prisma/client";
 import { NextFunction, Response } from "express";
 import { errorCode } from "../../../config/error-code";
-import { parsePostQueryParams } from "../../services/post/post.helpers";
-import * as PostService from "../../services/post/post.service";
+import { AdminPostService } from "../../services/post/admin.service";
 import { CustomRequest } from "../../types/common";
 import { createError } from "../../utils/common";
 import { cleanupUploadedFiles } from "../../utils/file-cleanup";
+
+const adminPostService = new AdminPostService();
 
 export const listPosts = async (
   req: CustomRequest,
@@ -13,28 +13,11 @@ export const listPosts = async (
   next: NextFunction
 ) => {
   try {
-    const queryParams = parsePostQueryParams(req.query);
-
-    const {
-      items: posts,
-      currentPage,
-      totalPages,
-      pageSize,
-    } = await PostService.listPosts({
-      ...queryParams,
-      ...(req.userId ? { authenticatedUserId: req.userId } : {}),
+    const result = await adminPostService.listPosts({
+      ...req.query,
+      ...(req.userId && { authenticatedUserId: req.userId }),
     });
-
-    res.status(200).json({
-      success: true,
-      data: {
-        posts,
-        currentPage,
-        totalPages,
-        pageSize,
-      },
-      message: null,
-    });
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -49,21 +32,15 @@ export const getPost = async (
     const { slug } = req.params;
 
     if (!slug) {
-      const error = createError({
+      throw createError({
         message: "Slug parameter is required.",
         status: 400,
         code: errorCode.invalid,
       });
-      return next(error);
     }
 
-    const post = await PostService.getPostDetail(slug, req.userId);
-
-    res.status(200).json({
-      success: true,
-      data: { post },
-      message: null,
-    });
+    const result = await adminPostService.getPostDetail(slug);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -75,26 +52,17 @@ export const createPost = async (
   next: NextFunction
 ) => {
   try {
-    const { title, excerpt, content, categoryId } = req.body;
     const file = (req as any).file as Express.Multer.File | undefined;
 
-    const post = await PostService.createPost({
-      title,
-      excerpt,
-      content,
-      status: PostStatus.DRAFT,
-      categoryId,
-      ...(file?.filename && { imageFilename: file.filename }),
-      ...(req.userId ? { authenticatedUserId: req.userId } : {}),
+    const result = await adminPostService.createPost({
+      ...req.body,
+      imageFilename: file?.filename,
+      authenticatedUserId: req.userId,
     });
 
     (req as any).uploadedFiles = [];
 
-    res.status(201).json({
-      success: true,
-      data: { post },
-      message: "Post created successfully.",
-    });
+    return res.status(201).json(result);
   } catch (error: any) {
     await cleanupUploadedFiles(req);
     next(error);
@@ -108,36 +76,26 @@ export const updatePost = async (
 ) => {
   try {
     const { slug } = req.params;
-    const { title, excerpt, content, status, categoryId } = req.body;
-    const file = (req as any).file as Express.Multer.File | undefined;
 
     if (!slug) {
-      const error = createError({
+      throw createError({
         message: "Slug parameter is required.",
         status: 400,
         code: errorCode.invalid,
       });
-      await cleanupUploadedFiles(req);
-      return next(error);
     }
 
-    const post = await PostService.updatePost(slug, {
-      title,
-      excerpt,
-      content,
-      status,
-      categoryId,
-      ...(file?.filename && { imageFilename: file.filename }),
-      ...(req.userId ? { authenticatedUserId: req.userId } : {}),
+    const file = (req as any).file as Express.Multer.File | undefined;
+
+    const result = await adminPostService.updatePost(slug, {
+      ...req.body,
+      imageFilename: file?.filename,
+      authenticatedUserId: req.userId,
     });
 
     (req as any).uploadedFiles = [];
 
-    res.status(200).json({
-      success: true,
-      data: { post },
-      message: "Post updated successfully.",
-    });
+    return res.status(200).json(result);
   } catch (error: any) {
     await cleanupUploadedFiles(req);
     next(error);
@@ -153,21 +111,15 @@ export const deletePost = async (
     const { slug } = req.params;
 
     if (!slug) {
-      const error = createError({
+      throw createError({
         message: "Slug parameter is required.",
         status: 400,
         code: errorCode.invalid,
       });
-      return next(error);
     }
 
-    await PostService.deletePost(slug, req.userId);
-
-    res.status(200).json({
-      success: true,
-      data: null,
-      message: "Post deleted successfully.",
-    });
+    const result = await adminPostService.deletePost(slug);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }

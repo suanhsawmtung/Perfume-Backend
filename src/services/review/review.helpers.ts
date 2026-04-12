@@ -76,17 +76,19 @@ export const parseReviewQueryParams = (query: any): ParseReviewQueryParamsResult
       ? query.search.trim()
       : undefined;
 
-  let status: "publish" | "unpublish" | undefined;
-  if (query.status === "publish" || query.status === "unpublish") {
-    status = query.status;
+  let isPublish: boolean | undefined;
+  if (query.status === "publish") {
+    isPublish = true;
+  } else if (query.status === "unpublish") {
+    isPublish = false;
   }
 
-  const user =
+  const username =
     typeof query.user === "string" && query.user.trim().length > 0
       ? query.user.trim()
       : undefined;
 
-  const product =
+  const productSlug =
     typeof query.product === "string" && query.product.trim().length > 0
       ? query.product.trim()
       : undefined;
@@ -95,9 +97,9 @@ export const parseReviewQueryParams = (query: any): ParseReviewQueryParamsResult
     pageSize,
     offset,
     search,
-    status,
-    user,
-    product,
+    isPublish,
+    username,
+    productSlug,
   };
 };
 
@@ -149,6 +151,12 @@ export const updateReviewRecord = async (id: number, data: Prisma.ReviewUpdateIn
         },
       },
     },
+  });
+};
+
+export const deleteReviewRecord = async (id: number) => {
+  return await prisma.review.delete({
+    where: { id },
   });
 };
 

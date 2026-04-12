@@ -1,6 +1,10 @@
 import { NextFunction, Response } from "express";
-import { listPublicProducts as listPublicProductsService } from "../../services/product/product.service";
+import { errorCode } from "../../../config/error-code";
+import { PublicProductService } from "../../services/product/public.service";
 import { CustomRequest } from "../../types/common";
+import { createError } from "../../utils/common";
+
+const publicProductService = new PublicProductService();
 
 export const listPublicProducts = async (
   req: CustomRequest,
@@ -8,22 +12,31 @@ export const listPublicProducts = async (
   next: NextFunction
 ) => {
   try {
-    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
-    const cursor = req.query.cursor ? parseInt(req.query.cursor as string, 10) : undefined;
+    const result = await publicProductService.listProducts(req.query);
+    return res.status(200).json(result);
+  } catch (error: any) {
+    next(error);
+  }
+};
 
-    const products = await listPublicProductsService(limit, cursor);
+export const getPublicProduct = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { slug } = req.params;
 
-    const nextCursor =
-      limit && products.length > 0 ? products[products.length - 1]?.id : null;
+    if (!slug) {
+      throw createError({
+        message: "Slug parameter is required.",
+        status: 400,
+        code: errorCode.invalid,
+      });
+    }
 
-    res.status(200).json({
-      success: true,
-      data: {
-        products,
-        nextCursor,
-      },
-      message: null,
-    });
+    const result = await publicProductService.getProductDetail(slug);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }

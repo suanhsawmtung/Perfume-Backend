@@ -1,11 +1,8 @@
 import { prisma } from "../src/lib/prisma";
-import { createOrUpdateSetting } from "../src/services/setting.service";
 import { createCache, removeCache } from "../src/utils/cache";
 
 async function setMaintenanceMode(mode: "on" | "off") {
   try {
-    const setting = await createOrUpdateSetting("maintenance", mode);
-
     if (mode === "on") {
       await createCache(".maintenance");
     } else {
@@ -13,7 +10,6 @@ async function setMaintenanceMode(mode: "on" | "off") {
     }
 
     console.log(`✅ Maintenance mode: ${mode.toUpperCase()}`);
-    return setting;
   } catch (error) {
     console.error("❌ Error updating maintenance mode:", error);
     process.exit(1);

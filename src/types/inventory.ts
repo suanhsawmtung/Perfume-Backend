@@ -1,4 +1,4 @@
-import { InventoryType } from "@prisma/client";
+import { Inventory, InventoryType } from "@prisma/client";
 
 export interface CreateInventoryParams {
   productVariantId: number;
@@ -21,3 +21,25 @@ export interface ParseInventoryQueryParamsResult {
   search?: string | undefined;
   type: string;
 }
+
+export type ListInventoryT = Inventory & {
+  productVariant: {
+    id: number;
+    sku: string;
+    product: {
+      id: number;
+      name: string;
+    };
+  };
+  createdBy: {
+    id: number;
+    username: string;
+  } | null;
+};
+
+export type ListInventoryResultT = {
+  items: ListInventoryT[];
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+};

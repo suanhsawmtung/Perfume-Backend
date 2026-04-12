@@ -1,127 +1,52 @@
-import { Prisma } from "@prisma/client";
-import { errorCode } from "../../../config/error-code";
-import { compareHashed, hash } from "../../lib/hash";
 import { prisma } from "../../lib/prisma";
-import {
-  ChangePasswordParams,
-  UpdateMeParams
-} from "../../types/user";
-import { createError } from "../../utils/common";
-import { getFilePath, removeFile } from "../../utils/file";
-import {
-  findUserById,
-  findUserByIdWithSensitive,
-  findUserByUsernameExcludingId,
-  generateUsername,
-  requireUserId,
-  updateUserRecord
-} from "./user.helpers";
+import { ServiceResponseT } from "../../types/common";
+import { PublicUserResultT, PublicUserT } from "../../types/user";
+import { IPublicUserService } from "./user.interface";
 
-export const listPublicUsers = async (limit?: number, cursor?: number) => {
-  return await prisma.user.findMany({
-    where: {
-      deletedAt: null,
-    },
-    ...(limit ? { take: limit } : {}),
-    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      username: true,
-    },
-    orderBy: { createdAt: "asc" },
-  });
-};
+export class PublicUserService implements IPublicUserService {
+  async listPublicUsers(
+    limit?: number,
+    offset?: number
+  ): Promise<ServiceResponseT<PublicUserResultT>> {
+    const pageSize = limit || 10;
+    const skip = offset || 0;
 
-export const getMe = async (userId: number) => {
-  const normalizedId = requireUserId(userId);
-  const user = await findUserById(normalizedId);
+    const [items, total] = await Promise.all([
+      prisma.user.findMany({
+        where: {
+          deletedAt: null,
+          status: "ACTIVE", // Usually only show active users publicly
+        },
+        take: pageSize,
+        skip,
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          username: true,
+        },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.user.count({
+        where: {
+          deletedAt: null,
+          status: "ACTIVE",
+        },
+      }),
+    ]);
 
-  if (!user) {
-    throw createError({
-      message: "User not found.",
-      status: 404,
-      code: errorCode.notFound,
-    });
+    const totalPages = Math.ceil(total / pageSize);
+    const currentPage = Math.floor(skip / pageSize) + 1;
+
+    return {
+      success: true,
+      data: {
+        items: items as PublicUserT[],
+        currentPage,
+        totalPages,
+        pageSize,
+      },
+      message: null,
+    };
   }
-
-  return user;
-};
-
-export const updateMe = async (userId: number, params: UpdateMeParams) => {
-  const { firstName, lastName, phone, imageFilename } = params;
-  const normalizedId = requireUserId(userId);
-
-  const existing = await findUserById(normalizedId);
-  if (!existing) {
-    throw createError({
-      message: "User not found.",
-      status: 404,
-      code: errorCode.notFound,
-    });
-  }
-
-  const trimmedFirstName = firstName?.trim() || null;
-  const trimmedLastName = lastName?.trim() || null;
-  const trimmedPhone = phone?.trim() || null;
-
-  // New username if name changed
-  const newUsername = await generateUsername(trimmedFirstName, trimmedLastName);
-
-  if (newUsername !== existing.username) {
-    const existingByUsername = await findUserByUsernameExcludingId(newUsername, existing.id);
-    if (existingByUsername) {
-      throw createError({
-        message: "User with this username already exists.",
-        status: 409,
-        code: errorCode.alreadyExists,
-      });
-    }
-  }
-
-  const updateData: Prisma.UserUpdateInput = {
-    firstName: trimmedFirstName,
-    lastName: trimmedLastName,
-    username: newUsername,
-    phone: trimmedPhone,
-  };
-
-  if (imageFilename) {
-    if (existing.image) {
-      const oldImagePath = getFilePath("uploads", "images", "user", existing.image);
-      removeFile(oldImagePath);
-    }
-    updateData.image = imageFilename;
-  }
-
-  return await updateUserRecord(existing.id, updateData);
-};
-
-export const changePassword = async (userId: number, params: ChangePasswordParams) => {
-  const { oldPassword, newPassword } = params;
-  const normalizedId = requireUserId(userId);
-
-  const user = await findUserByIdWithSensitive(normalizedId);
-  if (!user) {
-    throw createError({
-      message: "User not found.",
-      status: 404,
-      code: errorCode.notFound,
-    });
-  }
-
-  const isMatch = await compareHashed(oldPassword, user.password);
-  if (!isMatch) {
-    throw createError({
-      message: "Current password does not match.",
-      status: 400,
-      code: errorCode.invalid,
-    });
-  }
-
-  const hashedPassword = await hash(newPassword);
-  await updateUserRecord(user.id, {
-    password: hashedPassword,
-  });
-};
+}

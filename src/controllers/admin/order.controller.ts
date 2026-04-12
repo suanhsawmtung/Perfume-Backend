@@ -1,9 +1,10 @@
 import { NextFunction, Response } from "express";
 import { errorCode } from "../../../config/error-code";
-import { parseOrderQueryParams } from "../../services/order/order.helpers";
-import * as OrderService from "../../services/order/order.service";
+import { AdminOrderService } from "../../services/order/admin.service";
 import { CustomRequest } from "../../types/common";
 import { createError } from "../../utils/common";
+
+const adminOrderService = new AdminOrderService();
 
 export const listOrders = async (
   req: CustomRequest,
@@ -11,25 +12,8 @@ export const listOrders = async (
   next: NextFunction
 ) => {
   try {
-    const queryParams = parseOrderQueryParams(req.query);
-
-    const {
-      items: orders,
-      currentPage,
-      totalPages,
-      pageSize,
-    } = await OrderService.listOrders(queryParams);
-
-    res.status(200).json({
-      success: true,
-      data: {
-        orders,
-        currentPage,
-        totalPages,
-        pageSize,
-      },
-      message: null,
-    });
+    const result = await adminOrderService.listOrders(req.query);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -44,21 +28,15 @@ export const getOrder = async (
     const { code } = req.params;
 
     if (!code) {
-      const error = createError({
+      throw createError({
         message: "Order code is required.",
         status: 400,
         code: errorCode.invalid,
       });
-      return next(error);
     }
 
-    const order = await OrderService.getOrderDetail(code);
-
-    res.status(200).json({
-      success: true,
-      data: { order },
-      message: null,
-    });
+    const result = await adminOrderService.getOrderDetail(code);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -70,30 +48,12 @@ export const createOrder = async (
   next: NextFunction
 ) => {
   try {
-    const {
-      status,
-      customerName,
-      customerPhone,
-      customerAddress,
-      customerNotes,
-      items,
-    } = req.body;
-
-    const order = await OrderService.createOrder({
-      status,
-      customerName,
-      customerPhone,
-      customerAddress,
-      customerNotes,
-      items,
-      ...(req.userId && { userId: req.userId }),
+    const result = await adminOrderService.createOrder({
+      ...req.body,
+      userId: req.userId,
     });
 
-    res.status(201).json({
-      success: true,
-      data: { order },
-      message: "Order created successfully.",
-    });
+    return res.status(201).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -108,44 +68,20 @@ export const updateOrder = async (
     const { code } = req.params;
 
     if (!code) {
-      const error = createError({
+      throw createError({
         message: "Order code is required.",
         status: 400,
         code: errorCode.invalid,
       });
-      return next(error);
     }
 
-    const {
-      status,
-      customerName,
-      customerPhone,
-      customerAddress,
-      customerNotes,
-      rejectedReason,
-      cancelledReason,
-      items,
-    } = req.body;
-
-    const order = await OrderService.updateOrder(code, {
-      status,
-      customerName,
-      customerPhone,
-      customerAddress,
-      customerNotes,
-      rejectedReason,
-      cancelledReason,
-      items,
+    const result = await adminOrderService.updateOrder(code, {
+      ...req.body,
       image: req.file?.filename,
     });
 
-    res.status(200).json({
-      success: true,
-      data: { order },
-      message: "Order updated successfully.",
-    });
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
 };
-

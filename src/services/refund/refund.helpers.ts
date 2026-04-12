@@ -1,6 +1,6 @@
 import { Prisma, RefundStatus } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
-import type { BuildRefundWhereParams, ParseRefundQueryParamsResult } from "../../types/refund";
+import type { ListRefundsParams, ParseRefundQueryParamsResult } from "../../types/refund";
 
 export const parseRefundQueryParams = (
   query: any
@@ -35,10 +35,10 @@ export const parseRefundQueryParams = (
   };
 };
 
-export const buildRefundWhere = ({
+export const buildRefundWhereClause = ({
   search,
   status
-}: BuildRefundWhereParams): Prisma.RefundWhereInput => {
+}: ListRefundsParams): Prisma.RefundWhereInput => {
   const where: Prisma.RefundWhereInput = {
     deletedAt: null,
   };

@@ -1,8 +1,10 @@
 import { NextFunction, Response } from "express";
 import { errorCode } from "../../../config/error-code";
-import * as InventoryService from "../../services/inventory/inventory.service";
+import { AdminInventoryService } from "../../services/inventory/admin.service";
 import { CustomRequest } from "../../types/common";
 import { createError } from "../../utils/common";
+
+const adminInventoryService = new AdminInventoryService();
 
 export const listInventories = async (
   req: CustomRequest,
@@ -18,21 +20,12 @@ export const listInventories = async (
         code: errorCode.invalid,
       });
     }
- 
-    const { limit, offset, search } = req.query;
- 
-    const data = await InventoryService.listInventories({
+
+    const result = await adminInventoryService.listInventories({
+      ...req.query,
       type,
-      limit: limit ? Number(limit) : undefined,
-      offset: offset ? Number(offset) : undefined,
-      search: search as string,
     });
- 
-    return res.status(200).json({
-      success: true,
-      data,
-      message: null,
-    });
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -44,22 +37,12 @@ export const createInventory = async (
   next: NextFunction
 ) => {
   try {
-    const { productVariantId, type, quantity, unitCost } = req.body;
-    const adminId = req.userId!;
-
-    const inventory = await InventoryService.createInventory({
-      productVariantId: Number(productVariantId),
-      type,
-      quantity: Number(quantity),
-      unitCost: unitCost ? Number(unitCost) : undefined,
+    const adminId = req.userId;
+    const result = await adminInventoryService.createInventory({
+      ...req.body,
       createdById: adminId,
     });
-
-    return res.status(201).json({
-      success: true,
-      data: inventory,
-      message: "Inventory record created successfully.",
-    });
+    return res.status(201).json(result);
   } catch (error: any) {
     next(error);
   }

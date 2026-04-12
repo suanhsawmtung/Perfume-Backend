@@ -1,9 +1,10 @@
 import { NextFunction, Response } from "express";
 import { errorCode } from "../../../config/error-code";
-import { parseBrandQueryParams } from "../../services/brand/brand.helpers";
-import * as BrandService from "../../services/brand/brand.service";
+import { AdminBrandService } from "../../services/brand/admin.service";
 import { CustomRequest } from "../../types/common";
 import { createError } from "../../utils/common";
+
+const adminBrandService = new AdminBrandService();
 
 export const listBrands = async (
   req: CustomRequest,
@@ -11,25 +12,9 @@ export const listBrands = async (
   next: NextFunction
 ) => {
   try {
-    const queryParams = parseBrandQueryParams(req.query);
+    const result = await adminBrandService.listBrands(req.query);
 
-    const {
-      items: brands,
-      currentPage,
-      totalPages,
-      pageSize,
-    } = await BrandService.listBrands(queryParams);
-
-    res.status(200).json({
-      success: true,
-      data: {
-        brands,
-        currentPage,
-        totalPages,
-        pageSize,
-      },
-      message: null,
-    });
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -49,16 +34,13 @@ export const getBrand = async (
         status: 400,
         code: errorCode.invalid,
       });
-      return next(error);
+      
+      throw error;
     }
 
-    const brand = await BrandService.getBrandDetail(slug);
+    const result = await adminBrandService.getBrandDetail(slug);
 
-    res.status(200).json({
-      success: true,
-      data: { brand },
-      message: null,
-    });
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -72,13 +54,9 @@ export const createBrand = async (
   try {
     const { name } = req.body;
 
-    const brand = await BrandService.createBrand({ name });
+    const result = await adminBrandService.createBrand({ name });
 
-    res.status(201).json({
-      success: true,
-      data: { brand },
-      message: "Brand created successfully.",
-    });
+    return res.status(201).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -99,18 +77,14 @@ export const updateBrand = async (
         status: 400,
         code: errorCode.invalid,
       });
-      return next(error);
+      throw error;
     }
 
-    const brand = await BrandService.updateBrand(slug, {
+    const result = await adminBrandService.updateBrand(slug, {
       name,
     });
 
-    res.status(200).json({
-      success: true,
-      data: { brand },
-      message: "Brand updated successfully.",
-    });
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -130,16 +104,12 @@ export const deleteBrand = async (
         status: 400,
         code: errorCode.invalid,
       });
-      return next(error);
+      throw error;
     }
 
-    await BrandService.deleteBrand(slug);
+    const result = await adminBrandService.deleteBrand(slug);
 
-    res.status(200).json({
-      success: true,
-      data: null,
-      message: "Brand deleted successfully.",
-    });
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }

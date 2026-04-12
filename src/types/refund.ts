@@ -1,4 +1,4 @@
-import { RefundStatus } from "@prisma/client";
+import { Refund, RefundStatus } from "@prisma/client";
 
 export interface ListRefundsParams {
   limit?: number;
@@ -14,8 +14,6 @@ export interface ParseRefundQueryParamsResult {
   status?: RefundStatus | undefined;
 }
 
-export type BuildRefundWhereParams = Omit<ListRefundsParams, "limit" | "offset">;
-
 export interface CreateRefundParams {
   orderCode: string;
   amount: number;
@@ -25,3 +23,17 @@ export interface CreateRefundParams {
 export interface UpdateRefundParams {
   reason?: string;
 }
+
+export type ListRefundT = Refund & {
+  order: {
+    id: number;
+    code: string;
+  };
+};
+
+export type ListRefundResultT = {
+  items: ListRefundT[];
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+};

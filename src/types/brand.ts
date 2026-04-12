@@ -1,6 +1,8 @@
+import { Brand } from "@prisma/client";
+
 export type ListBrandsParams = {
-  pageSize: number;
-  offset: number;
+  limit?: number;
+  offset?: number;
   search?: string | undefined;
 };
 
@@ -17,3 +19,24 @@ export type ParseBrandQueryParamsResult = {
   offset: number;
   search?: string | undefined;
 };
+
+export type ListPublicBrandT = {
+  id: number;
+  name: string;
+  slug: string;
+};
+
+export type ListBrandT = Brand & {
+  _count: {
+    products: number;
+  };
+};
+
+export type ListBrandResultT = {
+  items: ListBrandT[];
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+};
+  
+

@@ -80,6 +80,7 @@ export const findPostDetail = async (slug: string) => {
           lastName: true,
           phone: true,
           email: true,
+          username: true,
         },
       },
       category: true,

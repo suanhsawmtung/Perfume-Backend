@@ -1,7 +1,8 @@
 import { NextFunction, Response } from "express";
-import { parseDashboardQueryParams } from "../../services/dashboard/dashboard.helpers";
-import * as dashboardService from "../../services/dashboard/dashboard.service";
+import { DashboardService } from "../../services/dashboard/dashboard.service";
 import { CustomRequest } from "../../types/common";
+
+const dashboardService = new DashboardService();
 
 export const getDashboardData = async (
   req: CustomRequest,
@@ -9,14 +10,9 @@ export const getDashboardData = async (
   next: NextFunction
 ) => {
   try {
-    const filter = parseDashboardQueryParams(req.query);
-    const data = await dashboardService.getDashboardData(filter);
+    const result = await dashboardService.getDashboardData(req.query);
 
-    res.status(200).json({
-      success: true,
-      data,
-      message: null,
-    });
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }

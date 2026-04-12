@@ -1,6 +1,8 @@
+import { Category } from "@prisma/client";
+
 export type ListCategoriesParams = {
-  pageSize: number;
-  offset: number;
+  pageSize?: number;
+  offset?: number;
   search?: string | undefined;
 };
 
@@ -16,4 +18,23 @@ export type ParseCategoryQueryParamsResult = {
   pageSize: number;
   offset: number;
   search?: string | undefined;
+};
+
+export type ListPublicCategoryT = {
+  id: number;
+  name: string;
+  slug: string;
+};
+
+export type ListCategoryT = Category & {
+  _count: {
+    posts: number;
+  };
+};
+
+export type ListCategoryResultT = {
+  items: ListCategoryT[];
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
 };

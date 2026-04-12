@@ -1,4 +1,4 @@
-import { PaymentMethod, PaymentStatus } from "@prisma/client";
+import { Payment, PaymentMethod, PaymentStatus } from "@prisma/client";
 
 export interface ListPaymentsParams {
   limit?: number | undefined;
@@ -31,3 +31,17 @@ export interface UpdatePaymentParams {
   paidAt?: Date | undefined;
   method?: PaymentMethod | undefined;
 }
+
+export type ListPaymentT = Payment & {
+  order: {
+    id: number;
+    code: string;
+  };
+};
+
+export type ListPaymentResultT = {
+  items: ListPaymentT[];
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+};

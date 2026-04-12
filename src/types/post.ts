@@ -1,15 +1,32 @@
-import { PostStatus } from "@prisma/client";
+import { Post, PostStatus, User, Category } from "@prisma/client";
 
 export type ListPostsParams = {
-  pageSize: number;
-  offset: number;
+  limit?: number | string;
+  offset?: number | string;
   authenticatedUserId?: number;
   search?: string | undefined;
   categorySlug?: string | undefined;
   status?: PostStatus | undefined;
 };
 
-export type BuildPostWhereParams = Omit<ListPostsParams, "pageSize" | "offset">;
+export type ListPostT = Post & {
+  author: Pick<User, "id" | "firstName" | "lastName" | "username">;
+  category: Pick<Category, "name" | "slug">;
+};
+
+export type ListPostResultT = {
+  items: ListPostT[];
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+};
+
+export type BuildPostWhereParams = {
+  authenticatedUserId?: number;
+  search?: string | undefined;
+  categorySlug?: string | undefined;
+  status?: PostStatus | undefined;
+};
 
 export type CreatePostParams = {
   title: string;

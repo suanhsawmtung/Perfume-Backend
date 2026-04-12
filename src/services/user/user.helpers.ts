@@ -11,7 +11,7 @@ import { createError, createSlug } from "../../utils/common";
 const userOmit = {
   password: true,
   randToken: true,
-  errorLoginCount: true,
+  previousRandToken: true,
 };
 
 export const parseUserQueryParams = (

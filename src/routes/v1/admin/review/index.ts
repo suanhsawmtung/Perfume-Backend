@@ -3,7 +3,7 @@ import express, { Router } from "express";
 import {
   getReview,
   listReviews,
-  togglePublishing,
+  togglePublishing
 } from "../../../../controllers/admin/review.controller";
 import { permit } from "../../../../middlewares/check-permissions";
 import { isAuthenticated } from "../../../../middlewares/ensure-authenticated";
@@ -30,5 +30,12 @@ router.patch(
   permit(true, Role.ADMIN),
   togglePublishing
 );
+
+// router.delete(
+//   "/:id",
+//   isAuthenticated,
+//   permit(true, Role.ADMIN),
+//   deleteReview
+// );
 
 export default router;

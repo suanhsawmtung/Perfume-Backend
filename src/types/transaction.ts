@@ -1,4 +1,4 @@
-import { TransactionDirection, TransactionType } from "@prisma/client";
+import { Transaction, TransactionDirection, TransactionType } from "@prisma/client";
 
 export interface ListTransactionsParams {
   limit?: string | number;
@@ -30,3 +30,19 @@ export interface UpdateTransactionParams {
   reference?: string;
   note?: string;
 }
+
+export type ListTransactionT = Transaction & {
+  createdBy: {
+    id: number;
+    username: string;
+    firstName: string | null;
+    lastName: string | null;
+  } | null;
+};
+
+export type ListTransactionResultT = {
+  items: ListTransactionT[];
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+};

@@ -1,3 +1,4 @@
+import { prisma } from "../../lib/prisma";
 import { Prisma } from "@prisma/client";
 import { ParseProductRatingQueryParamsResult } from "../../types/product-rating";
 
@@ -37,12 +38,12 @@ export const parseProductRatingQueryParams = (
   };
 };
 
-export const buildProductRatingWhere = (params: {
+export const buildProductRatingWhere = async (params: {
   search?: string | undefined;
-  productSlug?: string | undefined;
-  username?: string | undefined;
-}): Prisma.ProductRatingWhereInput => {
-  const { search, productSlug, username } = params;
+  product?: string | undefined;
+  user?: string | undefined;
+}): Promise<Prisma.ProductRatingWhereInput> => {
+  const { search, product, user } = params;
   const whereConditions: Prisma.ProductRatingWhereInput[] = [];
 
   if (search) {
@@ -66,18 +67,18 @@ export const buildProductRatingWhere = (params: {
     });
   }
 
-  if (productSlug) {
+  if (product) {
     whereConditions.push({
       product: {
-        slug: { equals: productSlug, mode: "insensitive" },
+        slug: { equals: product, mode: "insensitive" },
       },
     });
   }
 
-  if (username) {
+  if (user) {
     whereConditions.push({
       user: {
-        username: { equals: username, mode: "insensitive" },
+        username: { equals: user, mode: "insensitive" },
       },
     });
   }
@@ -89,10 +90,10 @@ export const buildProductRatingWhere = (params: {
     : {};
 };
 
-export const buildProductRatingSummaryWhere = (params: {
+export const buildProductRatingSummaryWhere = async (params: {
   search?: string | undefined;
   productSlug?: string | undefined;
-}): Prisma.ProductWhereInput => {
+}): Promise<Prisma.ProductWhereInput> => {
   const { search, productSlug } = params;
   const whereConditions: Prisma.ProductWhereInput[] = [];
 
@@ -116,4 +117,33 @@ export const buildProductRatingSummaryWhere = (params: {
         AND: whereConditions,
       }
     : {};
+};
+
+export const findProductRatingDetail = async (id: number) => {
+  return await prisma.productRating.findUnique({
+    where: { id },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+      product: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+        },
+      },
+    },
+  });
+};
+
+export const deleteProductRatingRecord = async (id: number) => {
+  return await prisma.productRating.delete({
+    where: { id },
+  });
 };

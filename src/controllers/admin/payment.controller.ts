@@ -1,8 +1,10 @@
 import { NextFunction, Response } from "express";
 import { errorCode } from "../../../config/error-code";
-import * as PaymentService from "../../services/payment/payment.service";
+import { AdminPaymentService } from "../../services/payment/admin.service";
 import { CustomRequest } from "../../types/common";
 import { createError } from "../../utils/common";
+
+const adminPaymentService = new AdminPaymentService();
 
 export const listPayments = async (
   req: CustomRequest,
@@ -10,13 +12,8 @@ export const listPayments = async (
   next: NextFunction
 ) => {
   try {
-    const result = await PaymentService.listPayments(req.query);
-
-    return res.status(200).json({
-      success: true,
-      data: result,
-      message: null,
-    });
+    const result = await adminPaymentService.listPayments(req.query);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -30,22 +27,16 @@ export const getPaymentDetail = async (
   try {
     const id = Number(req.params.id);
 
-    if (!id) {
-      const error = createError({
-        message: "Payment ID is required.",
+    if (isNaN(id)) {
+      throw createError({
+        message: "Valid Payment ID is required.",
         status: 400,
         code: errorCode.invalid,
       });
-      return next(error);
     }
 
-    const payment = await PaymentService.getPaymentDetail(id);
-
-    return res.status(200).json({
-      success: true,
-      data: { payment },
-      message: null,
-    });
+    const result = await adminPaymentService.getPaymentDetail(id);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -57,13 +48,8 @@ export const createPayment = async (
   next: NextFunction
 ) => {
   try {
-    const payment = await PaymentService.createPayment(req.body);
-
-    return res.status(201).json({
-      success: true,
-      data: { payment },
-      message: "Payment created successfully.",
-    });
+    const result = await adminPaymentService.createPayment(req.body);
+    return res.status(201).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -77,22 +63,16 @@ export const updatePayment = async (
   try {
     const id = Number(req.params.id);
 
-    if (!id) {
-      const error = createError({
-        message: "Payment ID is required.",
+    if (isNaN(id)) {
+      throw createError({
+        message: "Valid Payment ID is required.",
         status: 400,
         code: errorCode.invalid,
       });
-      return next(error);
     }
 
-    const payment = await PaymentService.updatePayment(id, req.body);
-
-    return res.status(200).json({
-      success: true,
-      data: { payment },
-      message: "Payment updated successfully.",
-    });
+    const result = await adminPaymentService.updatePayment(id, req.body);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -107,21 +87,15 @@ export const voidPayment = async (
     const id = Number(req.params.id);
 
     if (isNaN(id)) {
-      const error = createError({
+      throw createError({
         message: "Valid Payment ID is required.",
         status: 400,
         code: errorCode.invalid,
       });
-      return next(error);
     }
 
-    await PaymentService.voidPayment(id);
-
-    return res.status(200).json({
-      success: true,
-      data: null,
-      message: "Payment voided successfully.",
-    });
+    const result = await adminPaymentService.voidPayment(id);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -144,21 +118,20 @@ export const verifyPayment = async (
       });
     }
 
-    if (!status) {
+    let result;
+    if (status === "SUCCESS") {
+      result = await adminPaymentService.approvePayment(id);
+    } else if (status === "FAILED") {
+      result = await adminPaymentService.rejectPayment(id);
+    } else {
       throw createError({
-        message: "Status is required.",
+        message: "Invalid status update. Only SUCCESS or FAILED are allowed.",
         status: 400,
         code: errorCode.invalid,
       });
     }
 
-    const payment = await PaymentService.verifyPayment(id, status);
-
-    return res.status(200).json({
-      success: true,
-      data: { payment },
-      message: "Payment processed successfully.",
-    });
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }

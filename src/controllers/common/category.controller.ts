@@ -1,6 +1,8 @@
 import { NextFunction, Response } from "express";
-import { listPublicCategories as listPublicCategoriesService } from "../../services/category/category.service";
+import { PublicCategoryService } from "../../services/category/public.service";
 import { CustomRequest } from "../../types/common";
+
+const publicCategoryService = new PublicCategoryService();
 
 export const listPublicCategories = async (
   req: CustomRequest,
@@ -8,15 +10,8 @@ export const listPublicCategories = async (
   next: NextFunction
 ) => {
   try {
-    const categories = await listPublicCategoriesService();
-
-    res.status(200).json({
-      success: true,
-      data: {
-        categories,
-      },
-      message: null,
-    });
+    const result = await publicCategoryService.listPublicCategories();
+    res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }

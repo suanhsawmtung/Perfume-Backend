@@ -1,13 +1,31 @@
-import { OrderItemType, OrderPaymentStatus, OrderSource, OrderStatus } from "@prisma/client";
+import { Brand, Order, OrderItem, OrderItemType, OrderPaymentStatus, OrderSource, OrderStatus, Product, ProductVariant, User } from "@prisma/client";
 
 export type ListOrdersParams = {
-  pageSize: number;
-  offset: number;
+  limit?: number | string;
+  offset?: number | string;
   search?: string | undefined;
   status?: OrderStatus | undefined;
   paymentStatus?: OrderPaymentStatus | undefined;
   source?: OrderSource | undefined;
   userId?: number | undefined;
+};
+
+export type ListOrderT = Order & {
+  user: Pick<User, "id" | "firstName" | "lastName" | "username" | "phone" | "email">;
+  orderItems?: (OrderItem & {
+    productVariant?: ProductVariant & {
+      product: Pick<Product, "id" | "name" | "slug"> & { brand: Brand };
+    };
+  })[];
+  totalPaidAmount?: number;
+  totalRefundAmount?: number;
+};
+
+export type ListOrderResultT = {
+  items: ListOrderT[];
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
 };
 
 export type CreateOrderParams = {

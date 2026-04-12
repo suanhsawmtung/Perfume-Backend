@@ -1,9 +1,10 @@
 import { NextFunction, Response } from "express";
 import { errorCode } from "../../../config/error-code";
-import { parseCategoryQueryParams } from "../../services/category/category.helpers";
-import * as CategoryService from "../../services/category/category.service";
+import { AdminCategoryService } from "../../services/category/admin.service";
 import { CustomRequest } from "../../types/common";
 import { createError } from "../../utils/common";
+
+const adminCategoryService = new AdminCategoryService();
 
 export const listCategories = async (
   req: CustomRequest,
@@ -11,25 +12,8 @@ export const listCategories = async (
   next: NextFunction
 ) => {
   try {
-    const queryParams = parseCategoryQueryParams(req.query);
-
-    const {
-      items: categories,
-      currentPage,
-      totalPages,
-      pageSize,
-    } = await CategoryService.listCategories(queryParams);
-
-    res.status(200).json({
-      success: true,
-      data: {
-        categories,
-        currentPage,
-        totalPages,
-        pageSize,
-      },
-      message: null,
-    });
+    const result = await adminCategoryService.listCategories(req.query);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -44,21 +28,15 @@ export const getCategory = async (
     const { slug } = req.params;
 
     if (!slug) {
-      const error = createError({
-        message: "Slug parameter is required.",
+      throw createError({
+        message: "Slug is required",
         status: 400,
-        code: errorCode.invalid,
+        code: errorCode.notFound,
       });
-      return next(error);
     }
 
-    const category = await CategoryService.getCategoryDetail(slug);
-
-    res.status(200).json({
-      success: true,
-      data: { category },
-      message: null,
-    });
+    const result = await adminCategoryService.getCategoryDetail(slug);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -70,15 +48,8 @@ export const createCategory = async (
   next: NextFunction
 ) => {
   try {
-    const { name } = req.body;
-
-    const category = await CategoryService.createCategory({ name });
-
-    res.status(201).json({
-      success: true,
-      data: { category },
-      message: "Category created successfully.",
-    });
+    const result = await adminCategoryService.createCategory(req.body);
+    return res.status(201).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -91,26 +62,17 @@ export const updateCategory = async (
 ) => {
   try {
     const { slug } = req.params;
-    const { name } = req.body;
 
     if (!slug) {
-      const error = createError({
-        message: "Slug parameter is required.",
+      throw createError({
+        message: "Slug is required",
         status: 400,
-        code: errorCode.invalid,
+        code: errorCode.notFound,
       });
-      return next(error);
     }
 
-    const category = await CategoryService.updateCategory(slug, {
-      name,
-    });
-
-    res.status(200).json({
-      success: true,
-      data: { category },
-      message: "Category updated successfully.",
-    });
+    const result = await adminCategoryService.updateCategory(slug, req.body);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -125,21 +87,15 @@ export const deleteCategory = async (
     const { slug } = req.params;
 
     if (!slug) {
-      const error = createError({
-        message: "Slug parameter is required.",
+      throw createError({
+        message: "Slug is required",
         status: 400,
-        code: errorCode.invalid,
+        code: errorCode.notFound,
       });
-      return next(error);
     }
 
-    await CategoryService.deleteCategory(slug);
-
-    res.status(200).json({
-      success: true,
-      data: null,
-      message: "Category deleted successfully.",
-    });
+    const result = await adminCategoryService.deleteCategory(slug);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }

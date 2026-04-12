@@ -1,15 +1,17 @@
-import { Role, Status } from "@prisma/client";
+import { Role, Status, User } from "@prisma/client";
+
+export type SafeUserT = Omit<User, "password" | "randToken" | "previousRandToken">;
 
 export type ListUsersParams = {
-  pageSize: number;
-  offset: number;
-  authenticatedUserId?: number;
+  limit?: number | string | undefined;
+  offset?: number | string | undefined;
+  authenticatedUserId?: number | undefined;
   search?: string | undefined;
   role?: Role | undefined;
   status?: Status | undefined;
 };
 
-export type BuildUserWhereParams = Omit<ListUsersParams, "pageSize" | "offset">;
+export type BuildUserWhereParams = Omit<ListUsersParams, "limit" | "offset">;
 
 export type CreateUserParams = {
   firstName?: string;
@@ -55,4 +57,20 @@ export type ParseUserQueryParamsResult = {
   search?: string | undefined;
   role?: Role | undefined;
   status?: Status | undefined;
+};
+
+export type ListUserResultT = {
+  items: SafeUserT[];
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+};
+
+export type PublicUserT = Pick<User, "id" | "firstName" | "lastName" | "username">;
+
+export type PublicUserResultT = {
+  items: PublicUserT[];
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
 };

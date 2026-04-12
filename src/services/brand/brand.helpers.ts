@@ -28,6 +28,34 @@ export const parseBrandQueryParams = (
   };
 };
 
+export const buildBrandWhereClause = (params: {
+  search?: string | undefined;
+}): Prisma.BrandWhereInput => {
+  const { search } = params;
+  const where: Prisma.BrandWhereInput = {
+    deletedAt: null,
+  }
+
+  if (search) {
+    where.OR = [
+      {
+        name: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+      {
+        slug: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+    ];
+  }
+
+  return where;
+};
+
 export const requireSlug = (slug: string) => {
   if (!slug || slug.trim().length === 0) {
     throw createError({

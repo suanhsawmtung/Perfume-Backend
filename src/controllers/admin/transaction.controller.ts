@@ -1,8 +1,10 @@
 import { NextFunction, Response } from "express";
 import { errorCode } from "../../../config/error-code";
-import * as TransactionService from "../../services/transaction/transaction.service";
+import { AdminTransactionService } from "../../services/transaction/admin.service";
 import { CustomRequest } from "../../types/common";
 import { createError } from "../../utils/common";
+
+const adminTransactionService = new AdminTransactionService();
 
 export const listTransactions = async (
   req: CustomRequest,
@@ -10,13 +12,8 @@ export const listTransactions = async (
   next: NextFunction
 ) => {
   try {
-    const result = await TransactionService.listTransactions(req.query);
-
-    return res.status(200).json({
-      success: true,
-      data: result,
-      message: null,
-    });
+    const result = await adminTransactionService.listTransactions(req.query);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -31,21 +28,15 @@ export const getTransactionDetail = async (
     const id = Number(req.params.id);
 
     if (isNaN(id)) {
-      const error = createError({
+      throw createError({
         message: "Valid Transaction ID is required.",
         status: 400,
         code: errorCode.invalid,
       });
-      return next(error);
     }
 
-    const transaction = await TransactionService.getTransactionDetail(id);
-
-    return res.status(200).json({
-      success: true,
-      data: { transaction },
-      message: null,
-    });
+    const result = await adminTransactionService.getTransactionDetail(id);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -58,16 +49,11 @@ export const createTransaction = async (
 ) => {
   try {
     const userId = req.userId;
-    const transaction = await TransactionService.createTransaction({
+    const result = await adminTransactionService.createTransaction({
       ...req.body,
       userId,
     });
-
-    return res.status(201).json({
-      success: true,
-      data: { transaction },
-      message: "Transaction created successfully.",
-    });
+    return res.status(201).json(result);
   } catch (error: any) {
     next(error);
   }
@@ -82,21 +68,15 @@ export const updateTransaction = async (
     const id = Number(req.params.id);
 
     if (isNaN(id)) {
-      const error = createError({
+      throw createError({
         message: "Valid Transaction ID is required.",
         status: 400,
         code: errorCode.invalid,
       });
-      return next(error);
     }
 
-    const transaction = await TransactionService.updateTransaction(id, req.body);
-
-    return res.status(200).json({
-      success: true,
-      data: { transaction },
-      message: "Transaction updated successfully.",
-    });
+    const result = await adminTransactionService.updateTransaction(id, req.body);
+    return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }

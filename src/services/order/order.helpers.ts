@@ -182,7 +182,7 @@ export const parseOrderQueryParams = (
   };
 };
 
-export const buildOrderWhere = (params: {
+export const buildOrderWhereClause = (params: {
   search?: string;
   status?: OrderStatus;
   paymentStatus?: OrderPaymentStatus;
