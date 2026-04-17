@@ -27,4 +27,6 @@ export const authProcessErrorCode = {
   invalidOrWrongOtp: "Error_InvalidOrWrongOtp",
   otpNotVerified: "Error_OtpNotVerified",
   userNotFound: "Error_UserNotFound",
+  userNotVerified: "Error_UserNotVerified",
+  invalidPassword: "Error_InvalidPassword",
 };

@@ -1,3 +1,4 @@
+import { OtpType } from "@prisma/client";
 import { body } from "express-validator";
 
 export const registerValidation = [
@@ -6,6 +7,18 @@ export const registerValidation = [
     .notEmpty()
     .isEmail()
     .normalizeEmail(),
+  body("password", "Invalid password!")
+    .trim()
+    .notEmpty()
+    .isLength({ min: 8, max: 12 }),
+  body("firstName", "Invalid first name!")
+    .trim()
+    .notEmpty()
+    .escape(),
+  body("lastName", "Invalid last name!")
+    .trim()
+    .notEmpty()
+    .escape(),
 ];
 
 export const verifyOtpValidation = [
@@ -22,18 +35,18 @@ export const verifyOtpValidation = [
   body("token", "Invalid token!").trim().notEmpty().escape(),
 ];
 
-export const confirmPasswordValidation = [
-  body("email", "Invalid email address!")
-    .trim()
-    .notEmpty()
-    .isEmail()
-    .normalizeEmail(),
-  body("password", "Invalid password!")
-    .trim()
-    .notEmpty()
-    .isLength({ min: 8, max: 12 }),
-  body("token", "Invalid token!").trim().notEmpty().escape(),
-];
+// export const confirmPasswordValidation = [
+//   body("email", "Invalid email address!")
+//     .trim()
+//     .notEmpty()
+//     .isEmail()
+//     .normalizeEmail(),
+//   body("password", "Invalid password!")
+//     .trim()
+//     .notEmpty()
+//     .isLength({ min: 8, max: 12 }),
+//   body("token", "Invalid token!").trim().notEmpty().escape(),
+// ];
 
 export const loginValidation = [
   body("email", "Invalid email address!")
@@ -76,4 +89,8 @@ export const resendOtpValidation = [
     .notEmpty()
     .isEmail()
     .normalizeEmail(),
+  body("type", "Invalid OTP type!")
+    .trim()
+    .notEmpty()
+    .isIn(Object.values(OtpType))
 ];

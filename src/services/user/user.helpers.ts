@@ -8,11 +8,14 @@ import {
 } from "../../types/user";
 import { createError, createSlug } from "../../utils/common";
 
-const userOmit = {
+export const userOmit = {
   password: true,
-  randToken: true,
-  previousRandToken: true,
-};
+  refreshToken: true,
+  previousRefreshToken: true,
+  googleId: true,
+  rotateTokenAt: true,
+  deletedAt: true,
+} as const;
 
 export const parseUserQueryParams = (
   query: any
@@ -166,6 +169,13 @@ export const getRoleOrThrow = async (authenticatedUserId: number) => {
 };
 
 export const findUserByEmail = async (email: string) => {
+  return await prisma.user.findUnique({
+    where: { email },
+    omit: userOmit,
+  });
+};
+
+export const findUserByEmailWithSensitive = async (email: string) => {
   return await prisma.user.findUnique({
     where: { email },
   });

@@ -5,6 +5,7 @@ import { ServiceResponseT } from "../../types/common";
 import {
   ChangePasswordParams,
   SafeUserT,
+  SetPasswordParams,
   UpdateMeParams,
 } from "../../types/user";
 import { createError } from "../../utils/common";
@@ -15,21 +16,20 @@ import {
   findUserByUsernameExcludingId,
   generateUsername,
   requireUserId,
-  updateUserRecord,
+  updateUserRecord
 } from "./user.helpers";
 import { IProfileService } from "./user.interface";
 
-const userOmit = {
-  password: true,
-  randToken: true,
-  errorLoginCount: true,
-  previousRandToken: true,
-} as const;
-
 export class ProfileService implements IProfileService {
-  async getMe(userId: number): Promise<ServiceResponseT<SafeUserT>> {
+  async getMe(userId: number): Promise<ServiceResponseT<SafeUserT & { hasPassword: boolean }>> {
     const normalizedId = requireUserId(userId);
-    const user = await findUserById(normalizedId);
+    const [user, userPassword] = await Promise.all([
+      findUserById(normalizedId),
+      prisma.user.findUnique({
+        where: { id: normalizedId },
+        select: { password: true },
+      }),
+    ]);
 
     if (!user) {
       throw createError({
@@ -41,7 +41,7 @@ export class ProfileService implements IProfileService {
 
     return {
       success: true,
-      data: user as SafeUserT,
+      data: { ...user, hasPassword: !!userPassword?.password },
       message: null,
     };
   }
@@ -96,10 +96,7 @@ export class ProfileService implements IProfileService {
 
     await updateUserRecord(existing.id, updateData);
 
-    const updated = await prisma.user.findUnique({
-      where: { id: existing.id },
-      omit: userOmit,
-    });
+    const updated = await findUserById(existing.id);
 
     return {
       success: true,
@@ -124,10 +121,12 @@ export class ProfileService implements IProfileService {
       });
     }
 
-    const isMatch = await compareHashed(oldPassword, user.password);
-    if (!isMatch) {
+    const isMatch = await compareHashed(oldPassword, user.password || "");
+    if (!user.password || !isMatch) {
       throw createError({
-        message: "Current password does not match.",
+        message: !user.password 
+          ? "You do not have a password yet. Please use the Set Password feature." 
+          : "Current password does not match.",
         status: 400,
         code: errorCode.invalid,
       });
@@ -142,6 +141,42 @@ export class ProfileService implements IProfileService {
       success: true,
       data: null,
       message: "Password changed successfully.",
+    };
+  }
+
+  async setPassword(
+    userId: number,
+    params: SetPasswordParams
+  ): Promise<ServiceResponseT<null>> {
+    const { newPassword } = params;
+    const normalizedId = requireUserId(userId);
+
+    const user = await findUserByIdWithSensitive(normalizedId);
+    if (!user) {
+      throw createError({
+        message: "User not found.",
+        status: 404,
+        code: errorCode.notFound,
+      });
+    }
+
+    if (user.password) {
+      throw createError({
+        message: "You already have a password. Please use the Change Password feature.",
+        status: 400,
+        code: errorCode.invalid,
+      });
+    }
+
+    const hashedPassword = await hash(newPassword);
+    await updateUserRecord(user.id, {
+      password: hashedPassword,
+    });
+
+    return {
+      success: true,
+      data: null,
+      message: "Password set successfully.",
     };
   }
 }

@@ -1,4 +1,5 @@
 import cron from "node-cron";
+import { env } from "../../config/env";
 import { hasCache } from "../utils/cache";
 import { runCommand } from "../utils/run-command";
 
@@ -9,7 +10,7 @@ export const maintenanceJob = cron.schedule("* 5 * * *", async () => {
     console.log("Running pnpm dev:up at", new Date().toISOString());
 
     const command =
-      process.env.APP_ENV === "production" ? "pnpm app:up" : "pnpm dev:up";
+      env.appEnv === "production" ? "pnpm app:up" : "pnpm dev:up";
 
     (async () => {
       try {

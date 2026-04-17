@@ -1,6 +1,13 @@
 import { Role, Status, User } from "@prisma/client";
 
-export type SafeUserT = Omit<User, "password" | "randToken" | "previousRandToken">;
+export type SafeUserT = Omit<User, 
+  "password" | 
+  "refreshToken" | 
+  "previousRefreshToken" | 
+  "googleId" | 
+  "rotateTokenAt" | 
+  "deletedAt"
+>;
 
 export type ListUsersParams = {
   limit?: number | string | undefined;
@@ -48,6 +55,10 @@ export type UpdateMeParams = {
 
 export type ChangePasswordParams = {
   oldPassword: string;
+  newPassword: string;
+};
+
+export type SetPasswordParams = {
   newPassword: string;
 };
 

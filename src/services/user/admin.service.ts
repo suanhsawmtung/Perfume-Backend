@@ -27,15 +27,9 @@ import {
   updateUserRecord,
   updateUserRoleRecord,
   updateUserStatusRecord,
+  userOmit,
 } from "./user.helpers";
 import { IAdminUserService } from "./user.interface";
-
-const userOmit = {
-  password: true,
-  randToken: true,
-  errorLoginCount: true,
-  previousRandToken: true,
-} as const;
 
 export class AdminUserService implements IAdminUserService {
   async listUsers(
@@ -115,7 +109,7 @@ export class AdminUserService implements IAdminUserService {
     const username = await generateUsername(firstName, lastName);
     const defaultPassword = "12345678";
     const hashedPassword = await hash(defaultPassword);
-    const randToken = generateCode(16);
+    const refreshToken = generateCode(16);
 
     const user = await createUserRecord({
       firstName: firstName ?? null,
@@ -124,7 +118,8 @@ export class AdminUserService implements IAdminUserService {
       phone: phone ?? null,
       email: trimmedEmail,
       password: hashedPassword,
-      randToken,
+      refreshToken,
+      emailVerifiedAt: new Date(),
       role,
       status,
     });

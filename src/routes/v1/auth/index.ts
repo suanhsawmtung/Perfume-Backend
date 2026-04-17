@@ -1,26 +1,15 @@
 import express, { Router } from "express";
-import {
-  confirmPassword,
-  forgotPassword,
-  login,
-  logout,
-  register,
-  resendOtp,
-  resetPassword,
-  verifyOtp,
-  verifyPasswordOtp,
-} from "../../../controllers/auth.controller";
+import { forgotPassword, login, logout, register, resendOtp, resetPassword, verifyResetPasswordOtp, verifyUserEmail } from "../../../controllers/auth/auth.controller";
 import { ensureUnauthenticated } from "../../../middlewares/ensure-authenticated";
 import { handleValidationError } from "../../../middlewares/error-handler";
 import {
-  confirmPasswordValidation,
   forgotPasswordValidation,
   loginValidation,
   registerValidation,
   resendOtpValidation,
   resetPasswordValidation,
   verifyOtpValidation,
-  verifyPasswordOtpValidation,
+  verifyPasswordOtpValidation
 } from "../../../validations/auth.validation";
 
 const router: Router = express.Router();
@@ -38,7 +27,7 @@ router.post(
   ensureUnauthenticated,
   verifyOtpValidation,
   handleValidationError,
-  verifyOtp
+  verifyUserEmail
 );
 
 router.post(
@@ -49,13 +38,13 @@ router.post(
   resendOtp
 );
 
-router.post(
-  "/confirm-password",
-  ensureUnauthenticated,
-  confirmPasswordValidation,
-  handleValidationError,
-  confirmPassword
-);
+// router.post(
+//   "/confirm-password",
+//   ensureUnauthenticated,
+//   confirmPasswordValidation,
+//   handleValidationError,
+//   confirmPassword
+// );
 
 router.post(
   "/sign-in",
@@ -80,7 +69,7 @@ router.post(
   ensureUnauthenticated,
   verifyPasswordOtpValidation,
   handleValidationError,
-  verifyPasswordOtp
+  verifyResetPasswordOtp
 );
 
 router.post(

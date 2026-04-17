@@ -12,12 +12,13 @@ import helmet from "helmet";
 import morgan from "morgan";
 
 import path from "path";
+import { env } from "../config/env";
 import { startCronJobs } from "./jobs";
 import { isMaintenanceMode } from "./middlewares/ensure-not-in-maintenance";
 import routes from "./routes";
 import { cleanupUploadedFiles } from "./utils/file-cleanup";
 
-const whitelist = process.env.CORS_ORIGINS?.split(",") || [];
+const whitelist = env.corsOrigins;
 const corsOptions = {
   origin: function (
     origin: any,

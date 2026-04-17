@@ -10,6 +10,7 @@ import {
   UpdateUserParams,
   UpdateUserRoleParams,
   UpdateUserStatusParams,
+  SetPasswordParams,
 } from "../../types/user";
 
 export interface IAdminUserService {
@@ -26,6 +27,7 @@ export interface IProfileService {
   getMe(userId: number): Promise<ServiceResponseT<SafeUserT>>;
   updateMe(userId: number, params: UpdateMeParams): Promise<ServiceResponseT<SafeUserT>>;
   changePassword(userId: number, params: ChangePasswordParams): Promise<ServiceResponseT<null>>;
+  setPassword(userId: number, params: SetPasswordParams): Promise<ServiceResponseT<null>>;
 }
 
 export interface IPublicUserService {

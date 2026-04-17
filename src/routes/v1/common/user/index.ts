@@ -1,9 +1,10 @@
 import express, { Router } from "express";
 import {
+  changePassword,
   getMe,
   listPublicUsers,
+  setPassword,
   updateMe,
-  changePassword,
 } from "../../../../controllers/common/user.controller";
 import { isAuthenticated } from "../../../../middlewares/ensure-authenticated";
 import { handleValidationError } from "../../../../middlewares/error-handler";
@@ -14,6 +15,7 @@ import {
 import { normalLimiter } from "../../../../middlewares/rate-limiter";
 import {
   changePasswordValidation,
+  setPasswordValidation,
   updateMeValidation,
 } from "../../../../validations/user.validation";
 
@@ -40,12 +42,21 @@ router.patch(
 );
 
 router.patch(
-  "/me/password",
+  "/me/change-password",
   normalLimiter,
   isAuthenticated,
   changePasswordValidation,
   handleValidationError,
   changePassword
+);
+
+router.patch(
+  "/me/set-password",
+  normalLimiter,
+  isAuthenticated,
+  setPasswordValidation,
+  handleValidationError,
+  setPassword
 );
 
 

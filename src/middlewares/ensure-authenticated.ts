@@ -1,5 +1,6 @@
 import { NextFunction, Response } from "express";
 import jwt from "jsonwebtoken";
+import { env } from "../../config/env";
 import { errorCode } from "../../config/error-code";
 import { generateJWT } from "../lib/unique-key-generator";
 import { findUserByIdWithSensitive, updateUserRecord } from "../services/user/user.helpers";
@@ -34,7 +35,7 @@ export const isAuthenticated = (
     try {
       decoded = jwt.verify(
         refreshToken,
-        process.env.REFRESH_TOKEN_SECRET_KEY!
+        env.jwt.refreshTokenSecret
       ) as { id: number; email: string };
     } catch (err: any) {
       if (err.name === "TokenExpiredError") {
@@ -89,9 +90,9 @@ export const isAuthenticated = (
     }
 
     if (
-      (user.randToken !== refreshToken &&
-        user.previousRandToken !== refreshToken) ||
-      (user.previousRandToken === refreshToken &&
+      (user.refreshToken !== refreshToken &&
+        user.previousRefreshToken !== refreshToken) ||
+      (user.previousRefreshToken === refreshToken &&
         Date.now() > user.updatedAt.getTime() + 30 * 1000)
     ) {
       const error = createError({
@@ -105,33 +106,33 @@ export const isAuthenticated = (
 
     const newAccessToken = generateJWT({
       payload: { id: user.id },
-      secret: process.env.ACCESS_TOKEN_SECRET_KEY!,
+      secret: env.jwt.accessTokenSecret,
       options: { expiresIn: 60 * 15 },
     });
 
     const newRefreshToken = generateJWT({
       payload: { id: user.id, email: user.email },
-      secret: process.env.REFRESH_TOKEN_SECRET_KEY!,
+      secret: env.jwt.refreshTokenSecret,
       options: { expiresIn: "30d" },
     });
 
     res.cookie("accessToken", newAccessToken, {
       httpOnly: true,
-      secure: process.env.APP_ENV === "production",
-      sameSite: process.env.APP_ENV === "production" ? "none" : "strict",
+      secure: env.appEnv === "production",
+      sameSite: env.appEnv === "production" ? "none" : "strict",
       maxAge: 1000 * 60 * 15,
     });
 
     res.cookie("refreshToken", newRefreshToken, {
       httpOnly: true,
-      secure: process.env.APP_ENV === "production",
-      sameSite: process.env.APP_ENV === "production" ? "none" : "strict",
+      secure: env.appEnv === "production",
+      sameSite: env.appEnv === "production" ? "none" : "strict",
       maxAge: 1000 * 60 * 60 * 24 * 30,
     });
 
     await updateUserRecord(user.id, {
-      randToken: newRefreshToken,
-      previousRandToken: refreshToken,
+      refreshToken: newRefreshToken,
+      previousRefreshToken: refreshToken,
     });
 
     req.userId = user.id;
@@ -145,7 +146,7 @@ export const isAuthenticated = (
     try {
       const decoded = jwt.verify(
         accessToken,
-        process.env.ACCESS_TOKEN_SECRET_KEY!
+        env.jwt.accessTokenSecret
       ) as { id: number };
 
       if (isNaN(decoded.id)) {
@@ -193,7 +194,7 @@ export const ensureUnauthenticated = async (
   try {
     const decoded = jwt.verify(
       refreshToken,
-      process.env.REFRESH_TOKEN_SECRET_KEY!
+      env.jwt.refreshTokenSecret
     ) as { id: number; email: string };
 
     if (!isNaN(decoded.id)) {
@@ -203,7 +204,7 @@ export const ensureUnauthenticated = async (
       if (
         user &&
         user.email === decoded.email &&
-        user.randToken === refreshToken
+        user.refreshToken === refreshToken
       ) {
         const error = createError({
           message: "You are already logged in.",

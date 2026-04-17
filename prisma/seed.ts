@@ -167,7 +167,6 @@ export function createRandomUser() {
     email: faker.internet.email(),
     username: faker.internet.username(),
     password: faker.internet.password(),
-    randToken: faker.internet.jwt(),
   };
 }
 
@@ -423,12 +422,15 @@ export async function main() {
   console.log("Seeding Admin User...");
   const adminUser = await prisma.user.upsert({
     where: { email: "admin@example.com" },
-    update: {},
+    update: {
+      emailVerifiedAt: new Date(),
+    },
     create: {
       email: "admin@example.com",
       username: "admin",
       password: await hash("admin123"),
-      randToken: faker.internet.jwt(),
+      refreshToken: faker.internet.jwt(),
+      emailVerifiedAt: new Date(),
       role: Role.ADMIN,
       firstName: "Admin",
       lastName: "User",
@@ -445,7 +447,7 @@ export async function main() {
       email: "author@example.com",
       username: "author",
       password: await hash("author123"),
-      randToken: faker.internet.jwt(),
+      refreshToken: faker.internet.jwt(),
       role: Role.AUTHOR,
       firstName: "Author",
       lastName: "User",

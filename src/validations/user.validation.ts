@@ -98,3 +98,20 @@ export const changePasswordValidation = [
       return true;
     }),
 ];
+
+export const setPasswordValidation = [
+  body("newPassword")
+    .notEmpty()
+    .withMessage("New password is required.")
+    .isLength({ min: 6 })
+    .withMessage("New password must be at least 6 characters."),
+  body("confirmPassword")
+    .notEmpty()
+    .withMessage("Confirm password is required.")
+    .custom((value, { req }) => {
+      if (value !== req.body.newPassword) {
+        throw new Error("Password confirmation does not match password.");
+      }
+      return true;
+    }),
+];

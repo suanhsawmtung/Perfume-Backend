@@ -82,3 +82,22 @@ export const changePassword = async (
     next(error);
   }
 };
+
+export const setPassword = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = Number(req.userId);
+    const { newPassword } = req.body;
+
+    const result = await profileService.setPassword(userId, {
+      newPassword,
+    });
+
+    return res.status(200).json(result);
+  } catch (error: any) {
+    next(error);
+  }
+};
