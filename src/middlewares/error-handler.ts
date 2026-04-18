@@ -1,6 +1,6 @@
 import { NextFunction, Response } from "express";
 import { validationResult } from "express-validator";
-import { errorCode } from "../../config/error-code";
+import { errorCode } from "../config/error-code";
 import { CustomRequest } from "../types/common";
 import { createError } from "../utils/common";
 import { cleanupUploadedFiles } from "../utils/file-cleanup";

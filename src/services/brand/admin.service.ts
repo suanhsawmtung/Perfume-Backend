@@ -1,20 +1,20 @@
 import { Brand } from "@prisma/client";
-import { errorCode } from "../../../config/error-code";
+import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { CreateBrandParams, ListBrandResultT, ListBrandsParams, ListBrandT, UpdateBrandParams } from "../../types/brand";
 import { ServiceResponseT } from "../../types/common";
 import { createError, createSlug, ensureUniqueSlug } from "../../utils/common";
 import {
-  buildBrandWhereClause,
-  createBrandRecord,
-  deleteBrandRecord,
-  findBrandByName,
-  findBrandByNameExcludingId,
-  findBrandBySlug,
-  findBrandBySlugWithProductCount,
-  parseBrandQueryParams,
-  requireSlug,
-  updateBrandRecord,
+    buildBrandWhereClause,
+    createBrandRecord,
+    deleteBrandRecord,
+    findBrandByName,
+    findBrandByNameExcludingId,
+    findBrandBySlug,
+    findBrandBySlugWithProductCount,
+    parseBrandQueryParams,
+    requireSlug,
+    updateBrandRecord,
 } from "./brand.helpers";
 import { IAdminBrandService } from "./brand.interface";
 

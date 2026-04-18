@@ -12,7 +12,8 @@ import helmet from "helmet";
 import morgan from "morgan";
 
 import path from "path";
-import { env } from "../config/env";
+import { env } from "./config/env";
+import passport from "./config/passport";
 import { startCronJobs } from "./jobs";
 import { isMaintenanceMode } from "./middlewares/ensure-not-in-maintenance";
 import routes from "./routes";
@@ -43,7 +44,8 @@ app
   .use(cookieParser())
   .use(cors(corsOptions))
   .use(helmet())
-  .use(compression());
+  .use(compression())
+  .use(passport.initialize());;
 
 app.use(
   "/post",

@@ -1,6 +1,6 @@
 import { Role } from "@prisma/client";
 import { NextFunction, Response } from "express";
-import { errorCode } from "../../config/error-code";
+import { errorCode } from "../config/error-code";
 import { findUserById, findUserRoleById } from "../services/user/user.helpers";
 import { CustomRequest } from "../types/common";
 import { createError } from "../utils/common";

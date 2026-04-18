@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import multer, { FileFilterCallback, MulterError, StorageEngine } from "multer";
 import path from "path";
-import { errorCode } from "../../config/error-code";
+import { errorCode } from "../config/error-code";
 import { createError } from "../utils/common";
 import { ensureDir } from "../utils/file";
 import { trackUploadedFile } from "../utils/file-cleanup";

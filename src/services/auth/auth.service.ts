@@ -1,8 +1,8 @@
-import { OtpType } from "@prisma/client";
+import { AuthProvider, OtpType } from "@prisma/client";
 import "dotenv/config";
 import jwt from "jsonwebtoken";
 import moment from "moment";
-import { env } from "../../../config/env";
+import { env } from "../../config/env";
 import { compareHashed, hash } from "../../lib/hash";
 import { generateJWT } from "../../lib/unique-key-generator";
 import {
@@ -475,6 +475,35 @@ export class AuthService implements IAuthService {
             },
             success: true,
             message: "Tokens refreshed successfully.",
+        };
+    }
+
+    async googleLogin(user: SafeUserT): Promise<ServiceResponseT<ILoginData>> {
+        const accessToken = generateJWT({
+            payload: { id: user.id },
+            secret: env.jwt.accessTokenSecret,
+            options: { expiresIn: 60 * 15 },
+        });
+
+        const refreshToken = generateJWT({
+            payload: { id: user.id, email: user.email },
+            secret: env.jwt.refreshTokenSecret,
+            options: { expiresIn: "30d" },
+        });
+
+        const updatedUser = await updateUserRecord(user.id, {
+            provider: AuthProvider.GOOGLE,
+            refreshToken,
+        });
+
+        return {
+            data: {
+                accessToken,
+                refreshToken,
+                userData: await findUserById(updatedUser.id) as SafeUserT,
+            },
+            success: true,
+            message: "Successfully login with Google",
         };
     }
 

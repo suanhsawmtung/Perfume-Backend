@@ -1,7 +1,7 @@
 import { NextFunction, Response } from "express";
 import jwt from "jsonwebtoken";
-import { env } from "../../config/env";
-import { errorCode } from "../../config/error-code";
+import { env } from "../config/env";
+import { errorCode } from "../config/error-code";
 import { AuthService } from "../services/auth/auth.service";
 import { findUserByIdWithSensitive } from "../services/user/user.helpers";
 import { CustomRequest } from "../types/common";

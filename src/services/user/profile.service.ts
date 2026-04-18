@@ -1,22 +1,22 @@
-import { errorCode } from "../../../config/error-code";
+import { errorCode } from "../../config/error-code";
 import { compareHashed, hash } from "../../lib/hash";
 import { prisma } from "../../lib/prisma";
 import { ServiceResponseT } from "../../types/common";
 import {
-  ChangePasswordParams,
-  SafeUserT,
-  SetPasswordParams,
-  UpdateMeParams,
+    ChangePasswordParams,
+    SafeUserT,
+    SetPasswordParams,
+    UpdateMeParams,
 } from "../../types/user";
 import { createError } from "../../utils/common";
 import { getFilePath, removeFile } from "../../utils/file";
 import {
-  findUserById,
-  findUserByIdWithSensitive,
-  findUserByUsernameExcludingId,
-  generateUsername,
-  requireUserId,
-  updateUserRecord
+    findUserById,
+    findUserByIdWithSensitive,
+    findUserByUsernameExcludingId,
+    generateUsername,
+    requireUserId,
+    updateUserRecord
 } from "./user.helpers";
 import { IProfileService } from "./user.interface";
 

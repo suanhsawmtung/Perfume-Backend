@@ -1,35 +1,35 @@
-import { InventoryType, Prisma, Product, ProductVariant, VariantSource } from "@prisma/client";
-import { errorCode } from "../../../config/error-code";
+import { Prisma, Product, ProductVariant, VariantSource } from "@prisma/client";
+import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { ServiceResponseT } from "../../types/common";
 import {
-  CreateProductParams,
-  CreateProductVariantParams,
-  ListProductResultT,
-  ListProductsParams,
-  UpdateProductNewParams,
-  UpdateProductVariantParams,
+    CreateProductParams,
+    CreateProductVariantParams,
+    ListProductResultT,
+    ListProductsParams,
+    UpdateProductNewParams,
+    UpdateProductVariantParams,
 } from "../../types/product";
 import { createError, createSlug, ensureUniqueSlug } from "../../utils/common";
 import { getFilePath, removeFile } from "../../utils/file";
 import {
-  buildProductWhere,
-  deleteProductRecord,
-  deleteProductVariantFully,
-  findProductBySlug,
-  findProductDetail,
-  findProductByName,
-  findProductByNameExcludingId,
-  findProductVariantBySlug,
-  findProductVariantDetail,
-  findVariantImages,
-  generateUniqueVariantSku,
-  generateUniqueVariantSlug,
-  insertProduct,
-  parseProductQueryParams,
-  requireSlug,
-  requireVariantSlug,
-  updateProductRecord
+    buildProductWhere,
+    deleteProductRecord,
+    deleteProductVariantFully,
+    findProductByName,
+    findProductByNameExcludingId,
+    findProductBySlug,
+    findProductDetail,
+    findProductVariantBySlug,
+    findProductVariantDetail,
+    findVariantImages,
+    generateUniqueVariantSku,
+    generateUniqueVariantSlug,
+    insertProduct,
+    parseProductQueryParams,
+    requireSlug,
+    requireVariantSlug,
+    updateProductRecord
 } from "./product.helpers";
 import { IAdminProductService } from "./product.interface";
 

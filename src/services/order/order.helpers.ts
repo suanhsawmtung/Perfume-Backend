@@ -1,5 +1,5 @@
 import { OrderItemType, OrderPaymentStatus, OrderSource, OrderStatus, PaymentStatus, Prisma, RefundStatus } from "@prisma/client";
-import { errorCode } from "../../../config/error-code";
+import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { generateCode } from "../../lib/unique-key-generator";
 import { ParseOrderQueryParamsResult } from "../../types/order";

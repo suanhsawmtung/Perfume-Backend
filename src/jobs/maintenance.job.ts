@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import { env } from "../../config/env";
+import { env } from "../config/env";
 import { hasCache } from "../utils/cache";
 import { runCommand } from "../utils/run-command";
 

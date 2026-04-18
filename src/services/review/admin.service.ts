@@ -1,18 +1,18 @@
 import { Review } from "@prisma/client";
-import { errorCode } from "../../../config/error-code";
+import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { ServiceResponseT } from "../../types/common";
 import {
-  ListReviewResultT,
-  ListReviewsParams,
-  ListReviewT,
+    ListReviewResultT,
+    ListReviewsParams,
+    ListReviewT,
 } from "../../types/review";
 import { createError } from "../../utils/common";
 import {
-  buildReviewWhere,
-  findReviewDetail,
-  parseReviewQueryParams,
-  updateReviewRecord
+    buildReviewWhere,
+    findReviewDetail,
+    parseReviewQueryParams,
+    updateReviewRecord
 } from "./review.helpers";
 import { IAdminReviewService } from "./review.interface";
 

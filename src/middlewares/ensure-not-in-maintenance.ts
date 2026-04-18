@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { errorCode } from "../../config/error-code";
+import { errorCode } from "../config/error-code";
 import { hasCache } from "../utils/cache";
 import { createError } from "../utils/common";
 

@@ -1,13 +1,13 @@
+import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { ServiceResponseT } from "../../types/common";
 import { ListProductResultT, ListProductsParams } from "../../types/product";
 import { createError } from "../../utils/common";
-import { errorCode } from "../../../config/error-code";
 import {
-  buildProductWhere,
-  findProductDetail,
-  parseProductQueryParams,
-  requireSlug,
+    buildProductWhere,
+    findProductDetail,
+    parseProductQueryParams,
+    requireSlug,
 } from "./product.helpers";
 import { IPublicProductService } from "./product.interface";
 

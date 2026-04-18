@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { errorCode } from "../../../config/error-code";
+import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { ParseBrandQueryParamsResult } from "../../types/brand";
 import { createError } from "../../utils/common";

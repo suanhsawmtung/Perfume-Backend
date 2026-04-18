@@ -1,9 +1,11 @@
 import { Otp, OtpType, Prisma } from "@prisma/client";
-import { authProcessErrorCode, errorCode } from "../../../config/error-code";
+import { authProcessErrorCode, errorCode } from "../../config/error-code";
 import { hash } from "../../lib/hash";
 import { prisma } from "../../lib/prisma";
 import { generateOTP, generateToken } from "../../lib/unique-key-generator";
+import { SafeUserT } from "../../types/user";
 import { createError } from "../../utils/common";
+import { userOmit } from "../user/user.helpers";
 
 export interface IRefreshOrCreateOtpResponse {
   otp: string;
@@ -175,6 +177,21 @@ export const retryAndLogoutError = (): Error => {
     status: 401,
     code: errorCode.retryAndLogout,
   });
+};
+
+export const invalidGoogleProfileError = (): Error => {
+  return createError({
+    message: "Invalid Google profile!",
+    status: 400,
+    code: authProcessErrorCode.invalidGoogleProfile,
+  });
+};
+
+export const findUserByGoogleId = async (googleId: string): Promise<SafeUserT | null> => {
+  return await prisma.user.findUnique({
+    where: { googleId },
+    omit: userOmit,
+  }) as SafeUserT | null;
 };
 
 

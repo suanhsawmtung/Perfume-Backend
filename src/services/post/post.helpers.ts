@@ -1,5 +1,5 @@
 import { PostStatus, Prisma, Role } from "@prisma/client";
-import { errorCode } from "../../../config/error-code";
+import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { BuildPostWhereParams, ParsePostQueryParamsResult } from "../../types/post";
 import { createError } from "../../utils/common";

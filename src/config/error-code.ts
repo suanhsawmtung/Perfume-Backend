@@ -29,4 +29,5 @@ export const authProcessErrorCode = {
   userNotFound: "Error_UserNotFound",
   userNotVerified: "Error_UserNotVerified",
   invalidPassword: "Error_InvalidPassword",
+  invalidGoogleProfile: "Error_InvalidGoogleProfile",
 };

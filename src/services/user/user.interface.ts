@@ -1,3 +1,4 @@
+import { Profile } from "passport-google-oauth20";
 import { ServiceResponseT } from "../../types/common";
 import {
   ChangePasswordParams,
@@ -6,11 +7,11 @@ import {
   ListUsersParams,
   PublicUserResultT,
   SafeUserT,
+  SetPasswordParams,
   UpdateMeParams,
   UpdateUserParams,
   UpdateUserRoleParams,
   UpdateUserStatusParams,
-  SetPasswordParams,
 } from "../../types/user";
 
 export interface IAdminUserService {
@@ -32,4 +33,5 @@ export interface IProfileService {
 
 export interface IPublicUserService {
   listPublicUsers(limit?: number, offset?: number): Promise<ServiceResponseT<PublicUserResultT>>;
+  findOrCreateByGoogle(params: Profile): Promise<ServiceResponseT<SafeUserT>>;
 }

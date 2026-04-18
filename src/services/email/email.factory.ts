@@ -1,4 +1,4 @@
-import { env } from "../../../config/env";
+import { env } from "../../config/env";
 import { EmailProvider } from "./email.interface";
 import { LogEmailProvider } from "./providers/log.provider";
 import { SendGridEmailProvider } from "./providers/sendgrid.provider";

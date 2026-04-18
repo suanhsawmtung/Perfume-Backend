@@ -1,7 +1,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import "dotenv/config";
-import { env } from "../../config/env";
+import { env } from "../config/env";
 
 const connectionString = env.databaseUrl;
 

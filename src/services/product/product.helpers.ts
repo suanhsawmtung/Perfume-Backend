@@ -1,10 +1,10 @@
 import { Concentration, Gender, Prisma, VariantSource } from "@prisma/client";
-import { errorCode } from "../../../config/error-code";
+import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { generateCode } from "../../lib/unique-key-generator";
 import {
-  BuildProductWhereParams,
-  ParseProductQueryParamsResult,
+    BuildProductWhereParams,
+    ParseProductQueryParamsResult,
 } from "../../types/product";
 import { createError, createSlug, ensureUniqueSlug } from "../../utils/common";
 import { getFilePath, removeFile } from "../../utils/file";

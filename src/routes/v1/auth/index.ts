@@ -1,5 +1,6 @@
 import express, { Router } from "express";
-import { forgotPassword, login, logout, register, resendOtp, resetPassword, verifyResetPasswordOtp, verifyUserEmail } from "../../../controllers/auth/auth.controller";
+import passport from "../../../config/passport";
+import { forgotPassword, googleCallback, login, logout, register, resendOtp, resetPassword, verifyResetPasswordOtp, verifyUserEmail } from "../../../controllers/auth/auth.controller";
 import { ensureUnauthenticated } from "../../../middlewares/ensure-authenticated";
 import { handleValidationError } from "../../../middlewares/error-handler";
 import {
@@ -38,14 +39,6 @@ router.post(
   resendOtp
 );
 
-// router.post(
-//   "/confirm-password",
-//   ensureUnauthenticated,
-//   confirmPasswordValidation,
-//   handleValidationError,
-//   confirmPassword
-// );
-
 router.post(
   "/sign-in",
   ensureUnauthenticated,
@@ -78,6 +71,18 @@ router.post(
   resetPasswordValidation,
   handleValidationError,
   resetPassword
+);
+
+// Google OAuth2.0
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] }),
+);
+
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false }),
+  googleCallback
 );
 
 export default router;

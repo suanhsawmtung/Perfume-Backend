@@ -1,19 +1,19 @@
 import { Category, Prisma } from "@prisma/client";
-import { errorCode } from "../../../config/error-code";
+import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { CreateCategoryParams, ListCategoriesParams, ListCategoryResultT, ListCategoryT, UpdateCategoryParams } from "../../types/category";
 import { ServiceResponseT } from "../../types/common";
 import { createError, createSlug, ensureUniqueSlug } from "../../utils/common";
 import {
-  createCategoryRecord,
-  deleteCategoryRecord,
-  findCategoryByName,
-  findCategoryByNameExcludingId,
-  findCategoryBySlug,
-  findCategoryBySlugWithPostCount,
-  parseCategoryQueryParams,
-  requireSlug,
-  updateCategoryRecord,
+    createCategoryRecord,
+    deleteCategoryRecord,
+    findCategoryByName,
+    findCategoryByNameExcludingId,
+    findCategoryBySlug,
+    findCategoryBySlugWithPostCount,
+    parseCategoryQueryParams,
+    requireSlug,
+    updateCategoryRecord,
 } from "./category.helpers";
 import { IAdminCategoryService } from "./category.interface";
 

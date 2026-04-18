@@ -1,10 +1,10 @@
 import { Prisma, Role, Status } from "@prisma/client";
-import { errorCode } from "../../../config/error-code";
+import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { generateCode } from "../../lib/unique-key-generator";
 import {
-  BuildUserWhereParams,
-  ParseUserQueryParamsResult,
+    BuildUserWhereParams,
+    ParseUserQueryParamsResult,
 } from "../../types/user";
 import { createError, createSlug } from "../../utils/common";
 

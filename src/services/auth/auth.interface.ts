@@ -53,11 +53,13 @@ export interface IAuthService {
     token: string;
   }): Promise<ServiceResponseT<SafeUserT>>;
 
-  // refreshTokens(params: {
-  //   refreshToken: string;
-  // }): Promise<ServiceResponseT<ILoginData>>;
+  refreshTokens(params: {
+    refreshToken: string;
+  }): Promise<ServiceResponseT<ILoginData>>;
 
   checkAuth(userId?: number | undefined): Promise<ServiceResponseT<
         SafeUserT | null
     >>;
+
+  googleLogin(user: SafeUserT): Promise<ServiceResponseT<ILoginData>>;
 }

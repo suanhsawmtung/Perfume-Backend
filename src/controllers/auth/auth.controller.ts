@@ -1,7 +1,8 @@
 import { NextFunction, Request, Response } from "express";
-import { env } from "../../../config/env";
+import { env } from "../../config/env";
 import { AuthService } from "../../services/auth/auth.service";
 import { CustomRequest } from "../../types/common";
+import { SafeUserT } from "../../types/user";
 
 const authService = new AuthService();
 
@@ -159,6 +160,34 @@ export const resetPassword = async (
   const result = await authService.resetPassword({ email, password, token });
 
   return res.status(200).json(result);
+};
+
+export const googleCallback = async (
+  req: Request,
+  res: Response,
+  _next: NextFunction
+) => {
+  const user = req.user as SafeUserT;
+
+  const { data: { 
+    accessToken, 
+    refreshToken,
+  }} = await authService.googleLogin(user);
+
+  res
+    .cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: env.appEnv === "production",
+      sameSite: env.appEnv === "production" ? "none" : "strict",
+      maxAge: 1000 * 60 * 15,
+    })
+    .cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: env.appEnv === "production",
+      sameSite: env.appEnv === "production" ? "none" : "strict",
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+    })
+    .redirect(`${env.webUrl}`);
 };
 
 export const checkAuth = async (

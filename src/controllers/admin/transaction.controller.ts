@@ -1,5 +1,5 @@
 import { NextFunction, Response } from "express";
-import { errorCode } from "../../../config/error-code";
+import { errorCode } from "../../config/error-code";
 import { AdminTransactionService } from "../../services/transaction/admin.service";
 import { CustomRequest } from "../../types/common";
 import { createError } from "../../utils/common";
