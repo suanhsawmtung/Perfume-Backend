@@ -29,10 +29,12 @@ import {
     expiredOtpError,
     getOtpByEmail,
     invalidPasswordError,
+    invalidRefreshTokenError,
     invalidTokenError,
     otpNotExistError,
     otpNotVerifiedError,
     refreshOrCreateOtp,
+    retryAndLogoutError,
     unauthenticatedError,
     unmatchedOtpError,
     updateOtp,
@@ -401,6 +403,78 @@ export class AuthService implements IAuthService {
             data: result,
             success: true,
             message: "Successfully reset your account password.",
+        };
+    }
+
+    async refreshTokens({ refreshToken }: { refreshToken: string }): Promise<ServiceResponseT<ILoginData>> {
+        let decoded;
+        try {
+            decoded = jwt.verify(
+                refreshToken,
+                env.jwt.refreshTokenSecret
+            ) as { id: number; email: string };
+        } catch (err: any) {
+            if (err.name === "TokenExpiredError") {
+                throw unauthenticatedError();
+            } else {
+                // Return a specific error or use the application's error handling for invalid tokens
+                throw invalidRefreshTokenError();
+            }
+        }
+
+        if (isNaN(decoded.id)) {
+            throw userNotExistsError();
+        }
+
+        const user = await findUserByIdWithSensitive(decoded.id);
+
+        if (!user) {
+            throw userNotExistsError();
+        }
+
+        if (user.email !== decoded.email) {
+            throw unauthenticatedError();
+        }
+
+        // Token rotation logic
+        const refreshTokenMatches = user.refreshToken === refreshToken;
+        const previousRefreshTokenMatches = user.previousRefreshToken === refreshToken;
+        const withinRotationGracePeriod = user.rotateTokenAt && 
+            Date.now() <= user.rotateTokenAt.getTime() + 30 * 1000;
+
+        if (
+            (!refreshTokenMatches && !previousRefreshTokenMatches) ||
+            (previousRefreshTokenMatches && !withinRotationGracePeriod)
+        ) {
+            throw retryAndLogoutError();
+        }
+
+        const newAccessToken = generateJWT({
+            payload: { id: user.id },
+            secret: env.jwt.accessTokenSecret,
+            options: { expiresIn: 60 * 15 },
+        });
+
+        const newRefreshToken = generateJWT({
+            payload: { id: user.id, email: user.email },
+            secret: env.jwt.refreshTokenSecret,
+            options: { expiresIn: "30d" },
+        });
+
+        const updatedUser = await updateUserRecord(user.id, {
+            refreshToken: newRefreshToken,
+            previousRefreshToken: refreshToken,
+            rotateTokenAt: new Date(),
+        });
+
+        return {
+            data: {
+                accessToken: newAccessToken,
+                refreshToken: newRefreshToken,
+                userData: await findUserById(updatedUser.id) as SafeUserT,
+            },
+            success: true,
+            message: "Tokens refreshed successfully.",
         };
     }
 

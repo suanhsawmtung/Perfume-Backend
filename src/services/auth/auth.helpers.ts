@@ -161,4 +161,20 @@ export const unauthenticatedError = (): Error => {
   });
 };
 
+export const invalidRefreshTokenError = (): Error => {
+  return createError({
+    message: "Refresh Token is invalid.",
+    status: 400,
+    code: errorCode.attack,
+  });
+};
+
+export const retryAndLogoutError = (): Error => {
+  return createError({
+    message: "You are not an authenticated user.",
+    status: 401,
+    code: errorCode.retryAndLogout,
+  });
+};
+
 

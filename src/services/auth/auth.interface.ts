@@ -1,10 +1,10 @@
 import { OtpType } from "@prisma/client";
 import {
-    IForgotPasswordData,
-    ILoginData,
-    IRegistrationData,
-    IResendOtpData,
-    IVerifyResetOtpData
+  IForgotPasswordData,
+  ILoginData,
+  IRegistrationData,
+  IResendOtpData,
+  IVerifyResetOtpData
 } from "../../types/auth";
 import { ServiceResponseT } from "../../types/common";
 import { SafeUserT } from "../../types/user";
@@ -52,4 +52,12 @@ export interface IAuthService {
     password: string;
     token: string;
   }): Promise<ServiceResponseT<SafeUserT>>;
+
+  // refreshTokens(params: {
+  //   refreshToken: string;
+  // }): Promise<ServiceResponseT<ILoginData>>;
+
+  checkAuth(userId?: number | undefined): Promise<ServiceResponseT<
+        SafeUserT | null
+    >>;
 }
