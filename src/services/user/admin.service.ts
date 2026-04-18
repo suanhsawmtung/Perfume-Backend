@@ -4,30 +4,30 @@ import { prisma } from "../../lib/prisma";
 import { generateCode } from "../../lib/unique-key-generator";
 import { ServiceResponseT } from "../../types/common";
 import {
-    CreateUserParams,
-    ListUserResultT,
-    ListUsersParams,
-    SafeUserT,
-    UpdateUserParams,
-    UpdateUserRoleParams,
-    UpdateUserStatusParams,
+  CreateUserParams,
+  ListUserResultT,
+  ListUsersParams,
+  SafeUserT,
+  UpdateUserParams,
+  UpdateUserRoleParams,
+  UpdateUserStatusParams,
 } from "../../types/user";
 import { createError } from "../../utils/common";
 import { getFilePath, removeFile } from "../../utils/file";
 import {
-    buildUserWhere,
-    createUserRecord,
-    deleteUserRecord,
-    findUserByEmail,
-    findUserByEmailExcludingId,
-    findUserById,
-    findUserByUsername,
-    generateUsername,
-    requireUsername,
-    updateUserRecord,
-    updateUserRoleRecord,
-    updateUserStatusRecord,
-    userOmit,
+  buildUserWhere,
+  createUserRecord,
+  deleteUserRecord,
+  findUserByEmail,
+  findUserByEmailExcludingId,
+  findUserById,
+  findUserByUsername,
+  generateUsername,
+  requireUsername,
+  updateUserRecord,
+  updateUserRoleRecord,
+  updateUserStatusRecord,
+  userOmit,
 } from "./user.helpers";
 import { IAdminUserService } from "./user.interface";
 
@@ -164,22 +164,22 @@ export class AdminUserService implements IAdminUserService {
       });
     }
 
-    const newUsername = await generateUsername(firstName, lastName);
-    if (newUsername !== existing.username) {
-      const existingByUsername = await findUserByUsername(newUsername);
-      if (existingByUsername) {
-        throw createError({
-          message: "User with this username already exists.",
-          status: 409,
-          code: errorCode.alreadyExists,
-        });
-      }
-    }
+    // const newUsername = await generateUsername(firstName, lastName);
+    // if (newUsername !== existing.username) {
+    //   const existingByUsername = await findUserByUsername(newUsername);
+    //   if (existingByUsername) {
+    //     throw createError({
+    //       message: "User with this username already exists.",
+    //       status: 409,
+    //       code: errorCode.alreadyExists,
+    //     });
+    //   }
+    // }
 
     await updateUserRecord(existing.id, {
       firstName: firstName ?? null,
       lastName: lastName ?? null,
-      username: newUsername,
+      username: existing.username,
       phone: phone ?? null,
       email: trimmedEmail,
       role,
