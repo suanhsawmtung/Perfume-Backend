@@ -3,8 +3,8 @@ import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { generateCode } from "../../lib/unique-key-generator";
 import {
-    BuildProductWhereParams,
-    ParseProductQueryParamsResult,
+  BuildProductWhereParams,
+  ParseProductQueryParamsResult,
 } from "../../types/product";
 import { createError, createSlug, ensureUniqueSlug } from "../../utils/common";
 import { getFilePath, removeFile } from "../../utils/file";
@@ -319,7 +319,11 @@ export const findProductVariantDetail = async (slug: string) => {
       product: { deletedAt: null },
     },
     include: {
-      images: true,
+      images: {
+        orderBy: {
+          order: "asc",
+        },
+      },
       inventories: true,
       product: {
         select: {

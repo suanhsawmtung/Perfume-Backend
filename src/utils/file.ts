@@ -16,3 +16,11 @@ export const removeFile = async (filePath: string) => {
     console.warn(error);
   }
 };
+
+export const removeFolder = async (folderPath: string) => {
+  try {
+    await fs.rm(folderPath, { recursive: true });
+  } catch (error) {
+    console.warn(error);
+  }
+};

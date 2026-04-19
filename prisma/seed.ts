@@ -4,6 +4,7 @@ import moment from "moment";
 import { hash } from "../src/lib/hash";
 import { prisma } from "../src/lib/prisma";
 import { createSlug, ensureUniqueSlug } from "../src/utils/common";
+import { getFilePath, removeFolder } from "../src/utils/file";
 
 // Material seed data
 // const materials = [
@@ -33,33 +34,15 @@ const brands = [
 
 // Category seed data
 const categories = [
-  { name: "Furniture Buying Guide", slug: "furniture-buying-guide" },
-  { name: "Interior Design Tips", slug: "interior-design-tips" },
-  { name: "Furniture Care & Maintenance", slug: "furniture-care-maintenance" },
-  { name: "Material Guide", slug: "material-guide" },
-  { name: "Home Decor Inspiration", slug: "home-decor-inspiration" },
+  { name: "Fragrance Families", slug: "fragrance-families" },
+  { name: "Scent Longevity Tips", slug: "scent-longevity-tips" },
+  { name: "Seasonal Perfume Guides", slug: "seasonal-perfume-guides" },
+  { name: "Perfume Notes 101", slug: "perfume-notes-101" },
+  { name: "Niche vs Designer", slug: "niche-vs-designer" },
 ];
 
 // Product seed data
 const products = [
-  {
-    name: "Versace Eros",
-    brandSlug: "versace",
-    concentration: Concentration.EDT,
-    gender: Gender.MALE,
-    description:
-      "A fresh, woody fragrance with vibrant citrus and warm amber notes.",
-    releasedYear: 2019,
-    variants: [
-      {
-        size: 50,
-        source: VariantSource.ORIGINAL,
-        price: 450000,
-        discount: 0,
-        stock: 25,
-      },
-    ],
-  },
   {
   name: "Versace Bright Crystal",
   brandSlug: "versace",
@@ -75,6 +58,18 @@ const products = [
         price: 150000,
         discount: 0,
         stock: 5,
+        images: [
+          {
+            path: "https://down-my.img.susercontent.com/file/sg-11134201-8261q-mk284nvau4g2e5.webp",
+            isPrimary: true,
+            order: 0
+          },
+          {
+            path: "https://down-my.img.susercontent.com/file/sg-11134201-8262w-mk284o8k2iv8c5.webp",
+            isPrimary: false,
+            order: 1
+          },
+        ]
       },
       {
         size: 90,
@@ -82,6 +77,18 @@ const products = [
         price: 480000,
         discount: 0,
         stock: 20,
+        images: [
+          {
+            path: "https://shins.my/media/catalog/product/cache/4e22e919b2ba2a78127fbd5624ab1858/1/0/10103010200506-800x800_1.jpg",
+            isPrimary: true,
+            order: 0
+          },
+          {
+            path: "https://fragrancemyra.com/wp-content/uploads/2022/05/8CE5C374-601F-493B-822C-A87755FF042F.png",
+            isPrimary: false,
+            order: 1
+          },
+        ]
       },
     ],
   },
@@ -100,6 +107,18 @@ const products = [
         price: 340000,
         discount: 0,
         stock: 20,
+        images: [
+          {
+            path: "https://cdn.vesira.com/media/catalog/product/cache/5/image/650x/040ec09b1e35df139433887a97daa66f/6/8/689.jpg",
+            isPrimary: true,
+            order: 0
+          },
+          {
+            path: "https://shins.my/media/catalog/product/cache/4e22e919b2ba2a78127fbd5624ab1858/b/u/buy_4_at_rm99_-_2022-09-06t104855.340.png",
+            isPrimary: false,
+            order: 1
+          },
+        ]
       },
       {
         size: 90,
@@ -107,6 +126,13 @@ const products = [
         price: 720000,
         discount: 0,
         stock: 8,
+        images: [
+          {
+            path: "https://image-optimizer-reg.production.sephora-asia.net/images/product_images/closeup_1_Product_185776_20Versace_20Bright_20Crystal_20Absolu_20EDP_2090ml_92ae912c88747d41037977583b100c66c931b8dc_1528361453.png",
+            isPrimary: true,
+            order: 0
+          },
+        ]
       },
     ],
   },
@@ -125,6 +151,18 @@ const products = [
         price: 320000,
         discount: 0,
         stock: 40,
+        images: [
+          {
+            path: "https://www.lojaglamourosa.com/resources/medias/shop/products/thumbnails/shop-image-large/shop-pf-00704-01-le-male-edt-40ml--1.jpg",
+            isPrimary: true,
+            order: 0
+          },
+          {
+            path: "https://perfumeonline.ca/cdn/shop/products/jean-paul-gaultier-le-male-eau-de-toilette-40ml-p8488-20383_image_1024x1024.jpg?v=1571609925",
+            isPrimary: false,
+            order: 1
+          },
+        ]
       },
       {
         size: 75,
@@ -132,6 +170,13 @@ const products = [
         price: 480000,
         discount: 5,
         stock: 9,
+        images: [
+          {
+            path: "https://image-optimizer-reg.production.sephora-asia.net/images/product_images/closeup_1_Product_8435415012638-JEAN-PAUL-GAULTIER-Le-Male-Eau-De-To_838df6d6cfb4d53323cedb910c7a2a43eb66e710_1728632779.png",
+            isPrimary: true,
+            order: 0
+          },
+        ]
       },
     ],
   },
@@ -150,6 +195,18 @@ const products = [
         price: 880000,
         discount: 0,
         stock: 50,
+        images: [
+          {
+            path: "https://a.cdnsbn.com/images/products/xl/26066398006.jpg",
+            isPrimary: true,
+            order: 0
+          },
+          {
+            path: "https://a.cdnsbn.com/images/products/xl/26066398006-1.jpg",
+            isPrimary: false,
+            order: 1
+          },
+        ]
       },
       {
         size: 50,
@@ -157,6 +214,53 @@ const products = [
         price: 1400000,
         discount: 0,
         stock: 15,
+        images: [
+          {
+            path: "https://levelperfume.com/cdn/shop/files/Tom-Ford-Lost-Cherry-50ml-cr_1200x1200.jpg?v=1709016795",
+            isPrimary: true,
+            order: 0
+          },
+        ]
+      },
+    ],
+  },
+   {
+    name: "Versace Eros",
+    brandSlug: "versace",
+    concentration: Concentration.EDT,
+    gender: Gender.MALE,
+    description:
+      "A fresh, woody fragrance with vibrant citrus and warm amber notes.",
+    releasedYear: 2019,
+    variants: [
+      {
+        size: 50,
+        source: VariantSource.ORIGINAL,
+        price: 450000,
+        discount: 0,
+        stock: 25,
+        images: [
+          {
+            path: "https://www.versace.com/dw/image/v2/BGWN_PRD/on/demandware.static/-/Sites-ver-master-catalog/default/dwb90e5c70/original/90_R740008-R050MLS_RNUL_20_Eros~EDT~50~ml-Accessories-Versace-online-store_0_1.jpg?sw=850&q=85&strip=true",
+            isPrimary: false,
+            order: 1
+          },
+          {
+            path: "https://www.versace.com/dw/image/v2/BGWN_PRD/on/demandware.static/-/Sites-ver-master-catalog/default/dw81139a10/original/90_R740008-R050MLS_RNUL_22_Eros~EDT~50~ml-Accessories-Versace-online-store_0_1.jpg?sw=850&q=85&strip=true",
+            isPrimary: false,
+            order: 2
+          },
+          {
+            path: "https://www.versace.com/on/demandware.static/-/Library-Sites-ver-library/default/dwbf3cbf93/EROS.jpg",
+            isPrimary: false,
+            order: 3
+          },
+          {
+            path: "https://cdn.paris-avenues.com/image/cache/catalog/Product2/8011003809202-Versace-Eros-EDT-50-Ml--1000x1000.jpg",
+            isPrimary: true,
+            order: 0
+          },
+        ],
       },
     ],
   },
@@ -177,58 +281,78 @@ export const users = faker.helpers.multiple(createRandomUser, {
 // Post seed data
 const posts = [
   {
-    title: "First Time Home Owner Ideas",
+    title: "How to Build a Fragrance Wardrobe",
     excerpt:
-      "The choice of furniture depends on personal preferences, the style of the living space, and the intended use of the furniture.",
-    image: "post-1.jpg",
+      "Choosing a signature scent depends on the occasion, your skin chemistry, and the season you are in.",
+    image: "https://eden1.b-cdn.net/wp-content/uploads/2025/12/build-a-fragrance-wardrobe.jpg",
+    categorySlug: "fragrance-families",
     content:
-      "<p>Storage furniture is essential for organizing and storing items in homes and offices. It helps to keep living spaces clean and clutter-free, making it easier to find and access items when needed. Storage furniture can also add style and character to a room, enhancing the overall decor of a space.</p><br/><p>Storage furniture is designed to provide storage space for various items in homes and offices. Here are some common uses of storage furniture:</p><br/><ol><li><strong>Organization:</strong> The primary use of storage furniture is to help organize and store various items in homes and offices. This includes items such as clothing, shoes, books, toys, office supplies, and other household items.</li><li><strong>Space-saving:</strong> Storage furniture can also be used to save space in a room. For example, a bed with built-in drawers or shelves can provide additional storage space for clothing and bedding, freeing up space in a closet or dresser.</li><li><strong>Decor</strong>Storage furniture can also be used as decorative pieces in a room. Bookcases, for example, can be used to display books and decorative items while also providing storage space.</li><li><strong>Flexibility:</strong> Storage furniture can be used in various rooms in a home or office. For example, a storage cabinet that is used in a living room to store board games and other items can be moved to a home office to store office supplies.</li><li><strong>Safety:</strong> Storage furniture can also be used to keep hazardous items out of reach of children and pets. Cabinets and lockers can be used to store chemicals, tools, and other items that can be dangerous if not stored properly.</li></ol><br/><br/><p>Overall, storage furniture is an essential part of any functional and organized living space. It helps to keep items organized and easily accessible while also providing additional storage space and enhancing the overall decor of a room.</p>",
-    categorySlug: "furniture-buying-guide",
+      "<p>A fragrance wardrobe is more than just a collection of bottles; it's an extension of your personality. Having different scents for different moods helps you express yourself more effectively.</p><br/>" +
+      "<p>Here are common elements of a well-rounded fragrance collection:</p><br/>" +
+      "<ol>" +
+      "<li><strong>The Fresh Daily:</strong> A clean, citrusy, or aquatic scent perfect for the office or gym.</li>" +
+      "<li><strong>The Date Night:</strong> Something warmer with notes of amber, vanilla, or spices to create an inviting aura.</li>" +
+      "<li><strong>The Signature:</strong> That one scent people associate with you—usually a balanced floral or woody composition.</li>" +
+      "<li><strong>The Seasonal:</strong> Lighter florals for Spring and heavy, gourmand scents for the cold Winter months.</li>" +
+      "</ol>",
   },
   {
-    title: "How To Keep Your Furniture Clean",
+    title: "5 Tips to Make Your Perfume Last All Day",
     excerpt:
-      "The choice of furniture depends on personal preferences, the style of the living space, and the intended use of the furniture.",
-    image: "post-2.jpg",
+      "Struggling with scent disappearance? Learn the science of pulse points and hydration to keep your fragrance alive.",
+    image: "https://rivona.in/cdn/shop/articles/5_Easy_Tips_to_make_your_Perfume.png?v=1760078625",
+    categorySlug: "scent-longevity-tips",
     content:
-      "<p>Storage furniture is essential for organizing and storing items in homes and offices. It helps to keep living spaces clean and clutter-free, making it easier to find and access items when needed. Storage furniture can also add style and character to a room, enhancing the overall decor of a space.</p><br/><p>Storage furniture is designed to provide storage space for various items in homes and offices. Here are some common uses of storage furniture:</p><br/><ol><li><strong>Organization:</strong> The primary use of storage furniture is to help organize and store various items in homes and offices. This includes items such as clothing, shoes, books, toys, office supplies, and other household items.</li><li><strong>Space-saving:</strong> Storage furniture can also be used to save space in a room. For example, a bed with built-in drawers or shelves can provide additional storage space for clothing and bedding, freeing up space in a closet or dresser.</li><li><strong>Decor</strong>Storage furniture can also be used as decorative pieces in a room. Bookcases, for example, can be used to display books and decorative items while also providing storage space.</li><li><strong>Flexibility:</strong> Storage furniture can be used in various rooms in a home or office. For example, a storage cabinet that is used in a living room to store board games and other items can be moved to a home office to store office supplies.</li><li><strong>Safety:</strong> Storage furniture can also be used to keep hazardous items out of reach of children and pets. Cabinets and lockers can be used to store chemicals, tools, and other items that can be dangerous if not stored properly.</li></ol><br/><br/><p>Overall, storage furniture is an essential part of any functional and organized living space. It helps to keep items organized and easily accessible while also providing additional storage space and enhancing the overall decor of a room.</p>",
-    categorySlug: "furniture-care-maintenance",
+      "<p>Longevity is the biggest challenge for many perfume enthusiasts. Here is how to ensure your scent stays with you from morning to night:</p><br/>" +
+      "<ol>" +
+      "<li><strong>Moisturize First:</strong> Fragrance clings better to hydrated skin. Apply an unscented lotion before spraying.</li>" +
+      "<li><strong>Pulse Points:</strong> Spray on areas where heat is generated—wrists, neck, and behind the ears.</li>" +
+      "<li><strong>Don't Rub:</strong> Rubbing your wrists together breaks down the molecules and ruins the top notes.</li>" +
+      "<li><strong>Storage Matters:</strong> Keep bottles away from sunlight and bathroom humidity to prevent the juice from spoiling.</li>" +
+      "</ol>",
   },
   {
-    title: "Small Space Furniture Apartment Ideas",
+    title: "Understanding Top, Heart, and Base Notes",
     excerpt:
-      "The choice of furniture depends on personal preferences, the style of the living space, and the intended use of the furniture.",
-    image: "post-3.jpg",
+      "Ever wonder why your perfume smells different after an hour? It’s all about the evaporation pyramid.",
+    image: "https://cdn.shopify.com/s/files/1/0904/3168/4923/files/Perfume_Making_Basic_Understanding_Top_Middle_Base_Notes_Perfume_Pyramid_Explained_copy.webp?v=1746047901",
+    categorySlug: "perfume-notes-101",
     content:
-      "<p>Storage furniture is essential for organizing and storing items in homes and offices. It helps to keep living spaces clean and clutter-free, making it easier to find and access items when needed. Storage furniture can also add style and character to a room, enhancing the overall decor of a space.</p><br/><p>Storage furniture is designed to provide storage space for various items in homes and offices. Here are some common uses of storage furniture:</p><br/><ol><li><strong>Organization:</strong> The primary use of storage furniture is to help organize and store various items in homes and offices. This includes items such as clothing, shoes, books, toys, office supplies, and other household items.</li><li><strong>Space-saving:</strong> Storage furniture can also be used to save space in a room. For example, a bed with built-in drawers or shelves can provide additional storage space for clothing and bedding, freeing up space in a closet or dresser.</li><li><strong>Decor</strong>Storage furniture can also be used as decorative pieces in a room. Bookcases, for example, can be used to display books and decorative items while also providing storage space.</li><li><strong>Flexibility:</strong> Storage furniture can be used in various rooms in a home or office. For example, a storage cabinet that is used in a living room to store board games and other items can be moved to a home office to store office supplies.</li><li><strong>Safety:</strong> Storage furniture can also be used to keep hazardous items out of reach of children and pets. Cabinets and lockers can be used to store chemicals, tools, and other items that can be dangerous if not stored properly.</li></ol><br/><br/><p>Overall, storage furniture is an essential part of any functional and organized living space. It helps to keep items organized and easily accessible while also providing additional storage space and enhancing the overall decor of a room.</p>",
-    categorySlug: "interior-design-tips",
+      "<p>Perfume is a living thing that evolves over time. Understanding the pyramid structure is key to buying the right bottle.</p><br/>" +
+      "<ul>" +
+      "<li><strong>Top Notes:</strong> The initial burst you smell (Citrus, Berries). These last about 15 minutes.</li>" +
+      "<li><strong>Heart Notes:</strong> The core of the fragrance (Florals, Spices). These emerge after the top notes fade.</li>" +
+      "<li><strong>Base Notes:</strong> The heavy hitters (Oud, Musk, Patchouli). These provide the foundation and last for hours.</li>" +
+      "</ul>",
   },
   {
-    title: "keep living spaces clean and clutter-free",
+    title: "The Best Floral Scents for Spring 2026",
     excerpt:
-      "The choice of furniture depends on personal preferences, the style of the living space, and the intended use of the furniture.",
-    image: "post-4.jpg",
+      "As the flowers bloom, your scent should too. Discover the top jasmine and rose-based perfumes this season.",
+    image: "https://cdn.shopify.com/s/files/1/1026/3879/files/rose_cream_collage.png?v=1774734916",
+    categorySlug: "seasonal-perfume-guides",
     content:
-      "<p>Storage furniture is essential for organizing and storing items in homes and offices. It helps to keep living spaces clean and clutter-free, making it easier to find and access items when needed. Storage furniture can also add style and character to a room, enhancing the overall decor of a space.</p><br/><p>Storage furniture is designed to provide storage space for various items in homes and offices. Here are some common uses of storage furniture:</p><br/><ol><li><strong>Organization:</strong> The primary use of storage furniture is to help organize and store various items in homes and offices. This includes items such as clothing, shoes, books, toys, office supplies, and other household items.</li><li><strong>Space-saving:</strong> Storage furniture can also be used to save space in a room. For example, a bed with built-in drawers or shelves can provide additional storage space for clothing and bedding, freeing up space in a closet or dresser.</li><li><strong>Decor</strong>Storage furniture can also be used as decorative pieces in a room. Bookcases, for example, can be used to display books and decorative items while also providing storage space.</li><li><strong>Flexibility:</strong> Storage furniture can be used in various rooms in a home or office. For example, a storage cabinet that is used in a living room to store board games and other items can be moved to a home office to store office supplies.</li><li><strong>Safety:</strong> Storage furniture can also be used to keep hazardous items out of reach of children and pets. Cabinets and lockers can be used to store chemicals, tools, and other items that can be dangerous if not stored properly.</li></ol><br/><br/><p>Overall, storage furniture is an essential part of any functional and organized living space. It helps to keep items organized and easily accessible while also providing additional storage space and enhancing the overall decor of a room.</p>",
-    categorySlug: "home-decor-inspiration",
+      "<p>Spring is the season of rebirth. We recommend looking for perfumes that utilize white florals and green notes.</p><br/>" +
+      "<p>Jasmine and Tuberose are currently trending for 2026, offering a sophisticated yet airy feel that matches the warming weather perfectly.</p>",
   },
   {
-    title: "How To Keep Your Furniture Clean",
+    title: "Is Niche Perfumery Worth the Price?",
     excerpt:
-      "The choice of furniture depends on personal preferences, the style of the living space, and the intended use of the furniture.",
-    image: "post-5.jpg",
+      "Explore the world of artisanal scents where the ingredients are rare and the storytelling is bold.",
+    image: "https://9f8e62d4.delivery.rocketcdn.me/wp-content/uploads/2024/01/What-Are-Niche-Fragrances.jpg",
+    categorySlug: "niche-vs-designer",
     content:
-      "<p>Storage furniture is essential for organizing and storing items in homes and offices. It helps to keep living spaces clean and clutter-free, making it easier to find and access items when needed. Storage furniture can also add style and character to a room, enhancing the overall decor of a space.</p><br/><p>Storage furniture is designed to provide storage space for various items in homes and offices. Here are some common uses of storage furniture:</p><br/><ol><li><strong>Organization:</strong> The primary use of storage furniture is to help organize and store various items in homes and offices. This includes items such as clothing, shoes, books, toys, office supplies, and other household items.</li><li><strong>Space-saving:</strong> Storage furniture can also be used to save space in a room. For example, a bed with built-in drawers or shelves can provide additional storage space for clothing and bedding, freeing up space in a closet or dresser.</li><li><strong>Decor</strong>Storage furniture can also be used as decorative pieces in a room. Bookcases, for example, can be used to display books and decorative items while also providing storage space.</li><li><strong>Flexibility:</strong> Storage furniture can be used in various rooms in a home or office. For example, a storage cabinet that is used in a living room to store board games and other items can be moved to a home office to store office supplies.</li><li><strong>Safety:</strong> Storage furniture can also be used to keep hazardous items out of reach of children and pets. Cabinets and lockers can be used to store chemicals, tools, and other items that can be dangerous if not stored properly.</li></ol><br/><br/><p>Overall, storage furniture is an essential part of any functional and organized living space. It helps to keep items organized and easily accessible while also providing additional storage space and enhancing the overall decor of a room.</p>",
-    categorySlug: "furniture-care-maintenance",
+      "<p>Niche fragrances are produced by houses dedicated solely to perfume, unlike designer brands that make clothing and accessories.</p><br/>" +
+      "<p>While more expensive, niche scents often use higher concentrations of natural oils and offer unique smells that won't make you 'smell like everyone else' in the room.</p>",
   },
   {
-    title: "Small Space Furniture Apartment Ideas",
+    title: "Why Your Skin Chemistry Changes the Scent",
     excerpt:
-      "The global smart furniture market size is expected to reach $794.8 million by 2025, growing at a CAGR of 6.4% from 2020 to 2025.",
-    image: "post-6.jpg",
+      "The same perfume can smell radically different on two people. Learn why pH and diet matter.",
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6wDkJwdGpXJaRlQJXMdyp6KAUGR5V0KyNgg&s",
+    categorySlug: "perfume-notes-101",
     content:
-      "<p>Storage furniture is essential for organizing and storing items in homes and offices. It helps to keep living spaces clean and clutter-free, making it easier to find and access items when needed. Storage furniture can also add style and character to a room, enhancing the overall decor of a space.</p><br/><p>Storage furniture is designed to provide storage space for various items in homes and offices. Here are some common uses of storage furniture:</p><br/><ol><li><strong>Organization:</strong> The primary use of storage furniture is to help organize and store various items in homes and offices. This includes items such as clothing, shoes, books, toys, office supplies, and other household items.</li><li><strong>Space-saving:</strong> Storage furniture can also be used to save space in a room. For example, a bed with built-in drawers or shelves can provide additional storage space for clothing and bedding, freeing up space in a closet or dresser.</li><li><strong>Decor</strong>Storage furniture can also be used as decorative pieces in a room. Bookcases, for example, can be used to display books and decorative items while also providing storage space.</li><li><strong>Flexibility:</strong> Storage furniture can be used in various rooms in a home or office. For example, a storage cabinet that is used in a living room to store board games and other items can be moved to a home office to store office supplies.</li><li><strong>Safety:</strong> Storage furniture can also be used to keep hazardous items out of reach of children and pets. Cabinets and lockers can be used to store chemicals, tools, and other items that can be dangerous if not stored properly.</li></ol><br/><br/><p>Overall, storage furniture is an essential part of any functional and organized living space. It helps to keep items organized and easily accessible while also providing additional storage space and enhancing the overall decor of a room.</p>",
-    categorySlug: "interior-design-tips",
+      "<p>Your skin's pH level, oiliness, and even your diet can alter how a fragrance develops. People with oily skin tend to hold scent longer, while dry skin requires more frequent reapplication.</p>",
   },
 ];
 
@@ -250,7 +374,11 @@ export async function main() {
   await prisma.product.deleteMany({});
   await prisma.user.deleteMany({ where: { role: Role.USER } });
   await prisma.transaction.deleteMany({});
+  await prisma.category.deleteMany({});
+  await prisma.brand.deleteMany({});
   console.log("Cleanup completed.");
+
+  removeFolder(getFilePath("uploads", "images"));
 
   // Seed Categories
   // console.log("Seeding Materials...");
@@ -385,6 +513,13 @@ export async function main() {
           stock: variantData.stock,
           isPrimary,
           productId: product.id,
+          images: {
+            create: variantData.images?.map((image) => ({
+              path: image.path,
+              isPrimary: image.isPrimary,
+              order: image.order
+            })),
+          },
         },
       });
 

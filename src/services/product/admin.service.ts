@@ -3,33 +3,33 @@ import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { ServiceResponseT } from "../../types/common";
 import {
-    CreateProductParams,
-    CreateProductVariantParams,
-    ListProductResultT,
-    ListProductsParams,
-    UpdateProductNewParams,
-    UpdateProductVariantParams,
+  CreateProductParams,
+  CreateProductVariantParams,
+  ListProductResultT,
+  ListProductsParams,
+  UpdateProductNewParams,
+  UpdateProductVariantParams,
 } from "../../types/product";
 import { createError, createSlug, ensureUniqueSlug } from "../../utils/common";
 import { getFilePath, removeFile } from "../../utils/file";
 import {
-    buildProductWhere,
-    deleteProductRecord,
-    deleteProductVariantFully,
-    findProductByName,
-    findProductByNameExcludingId,
-    findProductBySlug,
-    findProductDetail,
-    findProductVariantBySlug,
-    findProductVariantDetail,
-    findVariantImages,
-    generateUniqueVariantSku,
-    generateUniqueVariantSlug,
-    insertProduct,
-    parseProductQueryParams,
-    requireSlug,
-    requireVariantSlug,
-    updateProductRecord
+  buildProductWhere,
+  deleteProductRecord,
+  deleteProductVariantFully,
+  findProductByName,
+  findProductByNameExcludingId,
+  findProductBySlug,
+  findProductDetail,
+  findProductVariantBySlug,
+  findProductVariantDetail,
+  findVariantImages,
+  generateUniqueVariantSku,
+  generateUniqueVariantSlug,
+  insertProduct,
+  parseProductQueryParams,
+  requireSlug,
+  requireVariantSlug,
+  updateProductRecord
 } from "./product.helpers";
 import { IAdminProductService } from "./product.interface";
 
@@ -358,7 +358,7 @@ export class AdminProductService implements IAdminProductService {
       price,
       discount,
       imageFilenames,
-      existingImages,
+      // existingImages,
       imageLayout,
       isPrimary,
       isActive,
@@ -443,27 +443,25 @@ export class AdminProductService implements IAdminProductService {
           });
         }
 
+        const newImages = imageFilenames?.filter((filename) => !currentImages.some((img) => img.path === filename)) || [];
+
         // Re-order and sync
         for (let i = 0; i < imageLayout.length; i++) {
-          const path = imageLayout[i];
-          if (!path) continue;
+          const isNew = imageLayout[i] === "__NEW__";
 
-          const isNew = imageFilenames && imageFilenames.includes(path);
-          if (isNew) {
-            await tx.image.create({
-              data: {
-                path,
-                isPrimary: i === 0,
-                order: i,
-                productVariantId: existing.id,
-              },
-            });
-          } else {
-            await tx.image.updateMany({
-              where: { productVariantId: existing.id, path },
-              data: { order: i, isPrimary: i === 0 },
-            });
-          }
+          if(!isNew) continue;
+
+          const path = newImages.shift();
+          if(!path) continue;
+
+          await tx.image.create({
+            data: {
+              path,
+              isPrimary: i === 0,
+              order: i,
+              productVariantId: existing.id,
+            }
+          });
         }
       }
 
