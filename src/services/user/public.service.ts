@@ -93,4 +93,61 @@ export class PublicUserService implements IPublicUserService {
       message: "User created successfully."
     };
   }
+
+  async selectOptionListUsers(
+    query: { limit?: number; cursor?: number | null; search?: string | undefined }
+  ): Promise<ServiceResponseT<{ 
+    items: { id: number; name: string; slug: string; }[], 
+    nextCursor: number | null
+  }>> {
+    const limit = query.limit || 10;
+    const cursor = query.cursor;
+    const search = query.search;
+
+    const users = await prisma.user.findMany({
+      take: limit + 1,
+      ...(cursor && { cursor: { id: cursor } }),
+      skip: cursor ? 1 : 0,
+      where: {
+        status: "ACTIVE",
+        deletedAt: null,
+        ...(search && {
+          OR: [
+            { firstName: { contains: search, mode: "insensitive" } },
+            { lastName: { contains: search, mode: "insensitive" } },
+            { username: { contains: search, mode: "insensitive" } },
+          ],
+        }),
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        username: true,
+      },
+      orderBy: { id: "asc" },
+    }); 
+
+    let nextCursor: number | null = null;
+  
+    if (users.length > limit) {
+      users.pop();
+      nextCursor = users[users.length - 1]?.id || null;
+    }
+
+    const items = users.map(user => ({
+      id: user.id,
+      name: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.username,
+      slug: user.username,
+    }));
+
+    return {
+      data: {
+        items,
+        nextCursor,
+      },
+      success: true,
+      message: null,
+    };
+  }
 }

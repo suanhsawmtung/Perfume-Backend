@@ -1,9 +1,13 @@
 import { Brand } from "@prisma/client";
-import { CreateBrandParams, ListBrandResultT, ListBrandsParams, ListBrandT, ListPublicBrandT, UpdateBrandParams } from "../../types/brand";
+import { CreateBrandParams, ListBrandResultT, ListBrandsParams, ListBrandT, ListSelectOptionBrandT, UpdateBrandParams } from "../../types/brand";
 import { ServiceResponseT } from "../../types/common";
 
 export interface IPublicBrandService {
-  listPublicBrands(): Promise<ServiceResponseT<ListPublicBrandT[]>>;
+  listPublicBrands(): Promise<ServiceResponseT<ListSelectOptionBrandT[]>>;
+  selectOptionListBrands(query: { limit?: number; cursor?: number | null; search?: string | undefined }): Promise<ServiceResponseT<{ 
+    items: ListSelectOptionBrandT[], 
+    nextCursor: number | null
+  }>>;
 }
 
 export interface IAdminBrandService {

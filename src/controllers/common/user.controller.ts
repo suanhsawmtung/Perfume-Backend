@@ -101,3 +101,21 @@ export const setPassword = async (
     next(error);
   }
 };
+
+export const selectOptionListUsers = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+    const cursor = req.query.cursor ? parseInt(req.query.cursor as string) : null;
+    const search = req.query.search as string | undefined;
+
+    const result = await publicUserService.selectOptionListUsers({ limit, cursor, search });
+
+    res.status(200).json(result);
+  } catch (error: any) {
+    next(error);
+  }
+};

@@ -329,6 +329,12 @@ export const findProductVariantDetail = async (slug: string) => {
         select: {
           id: true,
           slug: true,
+          name: true,
+          brand: {
+            select: {
+              name: true,
+            },
+          },
         },
       },
     },

@@ -4,10 +4,10 @@ import { ServiceResponseT } from "../../types/common";
 import { ListProductResultT, ListProductsParams } from "../../types/product";
 import { createError } from "../../utils/common";
 import {
-    buildProductWhere,
-    findProductDetail,
-    parseProductQueryParams,
-    requireSlug,
+  buildProductWhere,
+  findProductDetail,
+  parseProductQueryParams,
+  requireSlug,
 } from "./product.helpers";
 import { IPublicProductService } from "./product.interface";
 
@@ -97,6 +97,114 @@ export class PublicProductService implements IPublicProductService {
     return {
       success: true,
       data: product,
+      message: null,
+    };
+  }
+
+  async selectOptionListProducts(
+    query: { limit?: number; cursor?: number | null; search?: string | undefined }
+  ): Promise<ServiceResponseT<{ 
+    items: { id: number; name: string; slug: string; }[], 
+    nextCursor: number | null
+  }>> {
+    const limit = query.limit || 10;
+    const cursor = query.cursor;
+    const search = query.search;
+
+    const products = await prisma.product.findMany({
+      take: limit + 1,
+      ...(cursor && { cursor: { id: cursor } }),
+      skip: cursor ? 1 : 0,
+      where: {
+        isActive: true,
+        deletedAt: null,
+        ...(search && {
+          name: {
+            contains: search,
+            mode: "insensitive",
+          },
+        }),
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+      },
+      orderBy: { id: "asc" },
+    }); 
+
+    let nextCursor: number | null = null;
+  
+    if (products.length > limit) {
+      products.pop();
+      nextCursor = products[products.length - 1]?.id || null;
+    }
+
+    return {
+      data: {
+        items: products,
+        nextCursor,
+      },
+      success: true,
+      message: null,
+    };
+  }
+
+  async selectOptionListProductVariants(
+    query: { productSlug: string; limit?: number; cursor?: number | null; search?: string | undefined }
+  ): Promise<ServiceResponseT<{ 
+    items: { id: number; name: string; slug: string; }[], 
+    nextCursor: number | null
+  }>> {
+    const limit = query.limit || 10;
+    const cursor = query.cursor;
+    const search = query.search;
+    const slug = query.productSlug;
+
+    const variants = await prisma.productVariant.findMany({
+      take: limit + 1,
+      ...(cursor && { cursor: { id: cursor } }),
+      skip: cursor ? 1 : 0,
+      where: {
+        isActive: true,
+        deletedAt: null,
+        product: {
+          slug: slug,
+        },
+        ...(search && {
+          name: {
+            contains: search,
+            mode: "insensitive",
+          },
+        }),
+      },
+      select: {
+        id: true,
+        size: true,
+        slug: true,
+      },
+      orderBy: { id: "asc" },
+    }); 
+
+    let nextCursor: number | null = null;
+  
+    if (variants.length > limit) {
+      variants.pop();
+      nextCursor = variants[variants.length - 1]?.id || null;
+    }
+
+    const items = variants.map((variant) => ({
+      id: variant.id,
+      name: `${variant.size} ml`,
+      slug: variant.slug,
+    }));
+
+    return {
+      data: {
+        items,
+        nextCursor,
+      },
+      success: true,
       message: null,
     };
   }

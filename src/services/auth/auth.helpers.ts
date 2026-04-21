@@ -1,5 +1,5 @@
 import { Otp, OtpType, Prisma } from "@prisma/client";
-import { authProcessErrorCode, errorCode } from "../../config/error-code";
+import { errorCode } from "../../config/error-code";
 import { hash } from "../../lib/hash";
 import { prisma } from "../../lib/prisma";
 import { generateOTP, generateToken } from "../../lib/unique-key-generator";
@@ -87,7 +87,7 @@ export const userNotExistsError = (): Error => {
   return createError({
     message: "This user does not exist.",
     status: 404,
-    code: authProcessErrorCode.userNotFound,
+    code: errorCode.userNotFound,
   });
 };
 
@@ -95,7 +95,7 @@ export const verifiedUserAlreadyExistsError = (): Error => {
   return createError({
     message: "This email address has already been registered.",
     status: 409,
-    code: authProcessErrorCode.userAlreadyExists,
+    code: errorCode.userAlreadyExists,
   });
 };
 
@@ -103,7 +103,7 @@ export const userNotVerifiedError = (): Error => {
   return createError({
     message: "This user is not verified. Please verify your email first.",
     status: 403,
-    code: authProcessErrorCode.userNotVerified,
+    code: errorCode.userNotVerified,
   });
 };
 
@@ -111,7 +111,7 @@ export const otpNotExistError = (): Error => {
   return createError({
     message: "OTP does not exist for this email address.",
     status: 400,
-    code: authProcessErrorCode.otpNotExist,
+    code: errorCode.otpNotExist,
   });
 };
 
@@ -119,7 +119,7 @@ export const otpNotVerifiedError = (): Error => {
   return createError({
     message: "OTP is not verified.",
     status: 400,
-    code: authProcessErrorCode.otpNotVerified,
+    code: errorCode.otpNotVerified,
   });
 };
 
@@ -127,7 +127,7 @@ export const invalidTokenError = (): Error => {
   return createError({
     message: "Invalid token!",
     status: 400,
-    code: authProcessErrorCode.invalidToken,
+    code: errorCode.invalidToken,
   });
 };
 
@@ -135,7 +135,7 @@ export const unmatchedOtpError = (): Error => {
   return createError({
     message: "Otp is incorrect!",
     status: 400,
-    code: authProcessErrorCode.invalidOrWrongOtp,
+    code: errorCode.invalidOrWrongOtp,
   });
 };
 
@@ -143,7 +143,7 @@ export const expiredOtpError = (): Error => {
   return createError({
     message: "Otp is expired!",
     status: 400,
-    code: authProcessErrorCode.expiredOtp,
+    code: errorCode.expiredOtp,
   });
 };
 
@@ -151,7 +151,7 @@ export const invalidPasswordError = (): Error => {
   return createError({
     message: "Invalid password!",
     status: 400,
-    code: authProcessErrorCode.invalidPassword,
+    code: errorCode.invalidPassword,
   });
 };
 
@@ -183,7 +183,7 @@ export const invalidGoogleProfileError = (): Error => {
   return createError({
     message: "Invalid Google profile!",
     status: 400,
-    code: authProcessErrorCode.invalidGoogleProfile,
+    code: errorCode.invalidGoogleProfile,
   });
 };
 

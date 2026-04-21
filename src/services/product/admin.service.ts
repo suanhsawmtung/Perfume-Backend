@@ -7,6 +7,7 @@ import {
   CreateProductVariantParams,
   ListProductResultT,
   ListProductsParams,
+  ProductVariantDetailType,
   UpdateProductNewParams,
   UpdateProductVariantParams,
 } from "../../types/product";
@@ -503,7 +504,7 @@ export class AdminProductService implements IAdminProductService {
     };
   }
 
-  async getVariantDetail(variantSlug: string): Promise<ServiceResponseT<any>> {
+  async getVariantDetail(variantSlug: string): Promise<ServiceResponseT<ProductVariantDetailType>> {
     const normalizedSlug = requireVariantSlug(variantSlug);
     const variant = await findProductVariantDetail(normalizedSlug);
 

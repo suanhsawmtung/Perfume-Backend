@@ -4,6 +4,10 @@ import { ServiceResponseT } from "../../types/common";
 
 export interface IPublicCategoryService {
   listPublicCategories(): Promise<ServiceResponseT<ListPublicCategoryT[]>>;
+  selectOptionListCategories(query: { limit?: number; cursor?: number | null; search?: string | undefined }): Promise<ServiceResponseT<{ 
+    items: ListPublicCategoryT[], 
+    nextCursor: number | null
+  }>>;
 }
 
 export interface IAdminCategoryService {

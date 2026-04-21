@@ -1,5 +1,5 @@
 // import { Otp, Prisma, User } from "@prisma/client";
-// import { authProcessErrorCode, errorCode } from "../../config/error-code";
+// import { errorCode } from "../../config/error-code";
 // import { hash } from "../lib/hash";
 // import { prisma } from "../lib/prisma";
 // import { generateOTP, generateToken } from "../lib/unique-key-generator";
@@ -114,7 +114,7 @@
 //     const error = createError({
 //       message: "OTP is allowed to request 3 times per day",
 //       status: 429,
-//       code: authProcessErrorCode.otpCountLimitExceeded,
+//       code: errorCode.otpCountLimitExceeded,
 //     });
 
 //     throw error;

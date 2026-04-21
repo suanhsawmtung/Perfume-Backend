@@ -34,4 +34,10 @@ export interface IProfileService {
 export interface IPublicUserService {
   listPublicUsers(limit?: number, offset?: number): Promise<ServiceResponseT<PublicUserResultT>>;
   findOrCreateByGoogle(params: Profile): Promise<ServiceResponseT<SafeUserT>>;
+  selectOptionListUsers(
+    query: { limit?: number; cursor?: number | null; search?: string | undefined }
+  ): Promise<ServiceResponseT<{ 
+    items: { id: number; name: string; slug: string; }[], 
+    nextCursor: number | null
+  }>>;
 }

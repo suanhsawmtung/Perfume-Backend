@@ -20,7 +20,7 @@ export type ParseBrandQueryParamsResult = {
   search?: string | undefined;
 };
 
-export type ListPublicBrandT = {
+export type ListSelectOptionBrandT = {
   id: number;
   name: string;
   slug: string;

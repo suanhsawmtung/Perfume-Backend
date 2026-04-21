@@ -14,10 +14,6 @@ export const errorCode = {
   retry: "Error_Retry",
   retryAndLogout: "Error_RetryAndLogout",
   authNotFound: "Error_AuthNotFound",
-};
-
-// Error codes for auth processes: register, verify-otp, verify-password-otp, confirm-password, reset-password
-export const authProcessErrorCode = {
   userAlreadyExists: "Error_UserAlreadyExists",
   otpNotExist: "Error_OtpNotExist",
   otpErrorCountLimitExceeded: "Error_OtpErrorCountLimitExceeded",
@@ -31,3 +27,4 @@ export const authProcessErrorCode = {
   invalidPassword: "Error_InvalidPassword",
   invalidGoogleProfile: "Error_InvalidGoogleProfile",
 };
+

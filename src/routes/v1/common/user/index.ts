@@ -3,8 +3,9 @@ import {
   changePassword,
   getMe,
   listPublicUsers,
+  selectOptionListUsers,
   setPassword,
-  updateMe,
+  updateMe
 } from "../../../../controllers/common/user.controller";
 import { isAuthenticated } from "../../../../middlewares/ensure-authenticated";
 import { handleValidationError } from "../../../../middlewares/error-handler";
@@ -22,6 +23,8 @@ import {
 const router: Router = express.Router();
 
 router.get("/", listPublicUsers);
+
+router.get("/select-options", selectOptionListUsers);
 
 router.get(
   "/me",

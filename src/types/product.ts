@@ -1,4 +1,4 @@
-import { Brand, Concentration, Gender, Product, VariantSource } from "@prisma/client";
+import { Brand, Concentration, Gender, Product, ProductVariant, VariantSource } from "@prisma/client";
 
 export type ListProductsParams = {
   limit?: number | string;
@@ -89,4 +89,13 @@ export type ParseProductQueryParamsResult = {
   concentration?: Concentration | undefined;
   isActive?: boolean | undefined;
   isLimited?: boolean | undefined;
+};
+
+export type ProductVariantDetailType = ProductVariant & {
+  product: {
+    name: string;
+    brand: {
+      name: string;
+    };
+  };
 };
