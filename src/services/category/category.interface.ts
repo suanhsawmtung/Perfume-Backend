@@ -2,7 +2,7 @@ import { Category } from "@prisma/client";
 import { CreateCategoryParams, ListCategoriesParams, ListCategoryResultT, ListCategoryT, ListPublicCategoryT, UpdateCategoryParams } from "../../types/category";
 import { ServiceResponseT } from "../../types/common";
 
-export interface IPublicCategoryService {
+export interface ICategoryService {
   listPublicCategories(): Promise<ServiceResponseT<ListPublicCategoryT[]>>;
   selectOptionListCategories(query: { limit?: number; cursor?: number | null; search?: string | undefined }): Promise<ServiceResponseT<{ 
     items: ListPublicCategoryT[], 

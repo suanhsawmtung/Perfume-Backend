@@ -5,9 +5,9 @@ import { ServiceResponseT } from "../../types/common";
 import { PublicUserResultT, PublicUserT, SafeUserT } from "../../types/user";
 import { findUserByGoogleId, invalidGoogleProfileError } from "../auth/auth.helpers";
 import { createUserRecord, findUserByEmail, generateUsername } from "./user.helpers";
-import { IPublicUserService } from "./user.interface";
+import { IUserService } from "./user.interface";
 
-export class PublicUserService implements IPublicUserService {
+export class UserService implements IUserService {
   async listPublicUsers(
     limit?: number,
     offset?: number
@@ -125,7 +125,7 @@ export class PublicUserService implements IPublicUserService {
         lastName: true,
         username: true,
       },
-      orderBy: { id: "asc" },
+      orderBy: { createdAt: "asc" },
     }); 
 
     let nextCursor: number | null = null;

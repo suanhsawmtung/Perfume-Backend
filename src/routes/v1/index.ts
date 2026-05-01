@@ -12,7 +12,6 @@ import adminOrderRoutes from "./admin/order";
 import adminPaymentRoutes from "./admin/payment";
 import adminPostRoutes from "./admin/post";
 import adminProductRoutes from "./admin/product";
-import adminProductRatingRoutes from "./admin/product-rating";
 import adminRefundRoutes from "./admin/refund";
 import adminReviewRoutes from "./admin/review";
 import adminTransactionRoutes from "./admin/transaction";
@@ -22,7 +21,9 @@ import authCheckRoutes from "./common/auth-check";
 import brandRoutes from "./common/brand";
 import categoryRoutes from "./common/category";
 import productRoutes from "./common/product";
+import reviewRoutes from "./common/review";
 import userRoutes from "./common/user";
+import wishlistRoutes from "./common/wishlist";
 
 const router: Router = express.Router();
 
@@ -35,7 +36,6 @@ router.use("/admin/posts", normalLimiter, adminPostRoutes);
 router.use("/admin/products", normalLimiter, adminProductRoutes);
 router.use("/admin/orders", normalLimiter, adminOrderRoutes);
 router.use("/admin/reviews", normalLimiter, adminReviewRoutes);
-router.use("/admin/product-ratings", normalLimiter, adminProductRatingRoutes);
 router.use("/admin/refunds", normalLimiter, adminRefundRoutes);
 router.use("/admin/payments", normalLimiter, adminPaymentRoutes);
 router.use("/admin/transactions", normalLimiter, adminTransactionRoutes);
@@ -46,6 +46,8 @@ router.use("/auth-check", authCheckLimiter, authCheckRoutes);
 router.use("/brands", brandRoutes);
 router.use("/categories", categoryRoutes);
 router.use("/products", productRoutes);
+router.use("/reviews", reviewRoutes);
 router.use("/users", userRoutes);
+router.use("/wishlists", wishlistRoutes);
 
 export default router;

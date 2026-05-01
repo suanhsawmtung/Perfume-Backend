@@ -31,7 +31,7 @@ export interface IProfileService {
   setPassword(userId: number, params: SetPasswordParams): Promise<ServiceResponseT<null>>;
 }
 
-export interface IPublicUserService {
+export interface IUserService {
   listPublicUsers(limit?: number, offset?: number): Promise<ServiceResponseT<PublicUserResultT>>;
   findOrCreateByGoogle(params: Profile): Promise<ServiceResponseT<SafeUserT>>;
   selectOptionListUsers(

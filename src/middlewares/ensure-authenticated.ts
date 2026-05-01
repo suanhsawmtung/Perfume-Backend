@@ -3,7 +3,6 @@ import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 import { errorCode } from "../config/error-code";
 import { AuthService } from "../services/auth/auth.service";
-import { findUserByIdWithSensitive } from "../services/user/user.helpers";
 import { CustomRequest } from "../types/common";
 import { createError } from "../utils/common";
 
@@ -104,48 +103,6 @@ export const isAuthenticated = async (
   }
 };
 
-export const ensureUnauthenticated = async (
-  req: CustomRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  const { refreshToken } = req.cookies || {};
-
-  // If no refresh token, user is not authenticated, proceed
-  if (!refreshToken) {
-    return next();
-  }
-
-  // If refresh token exists, verify it
-  try {
-    const decoded = jwt.verify(
-      refreshToken,
-      env.jwt.refreshTokenSecret
-    ) as { id: number; email: string };
-
-    if (!isNaN(decoded.id)) {
-      const user = await findUserByIdWithSensitive(decoded.id);
-
-      // If user exists and token matches, user is authenticated
-      if (
-        user &&
-        user.email === decoded.email &&
-        user.refreshToken === refreshToken
-      ) {
-        const error = createError({
-          message: "You are already logged in.",
-          status: 403,
-          code: errorCode.alreadyExists,
-        });
-
-        return next(error);
-      }
-    }
-  } catch (err: any) {
-    // If token is invalid or expired, user is not authenticated, proceed
-    // This is expected for unauthenticated users
-  }
-
-  // User is not authenticated, proceed
-  next();
+export const tryAuthenticate = (req: CustomRequest, res: Response, next: NextFunction) => {
+  isAuthenticated(req, res, () => next());
 };

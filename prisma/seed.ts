@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Concentration, Gender, InventoryType, OrderItemType, OrderPaymentStatus, OrderStatus, PaymentMethod, PaymentStatus, RefundStatus, Role, TransactionDirection, TransactionType, VariantSource } from "@prisma/client";
+import { Concentration, Gender, InventoryType, OrderPaymentStatus, OrderStatus, PaymentMethod, PaymentStatus, RefundStatus, Role, TransactionDirection, TransactionType } from "@prisma/client";
 import moment from "moment";
 import { hash } from "../src/lib/hash";
 import { prisma } from "../src/lib/prisma";
@@ -54,7 +54,6 @@ const products = [
   variants: [
       {
         size: 10,
-        source: VariantSource.ORIGINAL,
         price: 150000,
         discount: 0,
         stock: 5,
@@ -73,7 +72,6 @@ const products = [
       },
       {
         size: 90,
-        source: VariantSource.ORIGINAL,
         price: 480000,
         discount: 0,
         stock: 20,
@@ -103,7 +101,6 @@ const products = [
   variants: [
       {
         size: 30,
-        source: VariantSource.ORIGINAL,
         price: 340000,
         discount: 0,
         stock: 20,
@@ -122,7 +119,6 @@ const products = [
       },
       {
         size: 90,
-        source: VariantSource.ORIGINAL,
         price: 720000,
         discount: 0,
         stock: 8,
@@ -147,7 +143,6 @@ const products = [
     variants: [
       {
         size: 40,
-        source: VariantSource.ORIGINAL,
         price: 320000,
         discount: 0,
         stock: 40,
@@ -166,7 +161,6 @@ const products = [
       },
       {
         size: 75,
-        source: VariantSource.ORIGINAL,
         price: 480000,
         discount: 5,
         stock: 9,
@@ -191,7 +185,6 @@ const products = [
     variants: [
       {
         size: 30,
-        source: VariantSource.ORIGINAL,
         price: 880000,
         discount: 0,
         stock: 50,
@@ -210,7 +203,6 @@ const products = [
       },
       {
         size: 50,
-        source: VariantSource.ORIGINAL,
         price: 1400000,
         discount: 0,
         stock: 15,
@@ -235,7 +227,6 @@ const products = [
     variants: [
       {
         size: 50,
-        source: VariantSource.ORIGINAL,
         price: 450000,
         discount: 0,
         stock: 25,
@@ -365,7 +356,6 @@ export async function main() {
   await prisma.refund.deleteMany({});
   await prisma.payment.deleteMany({});
   await prisma.order.deleteMany({});
-  await prisma.productRating.deleteMany({});
   await prisma.productWishlist.deleteMany({});
   await prisma.post.deleteMany({});
   await prisma.inventory.deleteMany({});
@@ -489,7 +479,7 @@ export async function main() {
       }
 
       const baseVariantSlug = createSlug(
-        `${product.slug}-${variantData.size}-${variantData.source}`
+        `${product.slug}-${variantData.size}`
       );
       const existingVariant = await prisma.productVariant.findUnique({
         where: { slug: baseVariantSlug },
@@ -507,7 +497,6 @@ export async function main() {
           slug: variantSlug,
           sku,
           size: variantData.size,
-          source: variantData.source,
           price: variantData.price,
           discount: variantData.discount,
           stock: variantData.stock,
@@ -732,8 +721,7 @@ export async function main() {
                  await prisma.orderItem.create({
                      data: {
                          orderId: createdOrder.id,
-                         itemId: randomVariant.id,
-                         itemType: OrderItemType.PRODUCT_VARIANT,
+                         productVariantId: randomVariant.id,
                          quantity: quantity,
                          price: price,
                          createdAt: orderDate
@@ -878,8 +866,7 @@ export async function main() {
       await prisma.orderItem.create({
         data: {
           orderId: order.id,
-          itemId: randomVariant.id,
-          itemType: OrderItemType.PRODUCT_VARIANT,
+          productVariantId: randomVariant.id,
           quantity: 1,
           price,
           createdAt: orderDate,
@@ -949,29 +936,8 @@ export async function main() {
 
   const allProducts = await prisma.product.findMany();
 
-  if (allProducts.length > 0 && allClients.length >= 2) {
-    for (const product of allProducts) {
-      // Pick 2 random unique users from allClients
-      const selectedUsers = faker.helpers.arrayElements(allClients, 2);
-
-      for (const user of selectedUsers) {
-        await prisma.review.create({
-          data: {
-            content: faker.lorem.paragraph(),
-            isPublish: true,
-            userId: user.id,
-            productId: product.id,
-          },
-        });
-      }
-      console.log(`Created 2 reviews for product: ${product.name}`);
-    }
-  } else {
-    console.log("Skipping review seeding: Not enough products or users.");
-  }
-
-  // Seed Product Ratings
-  console.log("Seeding Product Ratings...");
+  // Seed Product Reviews
+  console.log("Seeding Product reviews...");
   if (allProducts.length > 0 && allClients.length >= 2) {
     for (const product of allProducts) {
       // Pick 2-4 random unique users from allClients to give ratings
@@ -981,8 +947,10 @@ export async function main() {
       let totalRating = 0;
       for (const user of raters) {
         const ratingValue = faker.number.int({ min: 1, max: 5 });
-        await prisma.productRating.create({
+        await prisma.review.create({
           data: {
+            content: faker.lorem.paragraph(),
+            isPublish: true,
             userId: user.id,
             productId: product.id,
             rating: ratingValue,

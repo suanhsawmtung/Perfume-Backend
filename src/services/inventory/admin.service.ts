@@ -3,10 +3,10 @@ import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { ServiceResponseT } from "../../types/common";
 import {
-    CreateInventoryParams,
-    ListInventoriesParams,
-    ListInventoryResultT,
-    ListInventoryT,
+  CreateInventoryParams,
+  ListInventoriesParams,
+  ListInventoryResultT,
+  ListInventoryT,
 } from "../../types/inventory";
 import { createError } from "../../utils/common";
 import { buildInventoryWhereClause, parseInventoryQueryParams } from "./inventory.helpers";
@@ -33,7 +33,6 @@ export class AdminInventoryService implements IAdminInventoryService {
               sku: true,
               slug: true,
               size: true,
-              source: true,
               product: {
                 select: {
                   id: true,

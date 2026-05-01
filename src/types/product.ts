@@ -1,9 +1,17 @@
-import { Brand, Concentration, Gender, Product, ProductVariant, VariantSource } from "@prisma/client";
+import {
+  Brand,
+  Concentration,
+  Gender,
+  Image,
+  Product,
+  ProductVariant,
+  ProductWishlist
+} from "@prisma/client";
 
 export type ListProductsParams = {
   limit?: number | string;
   offset?: number | string;
-  search?: string | undefined;  
+  search?: string | undefined;
   brandSlug?: string | undefined;
   gender?: Gender | undefined;
   concentration?: Concentration | undefined;
@@ -11,11 +19,25 @@ export type ListProductsParams = {
   isLimited?: boolean | undefined;
 }
 
-export type ListProductT = Product & {
+export type AdminListProductT = Product & {
   brand: Pick<Brand, "name">;
   _count: {
     variants: number;
   };
+};
+
+export type AdminListProductResultT = {
+  items: AdminListProductT[];
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+};
+
+export type ListProductT = Product & {
+  brand: Pick<Brand, "name" | "slug">;
+  variants: (Pick<ProductVariant, "price" | "discount" | "stock" | "reserved"> & {
+    images: Pick<Image, "path">[];
+  })[];
 };
 
 export type ListProductResultT = {
@@ -32,6 +54,25 @@ export type BuildProductWhereParams = {
   concentration?: Concentration | undefined;
   isActive?: boolean | undefined;
   isLimited?: boolean | undefined;
+};
+
+export type AdminProductDetailT = Product & {
+  brand: Brand;
+  variants: (ProductVariant & {
+    images: Pick<Image, "path" | "isPrimary" | "order">[];
+  })[];
+  _count: {
+    variants: number;
+    reviews: number;
+  };
+};
+
+export type ProductDetailT = Product & {
+  brand: Brand;
+  variants: (ProductVariant & {
+    images: Pick<Image, "path" | "isPrimary" | "order">[];
+  })[];
+  wishlists: ProductWishlist[];
 };
 
 export type CreateProductParams = {
@@ -59,7 +100,6 @@ export type UpdateProductNewParams = {
 export type CreateProductVariantParams = {
   productId?: number | string;
   size: number | string;
-  source?: VariantSource;
   price: number | string;
   discount?: number | string;
   imageFilenames?: string[];
@@ -70,7 +110,6 @@ export type CreateProductVariantParams = {
 export type UpdateProductVariantParams = {
   productId?: number | string;
   size: number | string;
-  source?: VariantSource;
   price: number | string;
   discount?: number | string;
   imageFilenames?: string[];
@@ -93,9 +132,12 @@ export type ParseProductQueryParamsResult = {
 
 export type ProductVariantDetailType = ProductVariant & {
   product: {
+    id: number;
+    slug: string;
     name: string;
     brand: {
       name: string;
     };
   };
+  images: Pick<Image, "path" | "isPrimary" | "order">[];
 };

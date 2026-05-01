@@ -2,7 +2,7 @@ import { Brand } from "@prisma/client";
 import { CreateBrandParams, ListBrandResultT, ListBrandsParams, ListBrandT, ListSelectOptionBrandT, UpdateBrandParams } from "../../types/brand";
 import { ServiceResponseT } from "../../types/common";
 
-export interface IPublicBrandService {
+export interface IBrandService {
   listPublicBrands(): Promise<ServiceResponseT<ListSelectOptionBrandT[]>>;
   selectOptionListBrands(query: { limit?: number; cursor?: number | null; search?: string | undefined }): Promise<ServiceResponseT<{ 
     items: ListSelectOptionBrandT[], 

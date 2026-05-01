@@ -1,4 +1,4 @@
-import { Concentration, Gender, Prisma, VariantSource } from "@prisma/client";
+import { Concentration, Gender, Prisma } from "@prisma/client";
 import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { generateCode } from "../../lib/unique-key-generator";
@@ -160,15 +160,14 @@ export const requireSku = (sku: string) => {
   return sku.trim();
 };
 
-export const findProductDetail = async (slug: string) => {
+export const findAdminProductDetail = async (slug: string) => {
   return await prisma.product.findFirst({
-    where: { slug, deletedAt: null },
+    where: { slug, deletedAt: null, isActive: true },
     include: {
       brand: true,
       variants: {
-        where: { deletedAt: null },
+        where: { deletedAt: null, isActive: true },
         include: {
-          inventories: true,
           images: {
             select: {
               path: true,
@@ -183,35 +182,49 @@ export const findProductDetail = async (slug: string) => {
       },
       _count: {
         select: {
-          wishlists: true,
-          ratings: true,
           variants: true,
+          reviews: {
+            where: {
+              content: {
+                not: null
+              }
+            }
+          }
         },
       },
     },
   });
 };
 
-export const findProductVariantsSummary = async (slug: string) => {
+export const findProductDetail = async (slug: string, userId?: string | number) => {
   return await prisma.product.findFirst({
-    where: { slug, deletedAt: null },
-    select: {
-      name: true,
-      slug: true,
-      brand: {
-        select: {
-          name: true,
-        },
-      },
+    where: { slug, deletedAt: null, isActive: true },
+    include: {
+      brand: true,
       variants: {
-        where: { deletedAt: null },
-        orderBy: {
-          createdAt: "desc",
-        },
+        where: { deletedAt: null, isActive: true },
         include: {
-          inventories: true,
+          images: {
+            select: {
+              path: true,
+              isPrimary: true,
+              order: true,
+            },
+            orderBy: {
+              order: "asc",
+            },
+          },
         },
       },
+      ...(userId && {
+        // ratings: {
+        //   where: { userId: Number(userId) },
+        //   select: { rating: true },
+        // },
+        wishlists: {
+          where: { userId: Number(userId) },
+        },
+      }),
     },
   });
 };
@@ -302,10 +315,9 @@ export const generateUniqueVariantSku = async (
 export const generateUniqueVariantSlug = async (
   productSlug: string,
   size: number,
-  source: VariantSource,
   excludeId?: number
 ) => {
-  const baseSlug = createSlug(`${productSlug}-${size}-${source}`);
+  const baseSlug = createSlug(`${productSlug}-${size}ml`);
   const slugOwner = await findProductVariantBySlug(baseSlug);
   const slugExists = slugOwner ? slugOwner.id !== excludeId : false;
   return await ensureUniqueSlug(baseSlug, slugExists);
@@ -320,11 +332,15 @@ export const findProductVariantDetail = async (slug: string) => {
     },
     include: {
       images: {
+        select: {
+          path: true,
+          isPrimary: true,
+          order: true,
+        },
         orderBy: {
           order: "asc",
         },
       },
-      inventories: true,
       product: {
         select: {
           id: true,
@@ -518,10 +534,7 @@ export const insertProduct = async (
   createProductData: Prisma.ProductCreateInput
 ) => {
   return await prisma.product.create({
-    data: createProductData,
-    include: {
-      brand: true,
-    },
+    data: createProductData
   });
 };
 
@@ -531,10 +544,7 @@ export const updateProductRecord = async (
 ) => {
   return await prisma.product.update({
     where: { id },
-    data: updateProductData,
-    include: {
-      brand: true,
-    },
+    data: updateProductData
   });
 };
 

@@ -1,4 +1,4 @@
-import { Concentration, Gender, VariantSource } from "@prisma/client";
+import { Concentration, Gender } from "@prisma/client";
 import { body } from "express-validator";
 
 // const productValidation = [
@@ -142,10 +142,6 @@ const productVariantValidation = [
     .withMessage("Size is required.")
     .isInt({ min: 1 })
     .withMessage("Size must be a positive integer."),
-  body("source")
-    .optional()
-    .isIn(Object.values(VariantSource))
-    .withMessage("Source is invalid."),
   body("price")
     .notEmpty()
     .withMessage("Price is required.")

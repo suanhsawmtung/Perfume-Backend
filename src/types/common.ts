@@ -10,4 +10,14 @@ export interface ServiceResponseT<T> {
   message: string | null;
 }
 
+export type CursorPaginationParams = {
+  cursor?: number | string;
+  limit?: number | string;
+};
+
+export type CursorPaginationResultT<T> = {
+  items: T[];
+  nextCursor: number | null;
+};
+
 

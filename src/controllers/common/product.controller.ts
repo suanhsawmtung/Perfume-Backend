@@ -1,31 +1,32 @@
 import { NextFunction, Response } from "express";
 import { errorCode } from "../../config/error-code";
-import { PublicProductService } from "../../services/product/public.service";
+import { ProductService } from "../../services/product/product.service";
 import { CustomRequest } from "../../types/common";
 import { createError } from "../../utils/common";
 
-const publicProductService = new PublicProductService();
+const productService = new ProductService();
 
-export const listPublicProducts = async (
+export const listProducts = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const result = await publicProductService.listProducts(req.query);
+    const result = await productService.listProducts(req.query);
     return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
 };
 
-export const getPublicProduct = async (
+export const getProduct = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { slug } = req.params;
+    const { userId } = req;
 
     if (!slug) {
       throw createError({
@@ -35,7 +36,7 @@ export const getPublicProduct = async (
       });
     }
 
-    const result = await publicProductService.getProductDetail(slug);
+    const result = await productService.getProductDetail(slug, userId);
     return res.status(200).json(result);
   } catch (error: any) {
     next(error);
@@ -52,7 +53,7 @@ export const selectOptionListProducts = async (
     const cursor = req.query.cursor ? parseInt(req.query.cursor as string) : null;
     const search = req.query.search as string | undefined;
 
-    const result = await publicProductService.selectOptionListProducts({ limit, cursor, search });
+    const result = await productService.selectOptionListProducts({ limit, cursor, search });
 
     res.status(200).json(result);
   } catch (error: any) {
@@ -79,7 +80,7 @@ export const selectOptionListProductVariants = async (
       });
     }
 
-    const result = await publicProductService.selectOptionListProductVariants({ productSlug, limit, cursor, search });
+    const result = await productService.selectOptionListProductVariants({ productSlug, limit, cursor, search });
 
     res.status(200).json(result);
   } catch (error: any) {

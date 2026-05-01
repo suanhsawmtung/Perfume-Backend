@@ -16,7 +16,7 @@ export interface IAdminPostService {
   deletePost(slug: string): Promise<ServiceResponseT<null>>;
 }
 
-export interface IPublicPostService {
+export interface IPostService {
   listPosts(params: ListPostsParams): Promise<ServiceResponseT<ListPostResultT>>;
   getPostDetail(slug: string): Promise<ServiceResponseT<ListPostT>>;
 }

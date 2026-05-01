@@ -1,25 +1,24 @@
-import { InventoryType, OrderItemType, OrderPaymentStatus, OrderSource, OrderStatus, ReservationStatus } from "@prisma/client";
+import { InventoryType, Order, OrderPaymentStatus, OrderSource, OrderStatus, ReservationStatus } from "@prisma/client";
 import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { ServiceResponseT } from "../../types/common";
 import {
-    CreateOrderParams,
-    ListOrderResultT,
-    ListOrdersParams,
-    ListOrderT,
-    UpdateOrderParams,
+  CreateOrderParams,
+  ListOrderResultT,
+  ListOrdersParams,
+  ListOrderT,
+  UpdateOrderParams,
 } from "../../types/order";
 import { createError } from "../../utils/common";
 import { findUserById } from "../user/user.helpers";
 import {
-    buildOrderWhereClause,
-    enrichOrder,
-    enrichOrders,
-    findOrderRecordWithItemsByCode,
-    findOrderWithDetailsByCode,
-    generateOrderCode,
-    parseOrderQueryParams,
-    requireOrderCode
+  buildOrderWhereClause,
+  enrichOrders,
+  findOrderRecordWithItemsByCode,
+  findOrderWithDetailsByCode,
+  generateOrderCode,
+  parseOrderQueryParams,
+  requireOrderCode
 } from "./order.helpers";
 import { IAdminOrderService } from "./order.interface";
 
@@ -65,6 +64,22 @@ export class AdminOrderService implements IAdminOrderService {
               email: true,
             },
           },
+          orderItems: {
+            include: {
+              productVariant: {
+                include: {
+                  product: {
+                    select: {
+                      id: true,
+                      name: true,
+                      slug: true,
+                      brand: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       }),
       prisma.order.count({ where }),
@@ -97,18 +112,16 @@ export class AdminOrderService implements IAdminOrderService {
       });
     }
 
-    const enriched = await enrichOrder(order);
-
     return {
       success: true,
-      data: enriched as ListOrderT,
+      data: order,
       message: null,
     };
   }
 
   async createOrder(
     params: CreateOrderParams
-  ): Promise<ServiceResponseT<ListOrderT>> {
+  ): Promise<ServiceResponseT<Order>> {
     const {
       status,
       customerName,
@@ -185,7 +198,6 @@ export class AdminOrderService implements IAdminOrderService {
         calculatedTotalPrice += priceNum * quantityNum;
         verifiedItems.push({
           itemId: itemIdNum,
-          itemType: item.itemType || OrderItemType.PRODUCT_VARIANT,
           quantity: quantityNum,
           price: priceNum,
         });
@@ -205,8 +217,7 @@ export class AdminOrderService implements IAdminOrderService {
           customerNotes: customerNotes ? customerNotes.trim() : null,
           orderItems: {
             create: verifiedItems.map((item) => ({
-              itemId: item.itemId,
-              itemType: item.itemType,
+              productVariantId: item.itemId,
               quantity: item.quantity,
               price: item.price,
             })),
@@ -244,29 +255,12 @@ export class AdminOrderService implements IAdminOrderService {
         });
       }
 
-      const finalOrder = await tx.order.findUnique({
-        where: { id: order.id },
-        include: {
-          user: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              username: true,
-              phone: true,
-              email: true,
-            },
-          },
-          orderItems: true,
-        },
-      });
-
-      return await enrichOrder(finalOrder);
+      return order;
     });
 
     return {
       success: true,
-      data: result as ListOrderT,
+      data: result,
       message: "Order created successfully.",
     };
   }
@@ -274,7 +268,7 @@ export class AdminOrderService implements IAdminOrderService {
   async updateOrder(
     code: string,
     params: UpdateOrderParams
-  ): Promise<ServiceResponseT<ListOrderT>> {
+  ): Promise<ServiceResponseT<Order>> {
     const {
       status: newStatus,
       customerName,
@@ -376,8 +370,7 @@ export class AdminOrderService implements IAdminOrderService {
           const original = initialItems[index];
           return (
             !original ||
-            item.itemId !== original.itemId ||
-            item.itemType !== original.itemType ||
+            item.itemId !== original.productVariantId ||
             item.quantity !== original.quantity ||
             Number(item.price) !== Number(original.price)
           );
@@ -427,7 +420,7 @@ export class AdminOrderService implements IAdminOrderService {
       if (cancelledReason !== undefined)
         updateData.cancelledReason = cancelledReason.trim();
 
-      await tx.order.update({
+      const updatedOrder = await tx.order.update({
         where: { id: existingOrder.id },
         data: updateData,
       });
@@ -506,8 +499,7 @@ export class AdminOrderService implements IAdminOrderService {
           await tx.orderItem.create({
             data: {
               orderId: existingOrder.id,
-              itemId: itemIdNum,
-              itemType: item.itemType || OrderItemType.PRODUCT_VARIANT,
+              productVariantId: itemIdNum,
               quantity: quantityNum,
               price: item.price,
             },
@@ -656,31 +648,12 @@ export class AdminOrderService implements IAdminOrderService {
         }
       }
 
-      const finalOrder = await tx.order.findUnique({
-        where: { id: existingOrder.id },
-        include: {
-          user: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              username: true,
-              phone: true,
-              email: true,
-            },
-          },
-          orderItems: true,
-          payments: true,
-          refunds: true,
-        },
-      });
-
-      return await enrichOrder(finalOrder);
+      return updatedOrder;
     });
 
     return {
       success: true,
-      data: result as ListOrderT,
+      data: result,
       message: "Order updated successfully.",
     };
   }

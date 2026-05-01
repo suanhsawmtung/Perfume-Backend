@@ -1,11 +1,11 @@
 import { prisma } from "../../lib/prisma";
-import { ListPublicCategoryT } from "../../types/category";
+import { ListSelectOptionBrandT } from "../../types/brand";
 import { ServiceResponseT } from "../../types/common";
-import { IPublicCategoryService } from "./category.interface";
+import { IBrandService } from "./brand.interface";
 
-export class PublicCategoryService implements IPublicCategoryService {
-  async listPublicCategories(): Promise<ServiceResponseT<ListPublicCategoryT[]>> {
-    const categories = await prisma.category.findMany({
+export class BrandService implements IBrandService {
+  async listPublicBrands(): Promise<ServiceResponseT<ListSelectOptionBrandT[]>> {
+    const brands = await prisma.brand.findMany({
       select: {
         id: true,
         name: true,
@@ -15,23 +15,23 @@ export class PublicCategoryService implements IPublicCategoryService {
     });
 
     return {
+      data: brands,
       success: true,
-      data: categories,
       message: null,
     };
   }
 
-  async selectOptionListCategories(
+  async selectOptionListBrands(
     query: { limit?: number; cursor?: number | null; search?: string | undefined }
   ): Promise<ServiceResponseT<{ 
-    items: ListPublicCategoryT[], 
+    items: ListSelectOptionBrandT[], 
     nextCursor: number | null
   }>> {
     const limit = query.limit || 10;
     const cursor = query.cursor;
     const search = query.search;
 
-    const categories = await prisma.category.findMany({
+    const brands = await prisma.brand.findMany({
       take: limit + 1,
       ...(cursor && { cursor: { id: cursor } }),
       skip: cursor ? 1 : 0,
@@ -49,19 +49,19 @@ export class PublicCategoryService implements IPublicCategoryService {
         name: true,
         slug: true,
       },
-      orderBy: { id: "asc" },
-    });
+      orderBy: { createdAt: "asc" },
+    }); 
 
     let nextCursor: number | null = null;
-
-    if (categories.length > limit) {
-      categories.pop();
-      nextCursor = categories[categories.length - 1]?.id || null;
+  
+    if (brands.length > limit) {
+      brands.pop();
+      nextCursor = brands[brands.length - 1]?.id || null;
     }
 
     return {
       data: {
-        items: categories,
+        items: brands,
         nextCursor,
       },
       success: true,

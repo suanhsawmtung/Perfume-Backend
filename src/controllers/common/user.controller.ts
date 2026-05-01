@@ -1,11 +1,11 @@
 import { NextFunction, Response } from "express";
 import { ProfileService } from "../../services/user/profile.service";
-import { PublicUserService } from "../../services/user/public.service";
+import { UserService } from "../../services/user/user.service";
 import { CustomRequest } from "../../types/common";
 import { cleanupUploadedFiles } from "../../utils/file-cleanup";
 
 const profileService = new ProfileService();
-const publicUserService = new PublicUserService();
+const userService = new UserService();
 
 export const listPublicUsers = async (
   req: CustomRequest,
@@ -16,7 +16,7 @@ export const listPublicUsers = async (
     const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
     const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : undefined;
 
-    const result = await publicUserService.listPublicUsers(limit, offset);
+    const result = await userService.listPublicUsers(limit, offset);
 
     return res.status(200).json(result);
   } catch (error: any) {
@@ -112,7 +112,7 @@ export const selectOptionListUsers = async (
     const cursor = req.query.cursor ? parseInt(req.query.cursor as string) : null;
     const search = req.query.search as string | undefined;
 
-    const result = await publicUserService.selectOptionListUsers({ limit, cursor, search });
+    const result = await userService.selectOptionListUsers({ limit, cursor, search });
 
     res.status(200).json(result);
   } catch (error: any) {

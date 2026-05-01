@@ -1,4 +1,4 @@
-import { Brand, Order, OrderItem, OrderItemType, OrderPaymentStatus, OrderSource, OrderStatus, Product, ProductVariant, User } from "@prisma/client";
+import { Brand, Order, OrderItem, OrderPaymentStatus, OrderSource, OrderStatus, Product, ProductVariant, User } from "@prisma/client";
 
 export type ListOrdersParams = {
   limit?: number | string;
@@ -37,7 +37,6 @@ export type CreateOrderParams = {
   customerNotes?: string;
   items?: Array<{
     itemId: number | string;
-    itemType: OrderItemType;
     quantity: number | string;
     price: number | string;
   }>;
@@ -56,7 +55,6 @@ export type UpdateOrderParams = {
   cancelledReason?: string;
   items?: Array<{
     itemId: number | string;
-    itemType: OrderItemType;
     quantity: number | string;
     price: number | string;
   }>;
@@ -76,4 +74,34 @@ export type ParseOrderQueryParamsResult = {
   paymentStatus?: OrderPaymentStatus | undefined;
   source?: OrderSource | undefined;
   userId?: number | undefined;
+};
+
+export type MyOrderT = Pick< 
+  Order, 
+  "id" | 
+  "code" | 
+  "image" | 
+  "status" | 
+  "createdAt" | 
+  "totalPrice" |
+  "customerAddress" |
+  "customerName" |
+  "customerPhone" |
+  "customerNotes" |
+  "cancelledReason" |
+  "rejectedReason" 
+ > & {
+  orderItems: (Pick<OrderItem, "quantity" | "price"> & {
+    productVariant: Pick<ProductVariant, "size"> & {
+      images: { path: string }[];
+      product: Pick<Product, "id" | "name" | "slug"> & {
+        brand: Pick<Brand, "name">;
+      };
+    };
+  })[];
+};
+
+export type MyOrderListResultT = {
+  items: MyOrderT[];
+  nextCursor: number | null;
 };

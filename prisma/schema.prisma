@@ -23,7 +23,6 @@ model Product {
   updatedAt     DateTime          @updatedAt
   deletedAt     DateTime?
   brand         Brand             @relation(fields: [brandId], references: [id])
-  ratings       ProductRating[]
   variants      ProductVariant[]
   wishlists     ProductWishlist[]
   reviews       Review[]
@@ -35,7 +34,7 @@ model ProductVariant {
   productId    Int
   sku          String          @unique
   size         Int
-  source       VariantSource   @default(ORIGINAL)
+  // source       VariantSource   @default(ORIGINAL)
   price        Decimal         @db.Decimal(10, 2)
   discount     Decimal         @default(0) @db.Decimal(10, 2)
   stock        Int             @default(0)
@@ -46,7 +45,8 @@ model ProductVariant {
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
   deletedAt    DateTime?
-  bundleSets   BundleSetItem[]
+  // bundleSets   BundleSetItem[]
+  orderItems   OrderItem[]
   images       Image[]
   inventories  Inventory[]
   reservations Reservation[]
@@ -107,7 +107,8 @@ model Reservation {
 
 model Review {
   id        Int      @id @default(autoincrement())
-  content   String
+  content   String?
+  rating    Int      @db.SmallInt
   isPublish Boolean  @default(false)
   userId    Int
   productId Int
@@ -121,32 +122,32 @@ model Review {
   @@index([userId])
 }
 
-model BundleSet {
-  id          Int             @id @default(autoincrement())
-  name        String          @db.VarChar(255)
-  slug        String          @unique @db.VarChar(255)
-  gender      Gender
-  status      Status          @default(ACTIVE)
-  description String?
-  price       Decimal         @db.Decimal(10, 2)
-  discount    Decimal         @default(0) @db.Decimal(10, 2)
-  stock       Int             @default(0)
-  isActive    Boolean         @default(true)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  items       BundleSetItem[]
-}
+// model BundleSet {
+//   id          Int             @id @default(autoincrement())
+//   name        String          @db.VarChar(255)
+//   slug        String          @unique @db.VarChar(255)
+//   gender      Gender
+//   status      Status          @default(ACTIVE)
+//   description String?
+//   price       Decimal         @db.Decimal(10, 2)
+//   discount    Decimal         @default(0) @db.Decimal(10, 2)
+//   stock       Int             @default(0)
+//   isActive    Boolean         @default(true)
+//   createdAt   DateTime        @default(now())
+//   updatedAt   DateTime        @updatedAt
+//   items       BundleSetItem[]
+// }
 
-model BundleSetItem {
-  id               Int            @id @default(autoincrement())
-  bundleSetId      Int
-  productVariantId Int
-  quantity         Int            @default(1) @db.SmallInt
-  bundleSet        BundleSet      @relation(fields: [bundleSetId], references: [id], onDelete: Cascade)
-  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+// model BundleSetItem {
+//   id               Int            @id @default(autoincrement())
+//   bundleSetId      Int
+//   productVariantId Int
+//   quantity         Int            @default(1) @db.SmallInt
+//   bundleSet        BundleSet      @relation(fields: [bundleSetId], references: [id], onDelete: Cascade)
+//   productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
 
-  @@unique([bundleSetId, productVariantId])
-}
+//   @@unique([bundleSetId, productVariantId])
+// }
 
 model Order {
   id              Int                @id @default(autoincrement())
@@ -174,16 +175,16 @@ model Order {
 }
 
 model OrderItem {
-  id        Int           @id @default(autoincrement())
-  orderId   Int
-  itemId    Int
-  itemType  OrderItemType
-  quantity  Int           @db.SmallInt
-  price     Decimal       @db.Decimal(10, 2)
-  createdAt DateTime      @default(now())
-  order     Order         @relation(fields: [orderId], references: [id])
+  id               Int           @id @default(autoincrement())
+  orderId          Int
+  productVariantId Int
+  quantity         Int           @db.SmallInt
+  price            Decimal       @db.Decimal(10, 2)
+  createdAt        DateTime      @default(now())
+  order            Order         @relation(fields: [orderId], references: [id])
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
 
-  @@index([itemId, itemType])
+  @@index([productVariantId])
 }
 
 model Payment {
@@ -302,19 +303,6 @@ model ProductWishlist {
   @@unique([userId, productId])
 }
 
-model ProductRating {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  productId Int
-  rating    Int      @db.SmallInt
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  product   Product  @relation(fields: [productId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
-
-  @@unique([userId, productId])
-}
-
 model User {
   id              Int       @id @default(autoincrement())
   firstName       String?   @db.VarChar(52)
@@ -342,7 +330,6 @@ model User {
 
   orders       Order[]
   posts        Post[]
-  ratings      ProductRating[]
   wishlists    ProductWishlist[]
   reviews      Review[]
   transactions Transaction[]
@@ -404,22 +391,22 @@ enum Gender {
   UNISEX
 }
 
-enum BundleAudience {
-  MEN
-  WOMEN
-  COUPLE
-  UNISEX
-}
+// enum BundleAudience {
+//   MEN
+//   WOMEN
+//   COUPLE
+//   UNISEX
+// }
 
-enum VariantSource {
-  ORIGINAL
-  DECANT
-}
+// enum VariantSource {
+//   ORIGINAL
+//   DECANT
+// }
 
-enum OrderItemType {
-  PRODUCT_VARIANT
-  BUNDLE
-}
+// enum OrderItemType {
+//   PRODUCT_VARIANT
+//   BUNDLE
+// }
 
 enum PaymentMethod {
   BANK_TRANSFER

@@ -1,4 +1,4 @@
-import { OrderItemType, OrderStatus } from "@prisma/client";
+import { OrderStatus } from "@prisma/client";
 import { body } from "express-validator";
 
 const orderValidation = [
@@ -44,13 +44,12 @@ const orderValidation = [
           typeof item.quantity === "number" &&
           item.quantity > 0 &&
           typeof item.price === "number" &&
-          item.price >= 0 &&
-          Object.values(OrderItemType).includes(item.itemType)
+          item.price >= 0
         );
       });
     })
     .withMessage(
-      "Each item must have itemId (positive integer), quantity (positive integer), and price (non-negative number)."
+      "Each item must have itemId (positive integer), quantity (positive integer), price (non-negative number)."
     ),
 ];
 

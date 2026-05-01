@@ -1,8 +1,8 @@
 import { NextFunction, Response } from "express";
-import { PublicCategoryService } from "../../services/category/public.service";
+import { CategoryService } from "../../services/category/category.service";
 import { CustomRequest } from "../../types/common";
 
-const publicCategoryService = new PublicCategoryService();
+const categoryService = new CategoryService();
 
 export const listPublicCategories = async (
   req: CustomRequest,
@@ -10,7 +10,7 @@ export const listPublicCategories = async (
   next: NextFunction
 ) => {
   try {
-    const result = await publicCategoryService.listPublicCategories();
+    const result = await categoryService.listPublicCategories();
     res.status(200).json(result);
   } catch (error: any) {
     next(error);
@@ -27,7 +27,7 @@ export const selectOptionListCategories = async (
     const cursor = req.query.cursor ? parseInt(req.query.cursor as string) : null;
     const search = req.query.search as string | undefined;
 
-    const result = await publicCategoryService.selectOptionListCategories({ limit, cursor, search });
+    const result = await categoryService.selectOptionListCategories({ limit, cursor, search });
 
     res.status(200).json(result);
   } catch (error: any) {

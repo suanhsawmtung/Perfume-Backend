@@ -1,7 +1,7 @@
 import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { ServiceResponseT } from "../../types/common";
-import { ListProductResultT, ListProductsParams } from "../../types/product";
+import { ListProductResultT, ListProductsParams, ProductDetailT } from "../../types/product";
 import { createError } from "../../utils/common";
 import {
   buildProductWhere,
@@ -9,9 +9,9 @@ import {
   parseProductQueryParams,
   requireSlug,
 } from "./product.helpers";
-import { IPublicProductService } from "./product.interface";
+import { IProductService } from "./product.interface";
 
-export class PublicProductService implements IPublicProductService {
+export class ProductService implements IProductService {
   async listProducts(
     params: ListProductsParams
   ): Promise<ServiceResponseT<ListProductResultT>> {
@@ -46,16 +46,22 @@ export class PublicProductService implements IPublicProductService {
             select: { name: true, slug: true },
           },
           variants: {
-            where: { isActive: true, deletedAt: null },
-            include: {
+            where: { 
+              isActive: true,
+              deletedAt: null,
+              isPrimary: true,
+            },
+            take: 1,
+            select: {
+              stock: true,
+              reserved: true,
+              price: true,
+              discount: true,
               images: {
                 where: { isPrimary: true },
                 take: 1
               }
             }
-          },
-          _count: {
-            select: { variants: { where: { isActive: true, deletedAt: null } } },
           },
         },
       }),
@@ -68,7 +74,7 @@ export class PublicProductService implements IPublicProductService {
     return {
       success: true,
       data: {
-        items: items as any[],
+        items: items,
         currentPage,
         totalPages,
         pageSize,
@@ -77,13 +83,16 @@ export class PublicProductService implements IPublicProductService {
     };
   }
 
-  async getProductDetail(slug: string): Promise<ServiceResponseT<any>> {
+  async getProductDetail(
+    slug: string, 
+    userId?: string | number
+  ): Promise<ServiceResponseT<ProductDetailT>> {
     const normalizedSlug = requireSlug(slug);
     
     // Using findProductDetail which already includes variants and images
-    const product = await findProductDetail(normalizedSlug);
+    const product = await findProductDetail(normalizedSlug, userId);
 
-    if (!product || !product.isActive) {
+    if (!product) {
       throw createError({
         message: "Product not found or unavailable.",
         status: 404,
@@ -130,7 +139,7 @@ export class PublicProductService implements IPublicProductService {
         name: true,
         slug: true,
       },
-      orderBy: { id: "asc" },
+      orderBy: { createdAt: "asc" },
     }); 
 
     let nextCursor: number | null = null;
@@ -183,7 +192,7 @@ export class PublicProductService implements IPublicProductService {
         size: true,
         slug: true,
       },
-      orderBy: { id: "asc" },
+      orderBy: { createdAt: "asc" },
     }); 
 
     let nextCursor: number | null = null;

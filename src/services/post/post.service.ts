@@ -5,19 +5,18 @@ import { ServiceResponseT } from "../../types/common";
 import { ListPostResultT, ListPostsParams, ListPostT } from "../../types/post";
 import { createError } from "../../utils/common";
 import {
-    findPostBySlug,
-    parsePostQueryParams,
-    requireSlug
+  findPostBySlug,
+  parsePostQueryParams,
+  requireSlug
 } from "./post.helpers";
-import { IPublicPostService } from "./post.interface";
+import { IPostService } from "./post.interface";
 
-export class PublicPostService implements IPublicPostService {
+export class PostService implements IPostService {
   async listPosts(
     params: ListPostsParams
   ): Promise<ServiceResponseT<ListPostResultT>> {
     const { pageSize, offset, search, categorySlug } = parsePostQueryParams(params);
 
-    // Public posts: Always PUBLISHED, ignore ownership/roles
     const where: Prisma.PostWhereInput = {
       status: PostStatus.PUBLISHED,
     };

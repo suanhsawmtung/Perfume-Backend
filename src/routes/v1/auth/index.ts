@@ -1,7 +1,7 @@
 import express, { Router } from "express";
 import passport from "../../../config/passport";
 import { forgotPassword, googleCallback, login, logout, register, resendOtp, resetPassword, verifyResetPasswordOtp, verifyUserEmail } from "../../../controllers/auth/auth.controller";
-import { ensureUnauthenticated } from "../../../middlewares/ensure-authenticated";
+import { ensureUnauthenticated } from "../../../middlewares/ensure-unauthenticated";
 import { handleValidationError } from "../../../middlewares/error-handler";
 import {
   forgotPasswordValidation,

@@ -1,11 +1,12 @@
-import { Prisma, Product, ProductVariant, VariantSource } from "@prisma/client";
+import { Prisma, Product, ProductVariant } from "@prisma/client";
 import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { ServiceResponseT } from "../../types/common";
 import {
+  AdminListProductResultT,
+  AdminProductDetailT,
   CreateProductParams,
   CreateProductVariantParams,
-  ListProductResultT,
   ListProductsParams,
   ProductVariantDetailType,
   UpdateProductNewParams,
@@ -17,10 +18,10 @@ import {
   buildProductWhere,
   deleteProductRecord,
   deleteProductVariantFully,
+  findAdminProductDetail,
   findProductByName,
   findProductByNameExcludingId,
   findProductBySlug,
-  findProductDetail,
   findProductVariantBySlug,
   findProductVariantDetail,
   findVariantImages,
@@ -37,7 +38,7 @@ import { IAdminProductService } from "./product.interface";
 export class AdminProductService implements IAdminProductService {
   async listProducts(
     params: ListProductsParams
-  ): Promise<ServiceResponseT<ListProductResultT>> {
+  ): Promise<ServiceResponseT<AdminListProductResultT>> {
     const {
       pageSize,
       offset,
@@ -91,9 +92,9 @@ export class AdminProductService implements IAdminProductService {
     };
   }
 
-  async getProductDetail(slug: string): Promise<ServiceResponseT<any>> {
+  async getProductDetail(slug: string): Promise<ServiceResponseT<AdminProductDetailT>> {
     const normalizedSlug = requireSlug(slug);
-    const product = await findProductDetail(normalizedSlug);
+    const product = await findAdminProductDetail(normalizedSlug);
 
     if (!product) {
       throw createError({
@@ -253,7 +254,6 @@ export class AdminProductService implements IAdminProductService {
     const {
       productId,
       size,
-      source,
       price,
       discount,
       imageFilenames,
@@ -281,7 +281,6 @@ export class AdminProductService implements IAdminProductService {
       });
     }
 
-    const variantSource = source || VariantSource.ORIGINAL;
     const variantSize = Number(size);
 
     const skuFinal = await generateUniqueVariantSku(
@@ -292,7 +291,6 @@ export class AdminProductService implements IAdminProductService {
     const slug = await generateUniqueVariantSlug(
       product.slug,
       variantSize,
-      variantSource
     );
 
     const variant = await prisma.$transaction(async (tx) => {
@@ -302,7 +300,6 @@ export class AdminProductService implements IAdminProductService {
           sku: skuFinal,
           slug,
           size: variantSize,
-          source: variantSource,
           price: Number(price),
           discount: discount ? Number(discount) : 0,
           isPrimary: !!isPrimary,
@@ -355,11 +352,9 @@ export class AdminProductService implements IAdminProductService {
   ): Promise<ServiceResponseT<ProductVariant>> {
     const {
       size,
-      source,
       price,
       discount,
       imageFilenames,
-      // existingImages,
       imageLayout,
       isPrimary,
       isActive,
@@ -377,11 +372,9 @@ export class AdminProductService implements IAdminProductService {
     }
 
     const variantSize = size ? Number(size) : existing.size;
-    const variantSource = source || existing.source;
 
-    // Handle slug change if size or source changed
     let slug = existing.slug;
-    if (variantSize !== existing.size || variantSource !== existing.source) {
+    if (variantSize !== existing.size) {
       const product = await prisma.product.findUnique({
         where: { id: existing.productId },
       });
@@ -389,7 +382,6 @@ export class AdminProductService implements IAdminProductService {
         slug = await generateUniqueVariantSlug(
           product.slug,
           variantSize,
-          variantSource,
           existing.id
         );
       }
@@ -398,7 +390,6 @@ export class AdminProductService implements IAdminProductService {
     const variant = await prisma.$transaction(async (tx) => {
       const updateData: Prisma.ProductVariantUpdateInput = {
         size: variantSize,
-        source: variantSource,
         slug,
       };
 

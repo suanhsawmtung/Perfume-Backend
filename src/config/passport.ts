@@ -1,9 +1,9 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy, Profile } from "passport-google-oauth20";
-import { PublicUserService } from "../services/user/public.service";
+import { UserService } from "../services/user/user.service";
 import { env } from "./env";
 
-const publicUserService = new PublicUserService();
+const userService = new UserService();
 
 passport.use(
     new GoogleStrategy(
@@ -20,7 +20,7 @@ passport.use(
             done: (err: any, user?: any) => void,
         ) => {
             try {
-                const { data: dbUser } = await publicUserService.findOrCreateByGoogle(profile);
+                const { data: dbUser } = await userService.findOrCreateByGoogle(profile);
                 done(null, dbUser);
             } catch (err) {
                 done(err as Error, undefined);

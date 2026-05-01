@@ -1,8 +1,8 @@
-import { OrderItemType, OrderPaymentStatus, OrderSource, OrderStatus, PaymentStatus, Prisma, RefundStatus } from "@prisma/client";
+import { OrderPaymentStatus, OrderSource, OrderStatus, PaymentStatus, Prisma, RefundStatus } from "@prisma/client";
 import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { generateCode } from "../../lib/unique-key-generator";
-import { ParseOrderQueryParamsResult } from "../../types/order";
+import { ListOrderT, ParseOrderQueryParamsResult } from "../../types/order";
 import { createError } from "../../utils/common";
 
 // export const orderStatusTransitions: Record<OrderStatus, readonly OrderStatus[]> = {
@@ -58,65 +58,63 @@ export const generateOrderCode = (): string => {
 };
 
 // Enrich order items with their actual data
-export const enrichOrderItems = async (orderItems: any[]) => {
-  if (!orderItems || orderItems.length === 0) return orderItems;
+// export const enrichOrderItems = async (orderItems: any[]) => {
+//   if (!orderItems || orderItems.length === 0) return orderItems;
 
-  const variantIds = orderItems
-    .filter((item) => item.itemType === OrderItemType.PRODUCT_VARIANT)
-    .map((item) => item.itemId);
+//   const variantIds = orderItems.map((item) => item.itemId);
 
-  const variants = await prisma.productVariant.findMany({
-    where: { id: { in: variantIds } },
-    include: {
-      product: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          brand: true,
-        },
-      },
-    },
-  });
+//   const variants = await prisma.productVariant.findMany({
+//     where: { id: { in: variantIds } },
+//     include: {
+//       product: {
+//         select: {
+//           id: true,
+//           name: true,
+//           slug: true,
+//           brand: true,
+//         },
+//       },
+//     },
+//   });
 
-  const variantMap = new Map(variants.map((v) => [v.id, v]));
+//   const variantMap = new Map(variants.map((v) => [v.id, v]));
 
-  return orderItems.map((item) => {
-    if (item.itemType === OrderItemType.PRODUCT_VARIANT) {
-      return {
-        ...item,
-        productVariant: variantMap.get(item.itemId),
-      };
-    }
-    return item;
-  });
-};
+//   return orderItems.map((item) => {
+//     if (item.itemType === OrderItemType.PRODUCT_VARIANT) {
+//       return {
+//         ...item,
+//         productVariant: variantMap.get(item.itemId),
+//       };
+//     }
+//     return item;
+//   });
+// };
 
 export const enrichOrder = async (order: any) => {
   if (!order) return null;
-  if (order.orderItems) {
-    order.orderItems = await enrichOrderItems(order.orderItems);
-  }
+  // if (order.orderItems) {
+  //   order.orderItems = await enrichOrderItems(order.orderItems);
+  // }
 
   // // Ensure total fields are present for consistency
-  // if (order.totalPaidAmount === undefined) {
-  //   const payments = order.payments || [];
-  //   order.totalPaidAmount = payments
-  //     .filter((p: any) => p.status === PaymentStatus.SUCCESS && !p.deletedAt)
-  //     .reduce((sum: number, p: any) => sum + Number(p.amount), 0);
-  // }
+  if (order.totalPaidAmount === undefined) {
+    const payments = order.payments || [];
+    order.totalPaidAmount = payments
+      .filter((p: any) => p.status === PaymentStatus.SUCCESS && !p.deletedAt)
+      .reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+  }
 
-  // if (order.totalRefundAmount === undefined) {
-  //   const refunds = order.refunds || [];
-  //   order.totalRefundAmount = refunds
-  //     .filter((r: any) => r.status === RefundStatus.SUCCESS && !r.deletedAt)
-  //     .reduce((sum: number, r: any) => sum + Number(r.amount), 0);
-  // }
+  if (order.totalRefundAmount === undefined) {
+    const refunds = order.refunds || [];
+    order.totalRefundAmount = refunds
+      .filter((r: any) => r.status === RefundStatus.SUCCESS && !r.deletedAt)
+      .reduce((sum: number, r: any) => sum + Number(r.amount), 0);
+  }
 
   return order;
 };
 
-export const enrichOrders = async (orders: any[]) => {
+export const enrichOrders = async (orders: ListOrderT[]) => {
   return Promise.all(orders.map((order) => enrichOrder(order)));
 };
 
@@ -256,7 +254,22 @@ export const findOrderWithDetailsByCode = async (code: string) => {
           email: true,
         },
       },
-      orderItems: true,
+      orderItems: {
+        include: {
+          productVariant: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                  brand: true,
+                },
+              },
+            },
+          },
+        },
+      },
       payments: true,
       refunds: true,
     },
@@ -348,19 +361,18 @@ export const requireOrderCode = (code: string) => {
   return code.trim();
 };
 
-export const reserveInventory = async (
-  id: number,
-  orderItem: {
-    itemType: OrderItemType;
-    itemId: number;
-    reservedQuantity: number;
-  }
-) => {
-  // await prisma.inventory.update({
-  //   where: { id: id },
-  //   data: { reserved: { increment: orderItem.reservedQuantity } },
-  // });
-};
+// export const reserveInventory = async (
+//   id: number,
+//   orderItem: {
+//     itemId: number;
+//     reservedQuantity: number;
+//   }
+// ) => {
+//   await prisma.inventory.update({
+//     where: { id: id },
+//     data: { reserved: { increment: orderItem.reservedQuantity } },
+//   });
+// };
 
 export const calculateOrderPaymentStatus = (
   totalPrice: number,
