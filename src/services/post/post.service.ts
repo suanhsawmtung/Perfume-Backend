@@ -2,10 +2,10 @@ import { PostStatus, Prisma } from "@prisma/client";
 import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { ServiceResponseT } from "../../types/common";
-import { ListPostResultT, ListPostsParams, ListPostT } from "../../types/post";
+import { ListPostResultT, ListPostsParams, ListPostT, PostDetailT } from "../../types/post";
 import { createError } from "../../utils/common";
 import {
-  findPostBySlug,
+  findPostDetail,
   parsePostQueryParams,
   requireSlug
 } from "./post.helpers";
@@ -39,7 +39,12 @@ export class PostService implements IPostService {
         take: pageSize,
         skip: offset,
         orderBy: { publishedAt: "desc" },
-        include: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          excerpt: true,
+          publishedAt: true,
           author: {
             select: {
               id: true,
@@ -50,6 +55,7 @@ export class PostService implements IPostService {
           },
           category: {
             select: {
+              id: true,
               name: true,
               slug: true,
             },
@@ -74,9 +80,9 @@ export class PostService implements IPostService {
     };
   }
 
-  async getPostDetail(slug: string): Promise<ServiceResponseT<ListPostT>> {
+  async getPostDetail(slug: string): Promise<ServiceResponseT<PostDetailT>> {
     const normalizedSlug = requireSlug(slug);
-    const post = await findPostBySlug(normalizedSlug);
+    const post = await findPostDetail(normalizedSlug);
 
     if (!post || post.status !== PostStatus.PUBLISHED) {
       throw createError({
@@ -88,7 +94,7 @@ export class PostService implements IPostService {
 
     return {
       success: true,
-      data: post as ListPostT,
+      data: post as PostDetailT,
       message: null,
     };
   }

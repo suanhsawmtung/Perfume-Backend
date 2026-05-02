@@ -1,6 +1,7 @@
 import { Post } from "@prisma/client";
 import { ServiceResponseT } from "../../types/common";
 import {
+  AdminListPostResultT,
   CreatePostParams,
   ListPostResultT,
   ListPostsParams,
@@ -9,7 +10,7 @@ import {
 } from "../../types/post";
 
 export interface IAdminPostService {
-  listPosts(params: ListPostsParams): Promise<ServiceResponseT<ListPostResultT>>;
+  listPosts(params: ListPostsParams): Promise<ServiceResponseT<AdminListPostResultT>>;  
   getPostDetail(slug: string): Promise<ServiceResponseT<ListPostT>>;
   createPost(params: CreatePostParams): Promise<ServiceResponseT<Post>>;
   updatePost(slug: string, params: UpdatePostParams): Promise<ServiceResponseT<Post>>;

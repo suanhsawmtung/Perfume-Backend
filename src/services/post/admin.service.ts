@@ -3,31 +3,32 @@ import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { ServiceResponseT } from "../../types/common";
 import {
-    CreatePostParams,
-    ListPostResultT,
-    ListPostsParams,
-    ListPostT,
-    UpdatePostParams,
+  AdminListPostResultT,
+  AdminListPostT,
+  CreatePostParams,
+  ListPostsParams,
+  PostDetailT,
+  UpdatePostParams
 } from "../../types/post";
 import { createError, createSlug, ensureUniqueSlug } from "../../utils/common";
 import {
-    buildPostWhere,
-    deletePostRecord,
-    findPostBySlug,
-    findPostByTitle,
-    findPostByTitleExcludingId,
-    findPostDetail,
-    insertPost,
-    parsePostQueryParams,
-    requireSlug,
-    updatePostRecord,
+  buildPostWhere,
+  deletePostRecord,
+  findPostBySlug,
+  findPostByTitle,
+  findPostByTitleExcludingId,
+  findPostDetail,
+  insertPost,
+  parsePostQueryParams,
+  requireSlug,
+  updatePostRecord,
 } from "./post.helpers";
 import { IAdminPostService } from "./post.interface";
 
 export class AdminPostService implements IAdminPostService {
   async listPosts(
     params: ListPostsParams
-  ): Promise<ServiceResponseT<ListPostResultT>> {
+  ): Promise<ServiceResponseT<AdminListPostResultT>> {
     const { pageSize, offset, search, categorySlug, status } =
       parsePostQueryParams(params);
 
@@ -44,7 +45,12 @@ export class AdminPostService implements IAdminPostService {
         take: pageSize,
         skip: offset,
         orderBy: { createdAt: "desc" },
-        include: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          status: true,
+          publishedAt: true,
           author: {
             select: {
               id: true,
@@ -55,6 +61,7 @@ export class AdminPostService implements IAdminPostService {
           },
           category: {
             select: {
+              id: true,
               name: true,
               slug: true,
             },
@@ -70,7 +77,7 @@ export class AdminPostService implements IAdminPostService {
     return {
       success: true,
       data: {
-        items: items as ListPostT[],
+        items: items as AdminListPostT[],
         currentPage,
         totalPages,
         pageSize,
@@ -79,7 +86,7 @@ export class AdminPostService implements IAdminPostService {
     };
   }
 
-  async getPostDetail(slug: string): Promise<ServiceResponseT<ListPostT>> {
+  async getPostDetail(slug: string): Promise<ServiceResponseT<PostDetailT>> {
     const normalizedSlug = requireSlug(slug);
     const post = await findPostDetail(normalizedSlug);
 
@@ -93,7 +100,7 @@ export class AdminPostService implements IAdminPostService {
 
     return {
       success: true,
-      data: post as ListPostT,
+      data: post as PostDetailT,
       message: null,
     };
   }

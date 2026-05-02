@@ -1,4 +1,4 @@
-import { Post, PostStatus, User, Category } from "@prisma/client";
+import { Category, Post, PostStatus, User } from "@prisma/client";
 
 export type ListPostsParams = {
   limit?: number | string;
@@ -9,9 +9,27 @@ export type ListPostsParams = {
   status?: PostStatus | undefined;
 };
 
-export type ListPostT = Post & {
+export type AdminListPostT = Pick<
+  Post,
+  "id" | "title" | "slug" | "status" | "publishedAt"
+> & {
   author: Pick<User, "id" | "firstName" | "lastName" | "username">;
-  category: Pick<Category, "name" | "slug">;
+  category: Pick<Category, "id" | "name" | "slug">;
+};
+
+export type AdminListPostResultT = {
+  items: AdminListPostT[];
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+};
+
+export type ListPostT = Pick<
+  Post,
+  "id" | "title" | "slug" | "excerpt" | "publishedAt"
+> & {
+  author: Pick<User, "id" | "firstName" | "lastName" | "username">;
+  category: Pick<Category, "id" | "name" | "slug">;
 };
 
 export type ListPostResultT = {
@@ -26,6 +44,11 @@ export type BuildPostWhereParams = {
   search?: string | undefined;
   categorySlug?: string | undefined;
   status?: PostStatus | undefined;
+};
+
+export type PostDetailT = Post & {
+  author: Pick<User, "id" | "firstName" | "lastName" | "username" | "email" | "phone">;
+  category: Category;
 };
 
 export type CreatePostParams = {
