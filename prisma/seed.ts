@@ -5,6 +5,7 @@ import { hash } from "../src/lib/hash";
 import { prisma } from "../src/lib/prisma";
 import { createSlug, ensureUniqueSlug } from "../src/utils/common";
 import { getFilePath, removeFolder } from "../src/utils/file";
+import { recalculateUserPoints } from "../src/services/user/user.helpers";
 
 // Material seed data
 // const materials = [
@@ -973,6 +974,17 @@ export async function main() {
   } else {
     console.log("Skipping product rating seeding: Not enough products or users.");
   }
+
+  // Recalculate Points for all users
+  console.log("Recalculating User Points...");
+  const allUsers = await prisma.user.findMany({
+    select: { id: true },
+  });
+
+  for (const user of allUsers) {
+    await recalculateUserPoints(user.id);
+  }
+  console.log(`Recalculated points for ${allUsers.length} users.`);
 
   console.log("Seed completed successfully!");
 }

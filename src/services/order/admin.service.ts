@@ -10,7 +10,7 @@ import {
   UpdateOrderParams,
 } from "../../types/order";
 import { createError } from "../../utils/common";
-import { findUserById } from "../user/user.helpers";
+import { findUserById, recalculateUserPoints } from "../user/user.helpers";
 import {
   buildOrderWhereClause,
   enrichOrders,
@@ -583,6 +583,10 @@ export class AdminOrderService implements IAdminOrderService {
             },
             data: { status: ReservationStatus.CONSUMED },
           });
+
+          if (existingOrder.source === OrderSource.CUSTOMER) {
+            await recalculateUserPoints(existingOrder.userId);
+          }
         } else if (
           newStatus === OrderStatus.REJECTED ||
           newStatus === OrderStatus.CANCELLED

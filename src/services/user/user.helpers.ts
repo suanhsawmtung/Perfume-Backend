@@ -1,10 +1,10 @@
-import { Prisma, Role, Status } from "@prisma/client";
+import { OrderSource, OrderStatus, PaymentStatus, Prisma, RefundStatus, Role, Status } from "@prisma/client";
 import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { generateCode } from "../../lib/unique-key-generator";
 import {
-    BuildUserWhereParams,
-    ParseUserQueryParamsResult,
+  BuildUserWhereParams,
+  ParseUserQueryParamsResult,
 } from "../../types/user";
 import { createError, createSlug } from "../../utils/common";
 
@@ -289,3 +289,65 @@ export const generateUsername = async (
 
   return username;
 };
+
+const POINTS_PER_ORDER = 10;
+const POINTS_PER_10000_SPENT = 1;
+const POINTS_PER_REVIEW = 5;
+
+export const getGrade = (points: number): "PLATINUM" | "GOLD" | "SILVER" | "BRONZE" => {
+  if (points >= 4000) return "PLATINUM";
+  if (points >= 1500) return "GOLD";
+  if (points >= 500) return "SILVER";
+  return "BRONZE";
+};
+
+export async function recalculateUserPoints(userId: number) {
+  // 1. Get all completed customer orders with their successful payments and refunds
+  const orders = await prisma.order.findMany({
+    where: {
+      userId,
+      status: OrderStatus.DONE,
+      source: OrderSource.CUSTOMER,
+      deletedAt: null,
+    },
+    include: {
+      payments: {
+        where: { deletedAt: null, status: PaymentStatus.SUCCESS },
+        select: { amount: true },
+      },
+      refunds: {
+        where: { deletedAt: null, status: RefundStatus.SUCCESS },
+        select: { amount: true },
+      },
+    },
+  });
+
+  // 2. Count of completed orders
+  const orderCount = orders.length;
+
+  // 3. Actual amount spent = sum of payments - sum of refunds
+  const totalSpent = orders.reduce((sum, order) => {
+    const paid = order.payments.reduce((s, p) => s + Number(p.amount), 0);
+    const refunded = order.refunds.reduce((s, r) => s + Number(r.amount), 0);
+    return sum + (paid - refunded);
+  }, 0);
+
+  // 4. Review count
+  const reviewCount = await prisma.review.count({
+    where: { userId },
+  });
+
+  // 5. Calculate total points
+  const points = Math.max(
+    0,
+    orderCount * POINTS_PER_ORDER +
+      Math.floor(totalSpent / 10000) * POINTS_PER_10000_SPENT +
+      reviewCount * POINTS_PER_REVIEW
+  );
+
+  // 6. Update user record
+  await prisma.user.update({
+    where: { id: userId },
+    data: { points },
+  });
+}
