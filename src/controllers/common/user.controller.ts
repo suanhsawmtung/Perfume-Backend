@@ -24,6 +24,20 @@ export const listPublicUsers = async (
   }
 };
 
+export const getMyProfile = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = Number(req.userId);
+    const result = await profileService.getMyProfile(userId);
+    return res.status(200).json(result);
+  } catch (error: any) {
+    next(error);
+  }
+}
+
 export const getMe = async (
   req: CustomRequest,
   res: Response,

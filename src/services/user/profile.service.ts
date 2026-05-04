@@ -1,22 +1,25 @@
+import { OrderStatus } from "@prisma/client";
 import { errorCode } from "../../config/error-code";
+import { UserDto } from "../../dtos/user.dto";
 import { compareHashed, hash } from "../../lib/hash";
 import { prisma } from "../../lib/prisma";
 import { ServiceResponseT } from "../../types/common";
 import {
-    ChangePasswordParams,
-    SafeUserT,
-    SetPasswordParams,
-    UpdateMeParams,
+  ChangePasswordParams,
+  MyProfileT,
+  SafeUserT,
+  SetPasswordParams,
+  UpdateMeParams,
 } from "../../types/user";
 import { createError } from "../../utils/common";
 import { getFilePath, removeFile } from "../../utils/file";
 import {
-    findUserById,
-    findUserByIdWithSensitive,
-    findUserByUsernameExcludingId,
-    generateUsername,
-    requireUserId,
-    updateUserRecord
+  findUserById,
+  findUserByIdWithSensitive,
+  findUserByUsernameExcludingId,
+  generateUsername,
+  requireUserId,
+  updateUserRecord
 } from "./user.helpers";
 import { IProfileService } from "./user.interface";
 
@@ -42,6 +45,116 @@ export class ProfileService implements IProfileService {
     return {
       success: true,
       data: { ...user, hasPassword: !!userPassword?.password },
+      message: null,
+    };
+  }
+
+  async getMyProfile(userId: number): Promise<ServiceResponseT<MyProfileT>> {
+    const normalizedId = requireUserId(userId);
+
+    const [user, totalOrders, totalSpentResult, totalReviews] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: normalizedId },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          emailVerifiedAt: true,
+          points: true,
+          createdAt: true,
+          username: true,
+          phone: true,
+          orders: {
+            take: 3,
+            orderBy: { createdAt: "desc" },
+            select: {
+              id: true,
+              code: true,
+              createdAt: true,
+              totalPrice: true,
+              orderItems: {
+                select: {
+                  quantity: true,
+                },
+              },
+            },
+          },
+          wishlists: {
+            take: 3,
+            orderBy: { createdAt: "desc" },
+            select: {
+              id: true,
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  variants: {
+                    where: { isPrimary: true },
+                    take: 1,
+                    select: {
+                      price: true,
+                      discount: true,
+                      images: {
+                        where: { isPrimary: true },
+                        take: 1,
+                        select: {
+                          path: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          reviews: {
+            take: 3,
+            orderBy: { createdAt: "desc" },
+            select: {
+              id: true,
+              content: true,
+              rating: true,
+              isPublish: true,
+              createdAt: true,
+              product: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      prisma.order.count({
+        where: { userId: normalizedId, status: OrderStatus.DONE, deletedAt: null },
+      }),
+      prisma.order.aggregate({
+        where: { userId: normalizedId, status: OrderStatus.DONE, deletedAt: null },
+        _sum: { totalPrice: true },
+      }),
+      prisma.review.count({
+        where: { userId: normalizedId },
+      }),
+    ]);
+
+    if (!user) {
+      throw createError({
+        message: "User not found.",
+        status: 404,
+        code: errorCode.notFound,
+      });
+    }
+
+    const data = UserDto.toMyProfile(user, {
+      totalOrders,
+      totalSpent: Number(totalSpentResult._sum.totalPrice || 0),
+      totalReviews,
+    });
+
+    return {
+      success: true,
+      data,
       message: null,
     };
   }

@@ -1,6 +1,7 @@
-import { Role, Status, User } from "@prisma/client";
+import { Image, Order, OrderItem, Product, ProductVariant, ProductWishlist, Review, Role, Status, User } from "@prisma/client";
 
-export type SafeUserT = Omit<User, 
+export type SafeUserT = Omit<
+  User,
   "password" | 
   "refreshToken" | 
   "previousRefreshToken" | 
@@ -84,4 +85,66 @@ export type PublicUserResultT = {
   currentPage: number;
   totalPages: number;
   pageSize: number;
+};
+
+export type UserProfileQueryData = Pick<
+  SafeUserT,
+  "points" | "id" | "firstName" | "lastName" | "email" | "phone" | "emailVerifiedAt" | "createdAt" | "username"
+> & {
+  orders: (Pick<Order, "id" | "code" | "createdAt" | "totalPrice"> & {
+    orderItems: Pick<OrderItem, "quantity">[];
+  })[];
+  wishlists: (Pick<ProductWishlist, "id"> & {
+    product: Pick<Product, "id" | "name"> & {
+      variants: (Pick<ProductVariant, "price" | "discount"> & {
+        images: Pick<Image, "path">[];
+      })[];
+    };
+  })[];
+  reviews: (Pick<Review, "id" | "content" | "rating" | "isPublish" | "createdAt"> & {
+    product: Pick<Product, "name">;
+  })[];
+};
+
+export type MyProfileT = {
+  id: number;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  emailVerifiedAt: Date | null;
+  createdAt: Date;
+  username: string;
+  phone: string | null;
+  orders: {
+    id: number;
+    code: string;
+    createdAt: Date;
+    totalPrice: number;
+    totalQuantity: number;
+  }[];
+  wishlist: {
+    id: number;
+    name: string;
+    image: string | null;
+    price: number;
+    discount: number;
+  }[];
+  reviews: {
+    id: number;
+    content: string | null;
+    rating: number;
+    isPublish: boolean;
+    createdAt: Date;
+    productName: string;
+  }[];
+  rewards: {
+    currentPoints: number;
+    currentGrade: "PLATINUM" | "GOLD" | "SILVER" | "BRONZE";
+    progress: number;
+    range: { start: number; end: number };
+    toNextGrade: number;
+    totalOrders: number;
+    totalSpent: number;
+    totalReviews: number;
+  };
 };

@@ -290,15 +290,52 @@ export const generateUsername = async (
   return username;
 };
 
-const POINTS_PER_ORDER = 10;
-const POINTS_PER_10000_SPENT = 1;
-const POINTS_PER_REVIEW = 5;
+export const POINTS_CONFIG = {
+  PER_ORDER: 10,
+  PER_REVIEW: 5,
+  MMK_DIVISOR: 1000,
+} as const;
 
-export const getGrade = (points: number): "PLATINUM" | "GOLD" | "SILVER" | "BRONZE" => {
-  if (points >= 4000) return "PLATINUM";
-  if (points >= 1500) return "GOLD";
-  if (points >= 500) return "SILVER";
+export const GRADE_CONFIG = {
+  BRONZE: { min: 0, max: 299, label: "Bronze", icon: "🥉" },
+  SILVER: { min: 300, max: 999, label: "Silver", icon: "🥈" },
+  GOLD: { min: 1000, max: 2999, label: "Gold", icon: "🥇" },
+  PLATINUM: { min: 3000, max: Infinity, label: "Platinum", icon: "💎" },
+} as const;
+
+export const getGrade = (
+  points: number
+): "PLATINUM" | "GOLD" | "SILVER" | "BRONZE" => {
+  if (points >= GRADE_CONFIG.PLATINUM.min) return "PLATINUM";
+  if (points >= GRADE_CONFIG.GOLD.min) return "GOLD";
+  if (points >= GRADE_CONFIG.SILVER.min) return "SILVER";
   return "BRONZE";
+};
+
+export const getGradeInfo = (points: number) => {
+  if (points >= GRADE_CONFIG.PLATINUM.min)
+    return {
+      grade: "PLATINUM" as const,
+      start: GRADE_CONFIG.PLATINUM.min,
+      end: GRADE_CONFIG.PLATINUM.min,
+    };
+  if (points >= GRADE_CONFIG.GOLD.min)
+    return {
+      grade: "GOLD" as const,
+      start: GRADE_CONFIG.GOLD.min,
+      end: GRADE_CONFIG.PLATINUM.min,
+    };
+  if (points >= GRADE_CONFIG.SILVER.min)
+    return {
+      grade: "SILVER" as const,
+      start: GRADE_CONFIG.SILVER.min,
+      end: GRADE_CONFIG.GOLD.min,
+    };
+  return {
+    grade: "BRONZE" as const,
+    start: GRADE_CONFIG.BRONZE.min,
+    end: GRADE_CONFIG.SILVER.min,
+  };
 };
 
 export async function recalculateUserPoints(userId: number) {
@@ -340,9 +377,9 @@ export async function recalculateUserPoints(userId: number) {
   // 5. Calculate total points
   const points = Math.max(
     0,
-    orderCount * POINTS_PER_ORDER +
-      Math.floor(totalSpent / 10000) * POINTS_PER_10000_SPENT +
-      reviewCount * POINTS_PER_REVIEW
+    orderCount * POINTS_CONFIG.PER_ORDER +
+      Math.floor(totalSpent / POINTS_CONFIG.MMK_DIVISOR) +
+      reviewCount * POINTS_CONFIG.PER_REVIEW
   );
 
   // 6. Update user record

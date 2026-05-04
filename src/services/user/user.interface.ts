@@ -5,6 +5,7 @@ import {
   CreateUserParams,
   ListUserResultT,
   ListUsersParams,
+  MyProfileT,
   PublicUserResultT,
   SafeUserT,
   SetPasswordParams,
@@ -25,7 +26,8 @@ export interface IAdminUserService {
 }
 
 export interface IProfileService {
-  getMe(userId: number): Promise<ServiceResponseT<SafeUserT>>;
+  getMe(userId: number): Promise<ServiceResponseT<SafeUserT & { hasPassword: boolean }>>;
+  getMyProfile(userId: number): Promise<ServiceResponseT<MyProfileT>>;
   updateMe(userId: number, params: UpdateMeParams): Promise<ServiceResponseT<SafeUserT>>;
   changePassword(userId: number, params: ChangePasswordParams): Promise<ServiceResponseT<null>>;
   setPassword(userId: number, params: SetPasswordParams): Promise<ServiceResponseT<null>>;
