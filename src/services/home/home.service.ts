@@ -16,7 +16,7 @@ export class HomeService implements IHomeService {
 
     const [productsForYou, latestReviews, latestPosts] = await Promise.all([
       this.getProductsForYou(userId, bestSellerIds, 4, genderFilter),
-      this.getLatestReviews(40),
+      this.getLatestReviews(30),
       this.getLatestPosts(3),
     ]);
 
