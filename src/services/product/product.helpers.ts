@@ -117,11 +117,44 @@ export const buildProductWhere = ({
     whereConditions.push({ isLimited });
   }
 
+
   return whereConditions.length > 0
     ? {
         AND: whereConditions,
       }
     : {};
+};
+
+export const getProductCardSelect = () => {
+  return {
+    id: true,
+    name: true,
+    slug: true,
+    rating: true,
+    ratingCount: true,
+    brand: {
+      select: { name: true, slug: true },
+    },
+    variants: {
+      where: {
+        isActive: true,
+        deletedAt: null,
+        isPrimary: true,
+      },
+      take: 1,
+      select: {
+        stock: true,
+        reserved: true,
+        price: true,
+        discount: true,
+        images: {
+          where: { isPrimary: true },
+          take: 1,
+          select: { path: true },
+        },
+      },
+    },
+  };
 };
 
 export const requireSlug = (slug: string) => {

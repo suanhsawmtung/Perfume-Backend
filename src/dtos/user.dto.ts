@@ -12,9 +12,9 @@ export class UserDto {
     const progress =
       rangeSize > 0
         ? Math.min(
-            100,
-            Math.max(0, ((points - gradeInfo.start) / rangeSize) * 100)
-          )
+          100,
+          Math.max(0, ((points - gradeInfo.start) / rangeSize) * 100)
+        )
         : 100;
 
     const rewards = {

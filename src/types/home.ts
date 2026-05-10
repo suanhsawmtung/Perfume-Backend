@@ -1,10 +1,10 @@
 import { ListPostT } from "./post";
-import { ListProductT } from "./product";
+import { ProductCardT } from "./product";
 import { ListReviewT } from "./review";
 
 export type HomeDataT = {
-  bestSellerProducts: ListProductT[];
-  productsForYou: ListProductT[];
+  bestSellerProducts: ProductCardT[];
+  productsForYou: ProductCardT[];
   latestReviews: ListReviewT[];
   latestPosts: ListPostT[];
 };

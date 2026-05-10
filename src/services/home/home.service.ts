@@ -1,7 +1,9 @@
 import { Gender, InventoryType, PostStatus } from "@prisma/client";
+import { ProductDto } from "../../dtos/product.dto";
 import { prisma } from "../../lib/prisma";
 import { ServiceResponseT } from "../../types/common";
 import { HomeDataT } from "../../types/home";
+import { getProductCardSelect } from "../product/product.helpers";
 import { IHomeService } from "./home.interface";
 
 export class HomeService implements IHomeService {
@@ -42,33 +44,6 @@ export class HomeService implements IHomeService {
     return undefined;
   }
 
-  private getProductInclude() {
-    return {
-      brand: {
-        select: { name: true, slug: true },
-      },
-      variants: {
-        where: {
-          isActive: true,
-          deletedAt: null,
-          isPrimary: true,
-        },
-        take: 1,
-        select: {
-          stock: true,
-          reserved: true,
-          price: true,
-          discount: true,
-          images: {
-            where: { isPrimary: true },
-            take: 1,
-            select: { path: true },
-          },
-        },
-      },
-    };
-  }
-
   private async getBestSellerProducts(limit: number, genderFilter: any) {
     const sales = await prisma.inventory.groupBy({
       by: ["productVariantId"],
@@ -96,16 +71,17 @@ export class HomeService implements IHomeService {
         variants: {
           some: {
             id: { in: variantIds },
+            isPrimary: true,
             isActive: true,
             deletedAt: null,
           },
         },
       },
-      include: this.getProductInclude(),
+      select: getProductCardSelect(),
       take: limit,
     });
 
-    return products;
+    return products.map(ProductDto.toProductCard);
   }
 
   private async getProductsForYou(
@@ -117,7 +93,8 @@ export class HomeService implements IHomeService {
     const uid = userId ? Number(userId) : undefined;
 
     if (!uid) {
-      return this.getTopRatedProducts(excludeIds, limit, genderFilter);
+      const products = await this.getTopRatedProducts(excludeIds, limit, genderFilter);
+      return products.map(ProductDto.toProductCard);
     }
 
     // Personalization logic for logged-in user
@@ -174,11 +151,15 @@ export class HomeService implements IHomeService {
         brandId: { in: bIds },
         gender: genderFilter,
         variants: {
-          some: { isActive: true, deletedAt: null },
+          some: {
+            isPrimary: true,
+            isActive: true,
+            deletedAt: null
+          },
         },
       },
       take: limit,
-      include: this.getProductInclude(),
+      select: getProductCardSelect(),
     });
 
     if (products.length < limit) {
@@ -192,7 +173,7 @@ export class HomeService implements IHomeService {
       products = [...products, ...fillProducts];
     }
 
-    return products;
+    return products.map(ProductDto.toProductCard);
   }
 
   private async getTopRatedProducts(
@@ -207,12 +188,16 @@ export class HomeService implements IHomeService {
         id: { notIn: excludeIds },
         gender: genderFilter,
         variants: {
-          some: { isActive: true, deletedAt: null },
+          some: {
+            isPrimary: true,
+            isActive: true,
+            deletedAt: null
+          },
         },
       },
       orderBy: [{ rating: "desc" }, { ratingCount: "desc" }],
       take: limit,
-      include: this.getProductInclude(),
+      select: getProductCardSelect(),
     });
   }
 
@@ -234,6 +219,7 @@ export class HomeService implements IHomeService {
             username: true,
             email: true,
             image: true,
+            emailVerifiedAt: true,
           },
         },
         product: {
@@ -281,4 +267,3 @@ export class HomeService implements IHomeService {
     return posts;
   }
 }
-

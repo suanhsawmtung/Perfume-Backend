@@ -33,12 +33,7 @@ export type AdminListProductResultT = {
   pageSize: number;
 };
 
-export type ListProductT = Product & {
-  brand: Pick<Brand, "name" | "slug">;
-  variants: (Pick<ProductVariant, "price" | "discount" | "stock" | "reserved"> & {
-    images: Pick<Image, "path">[];
-  })[];
-};
+export type ListProductT = ProductCardT;
 
 export type ListProductResultT = {
   items: ListProductT[];
@@ -140,4 +135,30 @@ export type ProductVariantDetailType = ProductVariant & {
     };
   };
   images: Pick<Image, "path" | "isPrimary" | "order">[];
+};
+
+export type ProductCardQueryDataT = Pick<Product, "id" | "name" | "slug" | "rating" | "ratingCount"> & {
+  brand: Pick<Brand, "name" | "slug">;
+  variants: (Pick<ProductVariant, "price" | "discount" | "stock" | "reserved"> & {
+    images: Pick<Image, "path">[];
+  })[];
+};
+
+export type ProductCardT = {
+  id: number;
+  name: string;
+  slug: string;
+  rating: number | null;
+  ratingCount: number;
+  brand: {
+    name: string;
+    slug: string;
+  };
+  image: string | null;
+  primaryVariant: {
+    price: number;
+    discount: number;
+    stock: number;
+    reserved: number;
+  };
 };

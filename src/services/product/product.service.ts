@@ -1,11 +1,13 @@
 import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
+import { ProductDto } from "../../dtos/product.dto";
 import { ServiceResponseT } from "../../types/common";
 import { ListProductResultT, ListProductsParams, ProductDetailT } from "../../types/product";
 import { createError } from "../../utils/common";
 import {
   buildProductWhere,
   findProductDetail,
+  getProductCardSelect,
   parseProductQueryParams,
   requireSlug,
 } from "./product.helpers";
@@ -25,15 +27,24 @@ export class ProductService implements IProductService {
       isLimited,
     } = parseProductQueryParams(params);
 
-    // Public products must be active
-    const where = buildProductWhere({
-      search,
-      brandSlug,
-      gender,
-      concentration,
-      isActive: true,
-      isLimited,
-    });
+    // Public products must be active and have at least one primary variant
+    const where = {
+      ...buildProductWhere({
+        search,
+        brandSlug,
+        gender,
+        concentration,
+        isActive: true,
+        isLimited,
+      }),
+      variants: {
+        some: {
+          isPrimary: true,
+          isActive: true,
+          deletedAt: null,
+        },
+      },
+    };
 
     const [items, total] = await Promise.all([
       prisma.product.findMany({
@@ -41,29 +52,7 @@ export class ProductService implements IProductService {
         take: pageSize,
         skip: offset,
         orderBy: { createdAt: "desc" },
-        include: {
-          brand: {
-            select: { name: true, slug: true },
-          },
-          variants: {
-            where: { 
-              isActive: true,
-              deletedAt: null,
-              isPrimary: true,
-            },
-            take: 1,
-            select: {
-              stock: true,
-              reserved: true,
-              price: true,
-              discount: true,
-              images: {
-                where: { isPrimary: true },
-                take: 1
-              }
-            }
-          },
-        },
+        select: getProductCardSelect(),
       }),
       prisma.product.count({ where }),
     ]);
@@ -74,7 +63,7 @@ export class ProductService implements IProductService {
     return {
       success: true,
       data: {
-        items: items,
+        items: items.map(ProductDto.toProductCard),
         currentPage,
         totalPages,
         pageSize,
