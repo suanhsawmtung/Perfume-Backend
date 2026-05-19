@@ -43,6 +43,7 @@ export class PostService implements IPostService {
           id: true,
           title: true,
           slug: true,
+          image: true,
           excerpt: true,
           publishedAt: true,
           author: {
@@ -75,6 +76,7 @@ export class PostService implements IPostService {
         currentPage,
         totalPages,
         pageSize,
+        total
       },
       message: null,
     };

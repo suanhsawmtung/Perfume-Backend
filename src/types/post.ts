@@ -26,7 +26,7 @@ export type AdminListPostResultT = {
 
 export type ListPostT = Pick<
   Post,
-  "id" | "title" | "slug" | "excerpt" | "publishedAt"
+  "id" | "title" | "slug" | "image" | "excerpt" | "publishedAt"
 > & {
   author: Pick<User, "id" | "firstName" | "lastName" | "username">;
   category: Pick<Category, "id" | "name" | "slug">;
@@ -37,6 +37,7 @@ export type ListPostResultT = {
   currentPage: number;
   totalPages: number;
   pageSize: number;
+  total: number
 };
 
 export type BuildPostWhereParams = {
