@@ -137,7 +137,7 @@ export type ProductVariantDetailType = ProductVariant & {
   images: Pick<Image, "path" | "isPrimary" | "order">[];
 };
 
-export type ProductCardQueryDataT = Pick<Product, "id" | "name" | "slug" | "rating" | "ratingCount"> & {
+export type ProductCardQueryDataT = Pick<Product, "id" | "name" | "slug" | "rating" | "ratingCount" | "gender" | "concentration" | "isLimited"> & {
   brand: Pick<Brand, "name" | "slug">;
   variants: (Pick<ProductVariant, "price" | "discount" | "stock" | "reserved"> & {
     images: Pick<Image, "path">[];
@@ -150,6 +150,9 @@ export type ProductCardT = {
   slug: string;
   rating: number | null;
   ratingCount: number;
+  gender: Gender;
+  concentration: Concentration;
+  isLimited: boolean;
   brand: {
     name: string;
     slug: string;

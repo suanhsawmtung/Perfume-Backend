@@ -10,6 +10,9 @@ export class ProductDto {
       slug: product.slug,
       rating: product.rating ? Number(product.rating) : null,
       ratingCount: product.ratingCount,
+      gender: product.gender,
+      concentration: product.concentration,
+      isLimited: product.isLimited,
       brand: {
         name: product.brand.name,
         slug: product.brand.slug,

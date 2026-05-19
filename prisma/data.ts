@@ -39,7 +39,7 @@ export const products = [
         stock: 15,
         images: [
           {
-            path: "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRftlbX-F7ut2kmIR-CkJcIut0FG-eerQTEChw2okF3QVjvbafW48cFMcW6euHnpR5WC2tJc2-tB22paFUJPBkBIA3Sm0vqEIY0FqZwYayuFR1b3NjW6NLZ7g",
+            path: "https://cdn.salla.sa/onxjbX/08d33866-d38a-40aa-b863-f1097f2ccc84-1000x1000-lrAsVE6XqDdSSgb7hLIiyIHV30hFqMYxcphyDQCe.png",
             isPrimary: true,
             order: 0
           }
@@ -457,7 +457,7 @@ export const products = [
         stock: 15,
         images: [
           {
-            path: "https://sl1nk.com/i7dg95p",
+            path: "https://img01.ztat.net/article/spp-media-p1/9b0bfc5379bc454ca0dff8cff7b29c02/32df744fad644eeb8409dffa5d0d34a6.jpg?imwidth=762",
             isPrimary: true,
             order: 0
           }
@@ -550,12 +550,12 @@ export const products = [
         stock: 5,
         images: [
           {
-            path: "https://down-my.img.susercontent.com/file/sg-11134201-8261q-mk284nvau4g2e5.webp",
+            path: "https://i.ebayimg.com/images/g/FRoAAOSwi0Nksjsk/s-l1200.jpg",
             isPrimary: true,
             order: 0
           },
           {
-            path: "https://down-my.img.susercontent.com/file/sg-11134201-8262w-mk284o8k2iv8c5.webp",
+            path: "https://u-mercari-images.mercdn.net/photos/m41866060093_1.jpg?width=2560&quality=75&_=1706535162",
             isPrimary: false,
             order: 1
           },
@@ -597,7 +597,7 @@ export const products = [
         stock: 20,
         images: [
           {
-            path: "https://cdn.vesira.com/media/catalog/product/cache/5/image/650x/040ec09b1e35df139433887a97daa66f/6/8/689.jpg",
+            path: "https://fandi-perfume.com/cdn/shop/files/versace-bright-crystal-absolu-for-women-eau-de-parfum-1217974189.png?v=1769518349&width=1024",
             isPrimary: true,
             order: 0
           },
@@ -639,12 +639,12 @@ export const products = [
         stock: 40,
         images: [
           {
-            path: "https://www.lojaglamourosa.com/resources/medias/shop/products/thumbnails/shop-image-large/shop-pf-00704-01-le-male-edt-40ml--1.jpg",
+            path: "https://images.tcdn.com.br/img/img_prod/1251682/jean_paul_gaultier_le_male_edt_1317_2_f6b8ae36447e58a7fc5f52a5d3c7b84c.jpg",
             isPrimary: true,
             order: 0
           },
           {
-            path: "https://perfumeonline.ca/cdn/shop/products/jean-paul-gaultier-le-male-eau-de-toilette-40ml-p8488-20383_image_1024x1024.jpg?v=1571609925",
+            path: "https://static.beautytocare.com/cdn-cgi/image/width=1600,height=1600,f=auto/media/catalog/product//j/e/jean-paul-gaultier-le-male-eau-de-toilette-40ml_1.jpg",
             isPrimary: false,
             order: 1
           },
@@ -675,6 +675,19 @@ export const products = [
     releasedYear: 2020,
     variants: [
       {
+        size: 50,
+        price: 1400000,
+        discount: 0,
+        stock: 15,
+        images: [
+          {
+            path: "https://down-tw.img.susercontent.com/file/971feba3a4be41d06103fb508e36c589",
+            isPrimary: true,
+            order: 0
+          },
+        ]
+      },
+      {
         size: 30,
         price: 880000,
         discount: 0,
@@ -682,26 +695,13 @@ export const products = [
         images: [
           {
             path: "https://a.cdnsbn.com/images/products/xl/26066398006.jpg",
-            isPrimary: true,
-            order: 0
-          },
-          {
-            path: "https://a.cdnsbn.com/images/products/xl/26066398006-1.jpg",
             isPrimary: false,
-            order: 1
-          },
-        ]
-      },
-      {
-        size: 50,
-        price: 1400000,
-        discount: 0,
-        stock: 15,
-        images: [
-          {
-            path: "https://levelperfume.com/cdn/shop/files/Tom-Ford-Lost-Cherry-50ml-cr_1200x1200.jpg?v=1709016795",
-            isPrimary: true,
             order: 0
+          },
+          {
+            path: "https://cdn.idealo.com/folder/Product/200736/4/200736492/s3_produktbild_max_5/tom-ford-lost-cherry-eau-parfum-30ml.jpg",
+            isPrimary: true,
+            order: 1
           },
         ]
       },

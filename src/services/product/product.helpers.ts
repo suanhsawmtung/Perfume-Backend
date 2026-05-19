@@ -113,7 +113,7 @@ export const buildProductWhere = ({
     whereConditions.push({ isActive });
   }
 
-  if (typeof isLimited === "boolean") {
+  if (typeof isLimited === "boolean" && isLimited) {
     whereConditions.push({ isLimited });
   }
 
@@ -132,6 +132,9 @@ export const getProductCardSelect = () => {
     slug: true,
     rating: true,
     ratingCount: true,
+    concentration: true,
+    gender: true,
+    isLimited: true,
     brand: {
       select: { name: true, slug: true },
     },
