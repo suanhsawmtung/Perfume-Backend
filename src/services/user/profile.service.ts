@@ -65,6 +65,7 @@ export class ProfileService implements IProfileService {
           createdAt: true,
           username: true,
           phone: true,
+          image: true,
           orders: {
             take: 3,
             orderBy: { createdAt: "desc" },

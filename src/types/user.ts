@@ -89,7 +89,7 @@ export type PublicUserResultT = {
 
 export type UserProfileQueryData = Pick<
   SafeUserT,
-  "points" | "id" | "firstName" | "lastName" | "email" | "phone" | "emailVerifiedAt" | "createdAt" | "username"
+  "points" | "id" | "firstName" | "lastName" | "email" | "phone" | "emailVerifiedAt" | "createdAt" | "username" | "image"
 > & {
   orders: (Pick<Order, "id" | "code" | "createdAt" | "totalPrice"> & {
     orderItems: Pick<OrderItem, "quantity">[];
@@ -115,6 +115,7 @@ export type MyProfileT = {
   createdAt: Date;
   username: string;
   phone: string | null;
+  image: string | null;
   orders: {
     id: number;
     code: string;

@@ -2,6 +2,7 @@ import express, { Router } from "express";
 import {
   changePassword,
   getMe,
+  getMyProfile,
   listPublicUsers,
   selectOptionListUsers,
   setPassword,
@@ -31,6 +32,13 @@ router.get(
   normalLimiter,
   isAuthenticated,
   getMe
+);
+
+router.get(
+  "/me/profile",
+  normalLimiter,
+  isAuthenticated,
+  getMyProfile
 );
 
 router.patch(

@@ -37,6 +37,7 @@ export class UserDto {
       createdAt: user.createdAt,
       username: user.username,
       phone: user.phone,
+      image: user.image,
       orders: user.orders.map((order) => ({
         id: order.id,
         code: order.code,
