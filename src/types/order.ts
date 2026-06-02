@@ -8,6 +8,7 @@ export type ListOrdersParams = {
   paymentStatus?: OrderPaymentStatus | undefined;
   source?: OrderSource | undefined;
   userId?: number | undefined;
+  condition?: "all" | "active" | "inactive" | undefined;
 };
 
 export type ListOrderT = Order & {
@@ -21,8 +22,8 @@ export type ListOrderT = Order & {
   totalRefundAmount?: number;
 };
 
-export type ListOrderResultT = {
-  items: ListOrderT[];
+export type ListOrderResultT<T = ListOrderT> = {
+  items: T[];
   currentPage: number;
   totalPages: number;
   pageSize: number;
@@ -74,23 +75,25 @@ export type ParseOrderQueryParamsResult = {
   paymentStatus?: OrderPaymentStatus | undefined;
   source?: OrderSource | undefined;
   userId?: number | undefined;
+  condition?: "all" | "active" | "inactive" | undefined;
 };
 
-export type MyOrderT = Pick< 
-  Order, 
-  "id" | 
-  "code" | 
-  "image" | 
-  "status" | 
-  "createdAt" | 
+export type OrderCardQueryDataT = Pick<
+  Order,
+  "id" |
+  "code" |
+  "image" |
+  "status" |
+  "paymentStatus" |
+  "createdAt" |
   "totalPrice" |
   "customerAddress" |
   "customerName" |
   "customerPhone" |
   "customerNotes" |
   "cancelledReason" |
-  "rejectedReason" 
- > & {
+  "rejectedReason"
+> & {
   orderItems: (Pick<OrderItem, "quantity" | "price"> & {
     productVariant: Pick<ProductVariant, "size"> & {
       images: { path: string }[];
@@ -98,6 +101,24 @@ export type MyOrderT = Pick<
         brand: Pick<Brand, "name">;
       };
     };
+  })[];
+  totalPaidAmount?: number;
+  totalRefundAmount?: number;
+};
+
+export type MyOrderT = Omit<
+  OrderCardQueryDataT,
+  "orderItems"
+> & {
+  orderItems: (Pick<OrderItem, "quantity" | "price"> & {
+    size: number;
+    image: string | null;
+    product: {
+      id: number;
+      slug: string;
+      name: string;
+      brand: string;
+    }
   })[];
 };
 

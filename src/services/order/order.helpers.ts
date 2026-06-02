@@ -2,7 +2,7 @@ import { OrderPaymentStatus, OrderSource, OrderStatus, PaymentStatus, Prisma, Re
 import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { generateCode } from "../../lib/unique-key-generator";
-import { ListOrderT, ParseOrderQueryParamsResult } from "../../types/order";
+import { ListOrderT, OrderCardQueryDataT, ParseOrderQueryParamsResult } from "../../types/order";
 import { createError } from "../../utils/common";
 
 // export const orderStatusTransitions: Record<OrderStatus, readonly OrderStatus[]> = {
@@ -111,10 +111,12 @@ export const enrichOrder = async (order: any) => {
       .reduce((sum: number, r: any) => sum + Number(r.amount), 0);
   }
 
-  return order;
+  const { payments, refunds, ...rest } = order;
+
+  return { ...rest };
 };
 
-export const enrichOrders = async (orders: ListOrderT[]) => {
+export const enrichOrders = async (orders: (ListOrderT | OrderCardQueryDataT)[]) => {
   return Promise.all(orders.map((order) => enrichOrder(order)));
 };
 
@@ -140,6 +142,14 @@ export const parseOrderQueryParams = (
     const statusValue = query.status.toUpperCase();
     if (Object.values(OrderStatus).includes(statusValue as OrderStatus)) {
       status = statusValue as OrderStatus;
+    }
+  }
+
+  let condition: "all" | "active" | "inactive" | undefined;
+  if (typeof query.condition === "string") {
+    const conditionValue = query.condition.toLowerCase();
+    if (["all", "active", "inactive"].includes(conditionValue)) {
+      condition = conditionValue as "all" | "active" | "inactive";
     }
   }
 
@@ -177,6 +187,7 @@ export const parseOrderQueryParams = (
     paymentStatus,
     source,
     userId,
+    condition,
   };
 };
 
@@ -186,9 +197,17 @@ export const buildOrderWhereClause = (params: {
   paymentStatus?: OrderPaymentStatus;
   source?: OrderSource;
   userId?: number;
+  condition?: "all" | "active" | "inactive";
 }): Prisma.OrderWhereInput => {
-  const { search, status, paymentStatus, source, userId } = params;
+  const { search, status, paymentStatus, source, userId, condition } = params;
   const whereConditions: Prisma.OrderWhereInput[] = [{ deletedAt: null }];
+
+  if (condition === "active") {
+    whereConditions.push({ status: { notIn: [OrderStatus.CANCELLED, OrderStatus.REJECTED, OrderStatus.DONE] } });
+  }
+  else if (condition === "inactive") {
+    whereConditions.push({ status: { in: [OrderStatus.CANCELLED, OrderStatus.REJECTED, OrderStatus.DONE] } });
+  }
 
   if (search) {
     whereConditions.push({
@@ -220,8 +239,8 @@ export const buildOrderWhereClause = (params: {
 
   return whereConditions.length > 0
     ? {
-        AND: whereConditions,
-      }
+      AND: whereConditions,
+    }
     : {};
 };
 
@@ -340,8 +359,8 @@ export const deleteOrderRecord = async (id: number) => {
 };
 
 export const createOrderItemRecord = async (data: Prisma.OrderItemCreateManyOrderInput) => {
-    // This is useful for nested creation or manual item insertion
-    // Actually OrderItem creation is usually part of Order creation or manual loop
+  // This is useful for nested creation or manual item insertion
+  // Actually OrderItem creation is usually part of Order creation or manual loop
 };
 
 export const deleteOrderItemRecords = async (orderId: number) => {

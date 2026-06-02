@@ -16,5 +16,6 @@ export interface IAdminOrderService {
 }
 
 export interface IOrderService {
-  listMyOrders(userId: number, params: CursorPaginationParams): Promise<ServiceResponseT<CursorPaginationResultT<MyOrderT>>>;
+  listMyOrders(userId: number, params: ListOrdersParams): Promise<ServiceResponseT<ListOrderResultT<MyOrderT>>>;
+  cancelMyOrder(code: string, params: { cancelledReason: string }): Promise<ServiceResponseT<Order>>;
 }

@@ -329,163 +329,164 @@ export async function main() {
 
   if (allClients.length > 0 && allProductVariants.length > 0) {
     const monthsToSeed = 8;
-    
+
     for (let i = 0; i < monthsToSeed; i++) {
-        const targetMonth = moment().subtract(i, "month");
+      const targetMonth = moment().subtract(i, "month");
 
-        const maxDay = targetMonth.isSame(moment(), "month")
-            ? moment().date() // today (e.g., 9)
-            : 28;
-        
-        const isCurrentMonth = i === 0;
-        const orderCount = isCurrentMonth ? 8 : 3;
-        console.log(`Seeding ${orderCount} orders for ${targetMonth.format("MMMM YYYY")}...`);
+      const maxDay = targetMonth.isSame(moment(), "month")
+        ? moment().date() // today (e.g., 9)
+        : 28;
 
-        let monthlyRevenue = 0;
+      const isCurrentMonth = i === 0;
+      const orderCount = isCurrentMonth ? 8 : 3;
+      console.log(`Seeding ${orderCount} orders for ${targetMonth.format("MMMM YYYY")}...`);
 
-        for (let j = 0; j < orderCount; j++) {
-            const randomUser = allClients[Math.floor(Math.random() * allClients.length)]!;
-            
-            let status: OrderStatus;
-            if (!isCurrentMonth) {
-                // All past months: All orders are DONE
-                status = OrderStatus.DONE;
-            } else {
-                // Current month: 4 are DONE, others are random non-DONE statuses
-                if (j < 4) {
-                    status = OrderStatus.DONE;
-                } else {
-                    const statuses = Object.values(OrderStatus).filter(s => s !== OrderStatus.DONE && s !== OrderStatus.CANCELLED);
-                    status = statuses[Math.floor(Math.random() * statuses.length)] as OrderStatus;
-                }
-            }
+      let monthlyRevenue = 0;
 
-            const isDone = status === OrderStatus.DONE;
-            const paymentStatus = isDone ? OrderPaymentStatus.PAID : OrderPaymentStatus.UNPAID;
-            // Spread orders across the month
-            const orderDate = targetMonth.clone().date(faker.number.int({ min: 1, max: maxDay })).toDate();
-            
-            // Create an order
-            const createdOrder = await prisma.order.create({
-                data: {
-                    userId: randomUser.id,
-                    code: faker.string.alphanumeric({ length: 15, casing: 'upper' }),
-                    totalPrice: 0, // Will update later
-                    status: status,
-                    paymentStatus: paymentStatus,
-                    customerName: `${randomUser.firstName ?? ""} ${randomUser.lastName ?? ""}`.trim().slice(0, 100) || "Anonymous",
-                    customerPhone: (randomUser.phone || faker.phone.number()).slice(0, 15),
-                    customerAddress: faker.location.streetAddress().slice(0, 255),
-                    customerNotes: faker.lorem.sentence().slice(0, 500),
-                    createdAt: orderDate,
-                    updatedAt: orderDate,
-                    ...(status === 'REJECTED' ? { rejectedReason: faker.lorem.sentence().slice(0, 255) } : {})
-                }
-            });
+      for (let j = 0; j < orderCount; j++) {
+        const randomUser = allClients[Math.floor(Math.random() * allClients.length)]!;
 
-            // Add 1-3 random products to the order
-            const numberOfProducts = faker.number.int({ min: 1, max: 3 });
-            let orderTotal = 0;
-
-            for (let k = 0; k < numberOfProducts; k++) {
-                 const randomVariant = allProductVariants[Math.floor(Math.random() * allProductVariants.length)]!;
-                 const quantity = Math.floor(Math.random() * 2) + 1;
-                 const price = Number(randomVariant.price) - (Number(randomVariant.price) * Number(randomVariant.discount) / 100);
-
-                 await prisma.orderItem.create({
-                     data: {
-                         orderId: createdOrder.id,
-                         productVariantId: randomVariant.id,
-                         quantity: quantity,
-                         price: price,
-                         createdAt: orderDate
-                     }
-                 });
-                 orderTotal += price * quantity;
-
-                 // If order is DONE, create SALE inventory record
-                 if (isDone) {
-                    const unitCost = price * 0.7; // Assume 30% profit margin for analytics
-                    await prisma.inventory.create({
-                        data: {
-                            productVariantId: randomVariant.id,
-                            quantity: quantity,
-                            type: InventoryType.SALE,
-                            unitCost: unitCost,
-                            totalCost: unitCost * quantity,
-                            createdAt: orderDate
-                        }
-                    });
-                 }
-            }
-
-            // Update order total price
-            await prisma.order.update({
-                where: { id: createdOrder.id },
-                data: { totalPrice: orderTotal }
-            });
-
-            // If order is DONE, create payment and transaction
-            if (isDone) {
-                monthlyRevenue += orderTotal;
-                await prisma.payment.create({
-                    data: {
-                        orderId: createdOrder.id,
-                        method: PaymentMethod.BANK_TRANSFER,
-                        amount: orderTotal,
-                        status: PaymentStatus.SUCCESS,
-                        paidAt: orderDate,
-                        createdAt: orderDate
-                    }
-                });
-
-                await prisma.transaction.create({
-                    data: {
-                        type: TransactionType.PAYMENT,
-                        direction: TransactionDirection.IN,
-                        amount: orderTotal,
-                        source: "Order Payment",
-                        reference: `PAY-${createdOrder.code}`,
-                        note: `Payment for order ${createdOrder.code}`,
-                        createdAt: orderDate
-                    }
-                });
-            }
-            
-            console.log(`Created ${status} order: ${createdOrder.code} for ${targetMonth.format("MMM YYYY")}`);
+        let status: OrderStatus;
+        if (!isCurrentMonth) {
+          // All past months: All orders are DONE
+          status = OrderStatus.DONE;
+        } else {
+          // Current month: 4 are DONE, others are random non-DONE statuses
+          if (j < 4) {
+            status = OrderStatus.DONE;
+          } else {
+            const statuses = Object.values(OrderStatus).filter(s => s !== OrderStatus.DONE && s !== OrderStatus.CANCELLED);
+            status = statuses[Math.floor(Math.random() * statuses.length)] as OrderStatus;
+          }
         }
 
-        // Add monthly operating expenses (Salary, Wifi, Utilities, etc.)
-        if (monthlyRevenue > 0) {
-            const operatingExpenses = [
-                { name: "Staff Salary", amountRatio: 0.15 },
-                { name: "Wifi Bill", amountRatio: 0.02 },
-                { name: "Water Bill", amountRatio: 0.01 },
-                { name: "Electricity Bill", amountRatio: 0.05 },
-                { name: "Office Rent", amountRatio: 0.12 }
-            ];
+        const isDone = status === OrderStatus.DONE;
+        const paymentStatus = isDone ? OrderPaymentStatus.PAID : OrderPaymentStatus.UNPAID;
+        // Spread orders across the month
+        const orderDate = targetMonth.clone().date(faker.number.int({ min: 1, max: maxDay })).toDate();
 
-            for (const expense of operatingExpenses) {
-                const amount = monthlyRevenue * expense.amountRatio;
-                const expenseDate = targetMonth.clone().date(faker.number.int({ min: 1, max: maxDay })).toDate();
+        // Create an order
+        const createdOrder = await prisma.order.create({
+          data: {
+            userId: randomUser.id,
+            code: faker.string.alphanumeric({ length: 15, casing: 'upper' }),
+            totalPrice: 0, // Will update later
+            status: status,
+            image: "https://scontent.fkul8-2.fna.fbcdn.net/v/t39.30808-6/605866286_869566848795608_7694348803099753370_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_ohc=v5Hoh8FZGDUQ7kNvwFx_lIW&_nc_oc=AdpsJUoFPLdLy3j1O9R1SPrZvH7RJ5OvA-EDcRYgZWK2jQfGPErURd03s4Fm3_lAL_WtaS6Q_fmS1Lj0GArowOGt&_nc_zt=23&_nc_ht=scontent.fkul8-2.fna&_nc_gid=Jees17g3HiQO91bikO5VdA&_nc_ss=7b2a8&oh=00_Af9qz1QNHko7N2_Jv7AlxM61XZna5f0-8hKiOyLD0zZkGw&oe=6A220D53",
+            paymentStatus: paymentStatus,
+            customerName: `${randomUser.firstName ?? ""} ${randomUser.lastName ?? ""}`.trim().slice(0, 100) || "Anonymous",
+            customerPhone: (randomUser.phone || faker.phone.number()).slice(0, 15),
+            customerAddress: faker.location.streetAddress().slice(0, 255),
+            customerNotes: faker.lorem.sentence().slice(0, 500),
+            createdAt: orderDate,
+            updatedAt: orderDate,
+            ...(status === 'REJECTED' ? { rejectedReason: faker.lorem.sentence().slice(0, 255) } : {})
+          }
+        });
 
-                await prisma.transaction.create({
-                    data: {
-                        type: TransactionType.EXPENSE,
-                        direction: TransactionDirection.OUT,
-                        amount: amount,
-                        source: "Operating Expense",
-                        note: expense.name,
-                        createdAt: expenseDate,
-                        updatedAt: expenseDate,
-                    }
-                });
+        // Add 1-3 random products to the order
+        const numberOfProducts = faker.number.int({ min: 1, max: 3 });
+        let orderTotal = 0;
+
+        for (let k = 0; k < numberOfProducts; k++) {
+          const randomVariant = allProductVariants[Math.floor(Math.random() * allProductVariants.length)]!;
+          const quantity = Math.floor(Math.random() * 2) + 1;
+          const price = Number(randomVariant.price) - (Number(randomVariant.price) * Number(randomVariant.discount) / 100);
+
+          await prisma.orderItem.create({
+            data: {
+              orderId: createdOrder.id,
+              productVariantId: randomVariant.id,
+              quantity: quantity,
+              price: price,
+              createdAt: orderDate
             }
-            console.log(`Added operating expenses for ${targetMonth.format("MMM YYYY")}`);
+          });
+          orderTotal += price * quantity;
+
+          // If order is DONE, create SALE inventory record
+          if (isDone) {
+            const unitCost = price * 0.7; // Assume 30% profit margin for analytics
+            await prisma.inventory.create({
+              data: {
+                productVariantId: randomVariant.id,
+                quantity: quantity,
+                type: InventoryType.SALE,
+                unitCost: unitCost,
+                totalCost: unitCost * quantity,
+                createdAt: orderDate
+              }
+            });
+          }
         }
+
+        // Update order total price
+        await prisma.order.update({
+          where: { id: createdOrder.id },
+          data: { totalPrice: orderTotal }
+        });
+
+        // If order is DONE, create payment and transaction
+        if (isDone) {
+          monthlyRevenue += orderTotal;
+          await prisma.payment.create({
+            data: {
+              orderId: createdOrder.id,
+              method: PaymentMethod.BANK_TRANSFER,
+              amount: orderTotal,
+              status: PaymentStatus.SUCCESS,
+              paidAt: orderDate,
+              createdAt: orderDate
+            }
+          });
+
+          await prisma.transaction.create({
+            data: {
+              type: TransactionType.PAYMENT,
+              direction: TransactionDirection.IN,
+              amount: orderTotal,
+              source: "Order Payment",
+              reference: `PAY-${createdOrder.code}`,
+              note: `Payment for order ${createdOrder.code}`,
+              createdAt: orderDate
+            }
+          });
+        }
+
+        console.log(`Created ${status} order: ${createdOrder.code} for ${targetMonth.format("MMM YYYY")}`);
+      }
+
+      // Add monthly operating expenses (Salary, Wifi, Utilities, etc.)
+      if (monthlyRevenue > 0) {
+        const operatingExpenses = [
+          { name: "Staff Salary", amountRatio: 0.15 },
+          { name: "Wifi Bill", amountRatio: 0.02 },
+          { name: "Water Bill", amountRatio: 0.01 },
+          { name: "Electricity Bill", amountRatio: 0.05 },
+          { name: "Office Rent", amountRatio: 0.12 }
+        ];
+
+        for (const expense of operatingExpenses) {
+          const amount = monthlyRevenue * expense.amountRatio;
+          const expenseDate = targetMonth.clone().date(faker.number.int({ min: 1, max: maxDay })).toDate();
+
+          await prisma.transaction.create({
+            data: {
+              type: TransactionType.EXPENSE,
+              direction: TransactionDirection.OUT,
+              amount: amount,
+              source: "Operating Expense",
+              note: expense.name,
+              createdAt: expenseDate,
+              updatedAt: expenseDate,
+            }
+          });
+        }
+        console.log(`Added operating expenses for ${targetMonth.format("MMM YYYY")}`);
+      }
     }
   } else {
-      console.log("Skipping order seeding: Not enough users or product variants.");
+    console.log("Skipping order seeding: Not enough users or product variants.");
   }
 
   // Seed Specific Refund Scenarios
@@ -524,6 +525,7 @@ export async function main() {
           code,
           totalPrice: 0,
           status: OrderStatus.CANCELLED,
+          image: "https://scontent.fkul8-2.fna.fbcdn.net/v/t39.30808-6/605866286_869566848795608_7694348803099753370_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_ohc=v5Hoh8FZGDUQ7kNvwFx_lIW&_nc_oc=AdpsJUoFPLdLy3j1O9R1SPrZvH7RJ5OvA-EDcRYgZWK2jQfGPErURd03s4Fm3_lAL_WtaS6Q_fmS1Lj0GArowOGt&_nc_zt=23&_nc_ht=scontent.fkul8-2.fna&_nc_gid=Jees17g3HiQO91bikO5VdA&_nc_ss=7b2a8&oh=00_Af9qz1QNHko7N2_Jv7AlxM61XZna5f0-8hKiOyLD0zZkGw&oe=6A220D53",
           paymentStatus: scenario.paymentStatus,
           customerName: `${randomUser.firstName ?? ""} ${randomUser.lastName ?? ""}`.trim() || "Anonymous",
           customerPhone: (randomUser.phone || faker.phone.number()).slice(0, 15),

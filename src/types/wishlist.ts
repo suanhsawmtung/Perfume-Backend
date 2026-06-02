@@ -4,9 +4,9 @@ import { CursorPaginationResultT } from "./common";
 export type WishlistItemT = ProductWishlist & {
   product: Pick<Product, "id" | "name" | "slug"> & {
     brand: Pick<Brand, "name">;
-    variants: Pick<ProductVariant, "price" | "discount" | "stock" | "reserved"> & {
+    variants: (Pick<ProductVariant, "price" | "discount" | "stock" | "reserved"> & {
       images: Pick<Image, "path">[];
-    }[];
+    })[];
   };
 };
 

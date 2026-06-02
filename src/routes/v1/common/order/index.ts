@@ -1,10 +1,26 @@
 import express, { Router } from "express";
-import { listMyOrders } from "../../../../controllers/common/order.controller";
+import { cancelMyOrder, listMyOrders } from "../../../../controllers/common/order.controller";
 import { isAuthenticated } from "../../../../middlewares/ensure-authenticated";
+import { normalLimiter } from "../../../../middlewares/rate-limiter";
+import { handleValidationError } from "../../../../middlewares/error-handler";
+import { cancelMyOrderValidation } from "../../../../validations/order.validation";
 
 const router: Router = express.Router();
 
-// Authenticated routes
-router.get("/my/all", isAuthenticated, listMyOrders);
+router.get(
+    "/",
+    isAuthenticated,
+    normalLimiter,
+    listMyOrders
+);
+
+router.patch(
+    "/:code/cancel",
+    isAuthenticated,
+    normalLimiter,
+    cancelMyOrderValidation,
+    handleValidationError,
+    cancelMyOrder
+)
 
 export default router;

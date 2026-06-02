@@ -35,7 +35,7 @@ router.get(
 );
 
 router.get(
-  "/me/profile",
+  "/my-profile",
   normalLimiter,
   isAuthenticated,
   getMyProfile

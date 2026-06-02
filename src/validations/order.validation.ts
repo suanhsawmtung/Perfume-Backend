@@ -71,3 +71,12 @@ const updateOrderValidation = [
 
 export { updateOrderValidation };
 
+export const cancelMyOrderValidation = [
+  body("cancelledReason")
+    .exists()
+    .withMessage("Reason is required.")
+    .notEmpty()
+    .withMessage("Reason cannot be empty.")
+    .trim(),
+];
+
