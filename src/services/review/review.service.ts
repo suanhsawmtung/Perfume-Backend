@@ -82,7 +82,7 @@ export class ReviewService implements IReviewService {
 
   async listMyReviews(userId: number, params: CursorPaginationParams): Promise<ServiceResponseT<CursorPaginationResultT<MyReviewT>>> {
     const limit = Number(params.limit) || 10;
-    const cursor = params.cursor ? Number(params.cursor) : undefined;
+    const cursor = params.cursor ? Number(params.cursor) : null;
 
     const reviews = await prisma.review.findMany({
       where: { userId, content: { not: null } },
@@ -96,19 +96,19 @@ export class ReviewService implements IReviewService {
             name: true,
             slug: true,
             variants: {
-                where: {
+              where: {
+                isPrimary: true,
+              },
+              take: 1,
+              select: {
+                images: {
+                  take: 1,
+                  where: {
                     isPrimary: true,
-                },
-                take: 1,
-                select: {
-                    images: {
-                        take: 1,
-                        where: {
-                            isPrimary: true,
-                        },
-                        select: { path: true }
-                    }
+                  },
+                  select: { path: true }
                 }
+              }
             }
           }
         }
@@ -118,8 +118,8 @@ export class ReviewService implements IReviewService {
 
     let nextCursor: number | null = null;
     if (reviews.length > limit) {
-      const nextItem = reviews.pop();
-      nextCursor = nextItem!.id;
+      reviews.pop();
+      nextCursor = reviews[reviews.length - 1]?.id || null;
     }
 
     return {

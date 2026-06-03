@@ -13,8 +13,8 @@ export class OrderService implements IOrderService {
   async listMyOrders(
     userId: number,
     params: ListOrdersParams
-  ): Promise<ServiceResponseT<ListOrderResultT<MyOrderT>>> {
-    const { pageSize, offset, search, condition } = parseOrderQueryParams(params);
+  ): Promise<ServiceResponseT<CursorPaginationResultT<MyOrderT>>> {
+    const { pageSize, cursor, search, condition } = parseOrderQueryParams(params);
 
     const where = buildOrderWhereClause({
       ...(search && { search }),
@@ -23,52 +23,51 @@ export class OrderService implements IOrderService {
       source: OrderSource.CUSTOMER,
     });
 
-    const [items, total] = await Promise.all([
-      prisma.order.findMany({
-        where,
-        take: pageSize,
-        skip: offset,
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          code: true,
-          image: true,
-          status: true,
-          paymentStatus: true,
-          createdAt: true,
-          totalPrice: true,
-          customerAddress: true,
-          customerName: true,
-          customerNotes: true,
-          customerPhone: true,
-          rejectedReason: true,
-          cancelledReason: true,
-          payments: true,
-          refunds: true,
-          orderItems: {
-            select: {
-              quantity: true,
-              price: true,
-              productVariant: {
-                select: {
-                  size: true,
-                  images: {
-                    where: {
-                      isPrimary: true,
-                    },
-                    select: {
-                      path: true,
-                    },
+    const orders = await prisma.order.findMany({
+      where,
+      take: pageSize + 1,
+      ...(cursor && { cursor: { id: cursor } }),
+      skip: cursor ? 1 : 0,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        code: true,
+        image: true,
+        status: true,
+        paymentStatus: true,
+        createdAt: true,
+        totalPrice: true,
+        customerAddress: true,
+        customerName: true,
+        customerNotes: true,
+        customerPhone: true,
+        rejectedReason: true,
+        cancelledReason: true,
+        payments: true,
+        refunds: true,
+        orderItems: {
+          select: {
+            quantity: true,
+            price: true,
+            productVariant: {
+              select: {
+                size: true,
+                images: {
+                  where: {
+                    isPrimary: true,
                   },
-                  product: {
-                    select: {
-                      id: true,
-                      name: true,
-                      slug: true,
-                      brand: {
-                        select: {
-                          name: true,
-                        },
+                  select: {
+                    path: true,
+                  },
+                },
+                product: {
+                  select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    brand: {
+                      select: {
+                        name: true,
                       },
                     },
                   },
@@ -77,21 +76,22 @@ export class OrderService implements IOrderService {
             },
           },
         },
-      }),
-      prisma.order.count({ where }),
-    ]);
+      },
+    })
 
-    const totalPages = Math.ceil(total / pageSize);
-    const currentPage = Math.floor(offset / pageSize) + 1;
+    let nextCursor: number | null = null;
+    if (orders.length > pageSize) {
+      orders.pop();
+      nextCursor = orders[orders.length - 1]?.id || null;
+    }
+
+    console.log("nextCursor", nextCursor, orders.length);
 
     return {
       success: true,
       data: {
-        items: (await enrichOrders(items))
-          .map((order) => OrderDto.toOrderCard(order)),
-        currentPage,
-        totalPages,
-        pageSize,
+        items: (await enrichOrders(orders)).map((order) => OrderDto.toOrderCard(order)),
+        nextCursor,
       },
       message: null,
     };

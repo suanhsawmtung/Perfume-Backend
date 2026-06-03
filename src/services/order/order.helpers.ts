@@ -179,6 +179,14 @@ export const parseOrderQueryParams = (
     }
   }
 
+  let cursor: number | undefined;
+  if (typeof query.cursor === "string") {
+    const parsedCursor = Number(query.cursor);
+    if (!isNaN(parsedCursor) && parsedCursor > 0) {
+      cursor = parsedCursor;
+    }
+  }
+
   return {
     pageSize,
     offset,
@@ -188,6 +196,7 @@ export const parseOrderQueryParams = (
     source,
     userId,
     condition,
+    cursor,
   };
 };
 

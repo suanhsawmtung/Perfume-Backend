@@ -1,6 +1,7 @@
 import { Brand, Order, OrderItem, OrderPaymentStatus, OrderSource, OrderStatus, Product, ProductVariant, User } from "@prisma/client";
+import { CursorPaginationParams } from "./common";
 
-export type ListOrdersParams = {
+export type ListAdminOrdersParams = {
   limit?: number | string;
   offset?: number | string;
   search?: string | undefined;
@@ -8,8 +9,13 @@ export type ListOrdersParams = {
   paymentStatus?: OrderPaymentStatus | undefined;
   source?: OrderSource | undefined;
   userId?: number | undefined;
-  condition?: "all" | "active" | "inactive" | undefined;
 };
+
+export type ListOrdersParams = {
+  search?: string | undefined;
+  userId?: number | undefined;
+  condition?: "all" | "active" | "inactive" | undefined;
+} & CursorPaginationParams;
 
 export type ListOrderT = Order & {
   user: Pick<User, "id" | "firstName" | "lastName" | "username" | "phone" | "email">;
@@ -22,8 +28,8 @@ export type ListOrderT = Order & {
   totalRefundAmount?: number;
 };
 
-export type ListOrderResultT<T = ListOrderT> = {
-  items: T[];
+export type ListOrderResultT = {
+  items: ListOrderT[];
   currentPage: number;
   totalPages: number;
   pageSize: number;
@@ -70,6 +76,7 @@ export type UpdateOrderParams = {
 export type ParseOrderQueryParamsResult = {
   pageSize: number;
   offset: number;
+  cursor: number | undefined;
   search?: string | undefined;
   status?: OrderStatus | undefined;
   paymentStatus?: OrderPaymentStatus | undefined;

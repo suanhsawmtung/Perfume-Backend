@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Concentration, Gender, InventoryType, OrderPaymentStatus, OrderStatus, PaymentMethod, PaymentStatus, RefundStatus, Role, TransactionDirection, TransactionType } from "@prisma/client";
+import { Concentration, Gender, InventoryType, OrderPaymentStatus, OrderStatus, PaymentMethod, PaymentStatus, PostStatus, RefundStatus, Role, TransactionDirection, TransactionType } from "@prisma/client";
 import moment from "moment";
 import { hash } from "../src/lib/hash";
 import { prisma } from "../src/lib/prisma";
@@ -13,7 +13,8 @@ export function createRandomUser() {
   return {
     email: faker.internet.email(),
     username: faker.internet.username(),
-    password: faker.internet.password(),
+    password: "password123",
+    emailVerifiedAt: new Date(),
   };
 }
 
@@ -260,6 +261,7 @@ export async function main() {
     await prisma.user.create({
       data: {
         ...user,
+        email: user.email.toLowerCase(),
         password: await hash(user.password),
       },
     });
@@ -311,6 +313,9 @@ export async function main() {
         image: postData.image,
         authorId: authorId ?? adminUser.id,
         categoryId: category.id,
+        publishedAt: moment().toDate(),
+        status: PostStatus.PUBLISHED,
+
       },
     });
     console.log(`Created/Updated post: ${postData.title}`);

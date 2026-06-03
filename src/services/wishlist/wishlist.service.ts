@@ -50,8 +50,8 @@ export class WishlistService implements IWishlistService {
 
     let nextCursor: number | null = null;
     if (wishlists.length > limit) {
-      const nextItem = wishlists.pop();
-      nextCursor = nextItem!.id;
+      wishlists.pop();
+      nextCursor = wishlists[wishlists.length - 1]?.id || null;
     }
 
     return {

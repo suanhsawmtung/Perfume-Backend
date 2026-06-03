@@ -70,8 +70,8 @@ export const listMyReviews = async (
     }
 
     const result = await reviewService.listMyReviews(userId, {
-      cursor: cursor as string,
-      limit: limit as string,
+      cursor: cursor as string | null,
+      limit: limit as string | null,
     });
     return res.status(200).json(result);
   } catch (error: any) {

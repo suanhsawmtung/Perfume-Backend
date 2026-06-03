@@ -3,7 +3,6 @@ import { errorCode } from "../../config/error-code";
 import { OrderService } from "../../services/order/order.service";
 import { CustomRequest } from "../../types/common";
 import { createError } from "../../utils/common";
-import { ListOrdersParams } from "../../types/order";
 
 const orderService = new OrderService();
 

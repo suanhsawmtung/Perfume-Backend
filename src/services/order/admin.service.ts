@@ -5,7 +5,7 @@ import { ServiceResponseT } from "../../types/common";
 import {
   CreateOrderParams,
   ListOrderResultT,
-  ListOrdersParams,
+  ListAdminOrdersParams,
   ListOrderT,
   UpdateOrderParams,
 } from "../../types/order";
@@ -34,7 +34,7 @@ const ORDER_STATUS_FLOW: Record<OrderStatus, OrderStatus[]> = {
 
 export class AdminOrderService implements IAdminOrderService {
   async listOrders(
-    params: ListOrdersParams
+    params: ListAdminOrdersParams
   ): Promise<ServiceResponseT<ListOrderResultT>> {
     const { pageSize, offset, search, status, paymentStatus, source, userId } =
       parseOrderQueryParams(params);
@@ -343,11 +343,11 @@ export class AdminOrderService implements IAdminOrderService {
       OrderStatus.REJECTED,
     ].includes(
       existingOrder.status as
-        | "SHIPPED"
-        | "DELIVERED"
-        | "DONE"
-        | "CANCELLED"
-        | "REJECTED"
+      | "SHIPPED"
+      | "DELIVERED"
+      | "DONE"
+      | "CANCELLED"
+      | "REJECTED"
     );
 
     const isNameChanged =

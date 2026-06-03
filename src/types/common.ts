@@ -11,8 +11,8 @@ export interface ServiceResponseT<T> {
 }
 
 export type CursorPaginationParams = {
-  cursor?: number | string;
-  limit?: number | string;
+  cursor?: number | string | null | undefined;
+  limit?: number | string | null | undefined;
 };
 
 export type CursorPaginationResultT<T> = {
