@@ -20,12 +20,6 @@ export type ParseBrandQueryParamsResult = {
   search?: string | undefined;
 };
 
-export type ListSelectOptionBrandT = {
-  id: number;
-  name: string;
-  slug: string;
-};
-
 export type ListBrandT = Brand & {
   _count: {
     products: number;
@@ -38,5 +32,5 @@ export type ListBrandResultT = {
   totalPages: number;
   pageSize: number;
 };
-  
+
 

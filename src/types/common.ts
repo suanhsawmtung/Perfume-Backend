@@ -18,6 +18,13 @@ export type CursorPaginationParams = {
 export type CursorPaginationResultT<T> = {
   items: T[];
   nextCursor: number | null;
+  totalCount: number;
 };
+
+export type SelectOptionT = {
+  id: number;
+  name: string;
+  slug: string;
+}
 
 

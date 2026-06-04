@@ -1,4 +1,4 @@
-import { Review } from "@prisma/client";
+import { Prisma, Review } from "@prisma/client";
 import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { CursorPaginationParams, CursorPaginationResultT, ServiceResponseT } from "../../types/common";
@@ -84,49 +84,58 @@ export class ReviewService implements IReviewService {
     const limit = Number(params.limit) || 10;
     const cursor = params.cursor ? Number(params.cursor) : null;
 
-    const reviews = await prisma.review.findMany({
-      where: { userId, content: { not: null } },
-      take: limit + 1,
-      ...(cursor && { cursor: { id: cursor } }),
-      skip: cursor ? 1 : 0,
-      include: {
-        product: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            variants: {
-              where: {
-                isPrimary: true,
-              },
-              take: 1,
-              select: {
-                images: {
-                  take: 1,
-                  where: {
-                    isPrimary: true,
-                  },
-                  select: { path: true }
+    const where: Prisma.ReviewWhereInput = {
+      userId,
+      content: { not: null },
+    }
+
+    const [items, totalCount] = await Promise.all([
+      prisma.review.findMany({
+        where,
+        take: limit + 1,
+        ...(cursor && { cursor: { id: cursor } }),
+        skip: cursor ? 1 : 0,
+        include: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              variants: {
+                where: {
+                  isPrimary: true,
+                },
+                take: 1,
+                select: {
+                  images: {
+                    take: 1,
+                    where: {
+                      isPrimary: true,
+                    },
+                    select: { path: true }
+                  }
                 }
               }
             }
           }
-        }
-      },
-      orderBy: { createdAt: "desc" } // Using ID for monotonic cursor behavior
-    });
+        },
+        orderBy: { createdAt: "desc" } // Using ID for monotonic cursor behavior
+      }),
+      prisma.review.count({ where })
+    ]);
 
     let nextCursor: number | null = null;
-    if (reviews.length > limit) {
-      reviews.pop();
-      nextCursor = reviews[reviews.length - 1]?.id || null;
+    if (items.length > limit) {
+      items.pop();
+      nextCursor = items[items.length - 1]?.id || null;
     }
 
     return {
       success: true,
       data: {
-        items: reviews as MyReviewT[],
-        nextCursor
+        items: items as MyReviewT[],
+        nextCursor,
+        totalCount
       },
       message: null
     };

@@ -23,51 +23,53 @@ export class OrderService implements IOrderService {
       source: OrderSource.CUSTOMER,
     });
 
-    const orders = await prisma.order.findMany({
-      where,
-      take: pageSize + 1,
-      ...(cursor && { cursor: { id: cursor } }),
-      skip: cursor ? 1 : 0,
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        code: true,
-        image: true,
-        status: true,
-        paymentStatus: true,
-        createdAt: true,
-        totalPrice: true,
-        customerAddress: true,
-        customerName: true,
-        customerNotes: true,
-        customerPhone: true,
-        rejectedReason: true,
-        cancelledReason: true,
-        payments: true,
-        refunds: true,
-        orderItems: {
-          select: {
-            quantity: true,
-            price: true,
-            productVariant: {
-              select: {
-                size: true,
-                images: {
-                  where: {
-                    isPrimary: true,
+    const [items, totalCount] = await await Promise.all([
+      prisma.order.findMany({
+        where,
+        take: pageSize + 1,
+        ...(cursor && { cursor: { id: cursor } }),
+        skip: cursor ? 1 : 0,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          code: true,
+          image: true,
+          status: true,
+          paymentStatus: true,
+          createdAt: true,
+          totalPrice: true,
+          customerAddress: true,
+          customerName: true,
+          customerNotes: true,
+          customerPhone: true,
+          rejectedReason: true,
+          cancelledReason: true,
+          payments: true,
+          refunds: true,
+          orderItems: {
+            select: {
+              quantity: true,
+              price: true,
+              productVariant: {
+                select: {
+                  size: true,
+                  images: {
+                    where: {
+                      isPrimary: true,
+                    },
+                    select: {
+                      path: true,
+                    },
                   },
-                  select: {
-                    path: true,
-                  },
-                },
-                product: {
-                  select: {
-                    id: true,
-                    name: true,
-                    slug: true,
-                    brand: {
-                      select: {
-                        name: true,
+                  product: {
+                    select: {
+                      id: true,
+                      name: true,
+                      slug: true,
+                      brand: {
+                        select: {
+                          name: true,
+                        },
                       },
                     },
                   },
@@ -76,22 +78,24 @@ export class OrderService implements IOrderService {
             },
           },
         },
-      },
-    })
+      }),
+      prisma.order.count({
+        where,
+      })
+    ]);
 
     let nextCursor: number | null = null;
-    if (orders.length > pageSize) {
-      orders.pop();
-      nextCursor = orders[orders.length - 1]?.id || null;
+    if (items.length > pageSize) {
+      items.pop();
+      nextCursor = items[items.length - 1]?.id || null;
     }
-
-    console.log("nextCursor", nextCursor, orders.length);
 
     return {
       success: true,
       data: {
-        items: (await enrichOrders(orders)).map((order) => OrderDto.toOrderCard(order)),
+        items: (await enrichOrders(items)).map((order) => OrderDto.toOrderCard(order)),
         nextCursor,
+        totalCount,
       },
       message: null,
     };

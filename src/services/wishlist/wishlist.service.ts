@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { CursorPaginationParams, ServiceResponseT } from "../../types/common";
@@ -13,52 +14,60 @@ export class WishlistService implements IWishlistService {
     const limit = Number(params.limit) || 10;
     const cursor = params.cursor ? Number(params.cursor) : undefined;
 
-    const wishlists = await prisma.productWishlist.findMany({
-      where: { userId },
-      take: limit + 1,
-      ...(cursor && { cursor: { id: cursor } }),
-      skip: cursor ? 1 : 0,
-      include: {
-        product: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            brand: {
-              select: { name: true },
-            },
-            variants: {
-              where: { isPrimary: true },
-              take: 1,
-              select: {
-                price: true,
-                discount: true,
-                stock: true,
-                reserved: true,
-                images: {
-                  where: { isPrimary: true },
-                  take: 1,
-                  select: { path: true },
-                },
-              }
+    const where: Prisma.ProductWishlistWhereInput = {
+      userId,
+    }
+
+    const [items, totalCount] = await Promise.all([
+      prisma.productWishlist.findMany({
+        where,
+        take: limit + 1,
+        ...(cursor && { cursor: { id: cursor } }),
+        skip: cursor ? 1 : 0,
+        include: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              brand: {
+                select: { name: true },
+              },
+              variants: {
+                where: { isPrimary: true },
+                take: 1,
+                select: {
+                  price: true,
+                  discount: true,
+                  stock: true,
+                  reserved: true,
+                  images: {
+                    where: { isPrimary: true },
+                    take: 1,
+                    select: { path: true },
+                  },
+                }
+              },
             },
           },
         },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.productWishlist.count({ where })
+    ]);
 
     let nextCursor: number | null = null;
-    if (wishlists.length > limit) {
-      wishlists.pop();
-      nextCursor = wishlists[wishlists.length - 1]?.id || null;
+    if (items.length > limit) {
+      items.pop();
+      nextCursor = items[items.length - 1]?.id || null;
     }
 
     return {
       success: true,
       data: {
-        items: wishlists as WishlistItemT[],
+        items: items as WishlistItemT[],
         nextCursor,
+        totalCount,
       },
       message: null,
     };

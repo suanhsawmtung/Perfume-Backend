@@ -1,7 +1,7 @@
-import { AuthProvider, Role } from "@prisma/client";
+import { AuthProvider, Prisma, Role } from "@prisma/client";
 import { Profile } from "passport-google-oauth20";
 import { prisma } from "../../lib/prisma";
-import { ServiceResponseT } from "../../types/common";
+import { CursorPaginationResultT, SelectOptionT, ServiceResponseT } from "../../types/common";
 import { PublicUserResultT, PublicUserT, SafeUserT } from "../../types/user";
 import { findUserByGoogleId, invalidGoogleProfileError } from "../auth/auth.helpers";
 import { createUserRecord, findUserByEmail, generateUsername } from "./user.helpers";
@@ -96,46 +96,48 @@ export class UserService implements IUserService {
 
   async selectOptionListUsers(
     query: { limit?: number; cursor?: number | null; search?: string | undefined }
-  ): Promise<ServiceResponseT<{ 
-    items: { id: number; name: string; slug: string; }[], 
-    nextCursor: number | null
-  }>> {
+  ): Promise<ServiceResponseT<CursorPaginationResultT<SelectOptionT>>> {
     const limit = query.limit || 10;
     const cursor = query.cursor;
     const search = query.search;
 
-    const users = await prisma.user.findMany({
-      take: limit + 1,
-      ...(cursor && { cursor: { id: cursor } }),
-      skip: cursor ? 1 : 0,
-      where: {
-        status: "ACTIVE",
-        deletedAt: null,
-        ...(search && {
-          OR: [
-            { firstName: { contains: search, mode: "insensitive" } },
-            { lastName: { contains: search, mode: "insensitive" } },
-            { username: { contains: search, mode: "insensitive" } },
-          ],
-        }),
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        username: true,
-      },
-      orderBy: { createdAt: "asc" },
-    }); 
-
-    let nextCursor: number | null = null;
-  
-    if (users.length > limit) {
-      users.pop();
-      nextCursor = users[users.length - 1]?.id || null;
+    const where: Prisma.UserWhereInput = {
+      status: "ACTIVE",
+      deletedAt: null,
+      ...(search && {
+        OR: [
+          { firstName: { contains: search, mode: "insensitive" } },
+          { lastName: { contains: search, mode: "insensitive" } },
+          { username: { contains: search, mode: "insensitive" } },
+        ],
+      }),
     }
 
-    const items = users.map(user => ({
+    const [items, totalCount] = await Promise.all([
+      prisma.user.findMany({
+        take: limit + 1,
+        ...(cursor && { cursor: { id: cursor } }),
+        skip: cursor ? 1 : 0,
+        where,
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          username: true,
+        },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+    let nextCursor: number | null = null;
+
+    if (items.length > limit) {
+      items.pop();
+      nextCursor = items[items.length - 1]?.id || null;
+    }
+
+    const result = items.map(user => ({
       id: user.id,
       name: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.username,
       slug: user.username,
@@ -143,8 +145,9 @@ export class UserService implements IUserService {
 
     return {
       data: {
-        items,
+        items: result,
         nextCursor,
+        totalCount,
       },
       success: true,
       message: null,
