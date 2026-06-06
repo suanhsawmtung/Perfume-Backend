@@ -3,8 +3,18 @@ import { MyWishlistResultT, ToggleWishlistResponseT } from "../../types/wishlist
 
 export interface IWishlistService {
   listMyWishlist(userId: number, params: CursorPaginationParams): Promise<ServiceResponseT<MyWishlistResultT>>;
-  toggleWishlist(
-    userId: number,
-    productId: number
-  ): Promise<ServiceResponseT<ToggleWishlistResponseT>>;
+  addToWishlist({
+    userId,
+    productId
+  }: {
+    userId: number;
+    productId: number;
+  }): Promise<ServiceResponseT<ToggleWishlistResponseT>>;
+  removeFromWishlist({
+    userId,
+    productId
+  }: {
+    userId: number;
+    productId: number;
+  }): Promise<ServiceResponseT<ToggleWishlistResponseT>>;
 }

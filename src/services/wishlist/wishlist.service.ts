@@ -2,20 +2,54 @@ import { Prisma } from "@prisma/client";
 import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { CursorPaginationParams, ServiceResponseT } from "../../types/common";
-import { MyWishlistResultT, ToggleWishlistResponseT, WishlistItemT } from "../../types/wishlist";
+import { ListWishlistsParams, MyWishlistResultT, ToggleWishlistResponseT } from "../../types/wishlist";
 import { createError } from "../../utils/common";
 import { IWishlistService } from "./wishlist.interface";
+import { WishlistDto } from "../../dtos/wishlist.dto";
 
 export class WishlistService implements IWishlistService {
   async listMyWishlist(
     userId: number,
-    params: CursorPaginationParams
+    params: ListWishlistsParams
   ): Promise<ServiceResponseT<MyWishlistResultT>> {
     const limit = Number(params.limit) || 10;
     const cursor = params.cursor ? Number(params.cursor) : undefined;
+    const search = params.search;
 
     const where: Prisma.ProductWishlistWhereInput = {
       userId,
+      product: {
+        isActive: true,
+        deletedAt: null,
+        variants: {
+          some: {
+            isActive: true,
+            deletedAt: null
+          }
+        }
+      },
+      ...(search ? {
+        OR: [
+          {
+            product: {
+              name: {
+                contains: search,
+                mode: "insensitive"
+              },
+            },
+          },
+          {
+            product: {
+              brand: {
+                name: {
+                  contains: search,
+                  mode: "insensitive"
+                },
+              },
+            },
+          }
+        ]
+      } : {})
     }
 
     const [items, totalCount] = await Promise.all([
@@ -34,9 +68,11 @@ export class WishlistService implements IWishlistService {
                 select: { name: true },
               },
               variants: {
-                where: { isPrimary: true },
+                where: { isPrimary: true, isActive: true, deletedAt: null },
                 take: 1,
                 select: {
+                  id: true,
+                  slug: true,
                   price: true,
                   discount: true,
                   stock: true,
@@ -65,7 +101,7 @@ export class WishlistService implements IWishlistService {
     return {
       success: true,
       data: {
-        items: items as WishlistItemT[],
+        items: items.map(WishlistDto.toWishlistCard),
         nextCursor,
         totalCount,
       },
@@ -73,13 +109,70 @@ export class WishlistService implements IWishlistService {
     };
   }
 
-  async toggleWishlist(
-    userId: number,
-    productId: number
-  ): Promise<ServiceResponseT<ToggleWishlistResponseT>> {
+  async addToWishlist({ userId, productId }: {
+    userId: number;
+    productId: number;
+  }): Promise<ServiceResponseT<ToggleWishlistResponseT>> {
     // 1. Check if product exists
     const product = await prisma.product.findUnique({
-      where: { id: productId },
+      where: { id: productId, isActive: true, deletedAt: null },
+      select: { id: true },
+    });
+
+    if (!product) {
+      throw createError({
+        message: "Product not found",
+        status: 404,
+        code: errorCode.notFound,
+      });
+    }
+
+    // 2. Check if already in wishlist
+    const existing = await prisma.productWishlist.findUnique({
+      where: {
+        userId_productId: {
+          userId,
+          productId,
+        },
+      },
+    });
+
+    if (existing) {
+      return {
+        success: true,
+        data: {
+          isAdded: true,
+          message: "Already in wishlist",
+        },
+        message: "Wishlist updated",
+      };
+    } else {
+      // Add
+      await prisma.productWishlist.create({
+        data: {
+          userId,
+          productId,
+        },
+      });
+
+      return {
+        success: true,
+        data: {
+          isAdded: true,
+          message: "Added to wishlist",
+        },
+        message: "Wishlist updated",
+      };
+    }
+  }
+
+  async removeFromWishlist({ userId, productId }: {
+    userId: number;
+    productId: number;
+  }): Promise<ServiceResponseT<ToggleWishlistResponseT>> {
+    // 1. Check if product exists
+    const product = await prisma.product.findUnique({
+      where: { id: productId, isActive: true, deletedAt: null },
       select: { id: true },
     });
 
@@ -116,19 +209,11 @@ export class WishlistService implements IWishlistService {
         message: "Wishlist updated",
       };
     } else {
-      // Add
-      await prisma.productWishlist.create({
-        data: {
-          userId,
-          productId,
-        },
-      });
-
       return {
         success: true,
         data: {
-          isAdded: true,
-          message: "Added to wishlist",
+          isAdded: false,
+          message: "Not in wishlist",
         },
         message: "Wishlist updated",
       };
