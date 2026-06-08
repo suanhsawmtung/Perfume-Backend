@@ -56,8 +56,8 @@ export const buildReviewWhere = async ({
 
   return whereConditions.length > 0
     ? {
-        AND: whereConditions,
-      }
+      AND: whereConditions,
+    }
     : {};
 };
 
@@ -70,6 +70,14 @@ export const parseReviewQueryParams = (query: any): ParseReviewQueryParamsResult
 
   const offsetParam = Number(query.offset);
   const offset = Number.isNaN(offsetParam) || offsetParam < 0 ? 0 : offsetParam;
+
+  let cursor: number | undefined;
+  if (typeof query.cursor === "string") {
+    const parsedCursor = Number(query.cursor);
+    if (!isNaN(parsedCursor) && parsedCursor > 0) {
+      cursor = parsedCursor;
+    }
+  }
 
   const search =
     typeof query.search === "string" && query.search.trim().length > 0
@@ -95,6 +103,7 @@ export const parseReviewQueryParams = (query: any): ParseReviewQueryParamsResult
 
   return {
     pageSize,
+    cursor,
     offset,
     search,
     isPublish,

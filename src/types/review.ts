@@ -4,6 +4,7 @@ import { CursorPaginationResultT } from "./common";
 export type ListReviewsParams = {
   limit?: number | string;
   offset?: number | string;
+  cursor?: number | string;
   search?: string | undefined;
   isPublish?: boolean | undefined;
   username?: string | undefined;
@@ -26,19 +27,6 @@ export type ProductReviewT = Review & {
   user: Pick<User, "id" | "firstName" | "lastName" | "username" | "email" | "image">;
 };
 
-export type MyReviewT = Review & {
-  product: Pick<Product, "id" | "name" | "slug"> & {
-    variants: {
-      images: {
-        path: string;
-      }[];
-    }[];
-  };
-  content: string;
-};
-
-export type MyReviewsResultT = CursorPaginationResultT<MyReviewT>;
-
 export type BuildReviewWhereParams = {
   search?: string | undefined;
   isPublish?: boolean | undefined;
@@ -53,11 +41,39 @@ export type CreateReviewParams = {
   content?: string;
 };
 
+export type UpdateReviewParams = {
+  rating: number;
+  content?: string;
+};
+
 export type ParseReviewQueryParamsResult = {
   pageSize: number;
   offset: number;
+  cursor: number | undefined;
   search?: string | undefined;
   isPublish?: boolean | undefined;
   username?: string | undefined;
   productSlug?: string | undefined;
 };
+
+export type ReviewCardQueryData = Review & {
+  product: Pick<Product, "id" | "name" | "slug"> & {
+    variants: {
+      images: {
+        path: string;
+      }[];
+    }[];
+  } & { brand: { name: string } };
+};
+
+export type ReviewCardT = Review & {
+  product: {
+    id: number;
+    name: string;
+    slug: string;
+    brand: string;
+    image: string | null;
+  }
+}
+
+export type MyReviewsResultT = CursorPaginationResultT<ReviewCardT>;

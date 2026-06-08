@@ -11,14 +11,8 @@ export const listReviews = async (
   next: NextFunction
 ) => {
   try {
-    const queryParams = parseReviewQueryParams(req.query);
 
-    const result = await adminReviewService.listReviews({
-      ...queryParams,
-      isPublish: queryParams.isPublish,
-      username: queryParams.username,
-      productSlug: queryParams.productSlug,
-    });
+    const result = await adminReviewService.listReviews(req.query);
 
     return res.status(200).json(result);
   } catch (error: any) {

@@ -59,7 +59,6 @@ export const listMyReviews = async (
 ) => {
   try {
     const { userId } = req;
-    const { cursor, limit } = req.query;
 
     if (!userId) {
       throw createError({
@@ -69,17 +68,14 @@ export const listMyReviews = async (
       });
     }
 
-    const result = await reviewService.listMyReviews(userId, {
-      cursor: cursor as string | null,
-      limit: limit as string | null,
-    });
+    const result = await reviewService.listMyReviews(userId, req.query);
     return res.status(200).json(result);
   } catch (error: any) {
     next(error);
   }
 };
 
-export const upsertReview = async (
+export const createReview = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
@@ -96,21 +92,66 @@ export const upsertReview = async (
       });
     }
 
-    if (!productId || rating === undefined) {
-      throw createError({
-        message: "Product ID and rating are required",
-        status: 400,
-        code: errorCode.invalid,
-      });
-    }
-
-    const result = await reviewService.upsertReview({
+    const result = await reviewService.createReview({
       userId,
       productId: Number(productId),
       rating: Number(rating),
       content,
     });
 
+    return res.status(200).json(result);
+  } catch (error: any) {
+    next(error);
+  }
+};
+
+export const updateReview = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { userId } = req;
+    const { id } = req.params;
+    const { rating, content } = req.body;
+
+    if (!userId) {
+      throw createError({
+        message: "Unauthenticated",
+        status: 401,
+        code: errorCode.unauthenticated,
+      });
+    }
+
+    const result = await reviewService.updateReview(Number(id), userId, {
+      rating: Number(rating),
+      content,
+    });
+
+    return res.status(200).json(result);
+  } catch (error: any) {
+    next(error);
+  }
+};
+
+export const deleteReview = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { userId } = req;
+    const { id } = req.params;
+
+    if (!userId) {
+      throw createError({
+        message: "Unauthenticated",
+        status: 401,
+        code: errorCode.unauthenticated,
+      });
+    }
+
+    const result = await reviewService.deleteReview(Number(id), userId);
     return res.status(200).json(result);
   } catch (error: any) {
     next(error);

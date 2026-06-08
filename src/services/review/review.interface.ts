@@ -5,8 +5,8 @@ import {
   ListReviewsParams,
   ListReviewT,
   ProductReviewT,
-  MyReviewT,
   CreateReviewParams,
+  UpdateReviewParams,
   MyReviewsResultT,
 } from "../../types/review";
 
@@ -20,5 +20,7 @@ export interface IReviewService {
   listProductReviews(productSlug: string): Promise<ServiceResponseT<ProductReviewT[]>>;
   getReviewDetail(id: number): Promise<ServiceResponseT<ProductReviewT>>;
   listMyReviews(userId: number, params: CursorPaginationParams): Promise<ServiceResponseT<MyReviewsResultT>>;
-  upsertReview(params: CreateReviewParams): Promise<ServiceResponseT<Review>>;
+  createReview(params: CreateReviewParams): Promise<ServiceResponseT<Review>>;
+  updateReview(id: number, userId: number, params: UpdateReviewParams): Promise<ServiceResponseT<Review>>;
+  deleteReview(id: number, userId: number): Promise<ServiceResponseT<null>>;
 }

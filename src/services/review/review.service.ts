@@ -2,9 +2,11 @@ import { Prisma, Review } from "@prisma/client";
 import { errorCode } from "../../config/error-code";
 import { prisma } from "../../lib/prisma";
 import { CursorPaginationParams, CursorPaginationResultT, ServiceResponseT } from "../../types/common";
-import { CreateReviewParams, MyReviewT, ProductReviewT } from "../../types/review";
+import { CreateReviewParams, ListReviewsParams, ProductReviewT, ReviewCardT, UpdateReviewParams } from "../../types/review";
 import { createError } from "../../utils/common";
 import { IReviewService } from "./review.interface";
+import { ReviewDto } from "../../dtos/review.dto";
+import { parseReviewQueryParams } from "./review.helpers";
 
 export class ReviewService implements IReviewService {
   async listProductReviews(productSlug: string): Promise<ServiceResponseT<ProductReviewT[]>> {
@@ -80,19 +82,26 @@ export class ReviewService implements IReviewService {
     };
   }
 
-  async listMyReviews(userId: number, params: CursorPaginationParams): Promise<ServiceResponseT<CursorPaginationResultT<MyReviewT>>> {
-    const limit = Number(params.limit) || 10;
-    const cursor = params.cursor ? Number(params.cursor) : null;
+  async listMyReviews(userId: number, params: ListReviewsParams): Promise<ServiceResponseT<CursorPaginationResultT<ReviewCardT>>> {
+    const { pageSize, cursor, search, isPublish } = parseReviewQueryParams(params);
 
     const where: Prisma.ReviewWhereInput = {
       userId,
-      content: { not: null },
+      ...(isPublish !== undefined && { isPublish }),
+      ...(search && {
+        OR: [
+          { content: { contains: search, mode: "insensitive" } },
+          { product: { name: { contains: search, mode: "insensitive" } } },
+          { product: { brand: { name: { contains: search, mode: "insensitive" } } } },
+          { product: { variants: { some: { sku: { contains: search, mode: "insensitive" } } } } },
+        ],
+      })
     }
 
     const [items, totalCount] = await Promise.all([
       prisma.review.findMany({
         where,
-        take: limit + 1,
+        take: pageSize + 1,
         ...(cursor && { cursor: { id: cursor } }),
         skip: cursor ? 1 : 0,
         include: {
@@ -101,6 +110,11 @@ export class ReviewService implements IReviewService {
               id: true,
               name: true,
               slug: true,
+              brand: {
+                select: {
+                  name: true,
+                }
+              },
               variants: {
                 where: {
                   isPrimary: true,
@@ -125,7 +139,7 @@ export class ReviewService implements IReviewService {
     ]);
 
     let nextCursor: number | null = null;
-    if (items.length > limit) {
+    if (items.length > pageSize) {
       items.pop();
       nextCursor = items[items.length - 1]?.id || null;
     }
@@ -133,7 +147,7 @@ export class ReviewService implements IReviewService {
     return {
       success: true,
       data: {
-        items: items as MyReviewT[],
+        items: items.map(ReviewDto.toReviewCard),
         nextCursor,
         totalCount
       },
@@ -141,9 +155,9 @@ export class ReviewService implements IReviewService {
     };
   }
 
-  async upsertReview(params: CreateReviewParams): Promise<ServiceResponseT<Review>> {
+  async createReview(params: CreateReviewParams): Promise<ServiceResponseT<Review>> {
     return await prisma.$transaction(async (tx) => {
-      // 1. Check if an existing review exists to determine if we are creating or updating
+      // 1. Check if an existing review exists for the given user and product
       const existingReview = await tx.review.findUnique({
         where: {
           userId_productId: {
@@ -152,6 +166,14 @@ export class ReviewService implements IReviewService {
           },
         },
       });
+
+      if (existingReview) {
+        throw createError({
+          message: "You have already reviewed this product",
+          status: 400,
+          code: errorCode.notAllowed,
+        });
+      }
 
       // 2. Fetch the product to get current rating stats
       const product = await tx.product.findUnique({
@@ -170,20 +192,9 @@ export class ReviewService implements IReviewService {
       const oldAvg = Number(product.rating);
       const oldCount = product.ratingCount;
 
-      // 3. Perform the upsert
-      const review = await tx.review.upsert({
-        where: {
-          userId_productId: {
-            userId: params.userId,
-            productId: params.productId,
-          },
-        },
-        update: {
-          rating: params.rating,
-          content: params.content ?? null,
-          isPublish: false,
-        },
-        create: {
+      // 3. Create the review
+      const review = await tx.review.create({
+        data: {
           userId: params.userId,
           productId: params.productId,
           rating: params.rating,
@@ -193,19 +204,8 @@ export class ReviewService implements IReviewService {
       });
 
       // 4. Recalculate rating and count
-      let newAvg: number;
-      let newCount: number;
-
-      if (existingReview) {
-        // Updating an existing review
-        const oldRating = existingReview.rating;
-        newCount = oldCount;
-        newAvg = (oldAvg * oldCount - oldRating + params.rating) / oldCount;
-      } else {
-        // Creating a new review
-        newCount = oldCount + 1;
-        newAvg = (oldAvg * oldCount + params.rating) / newCount;
-      }
+      const newCount = oldCount + 1;
+      const newAvg = (oldAvg * oldCount + params.rating) / newCount;
 
       // 5. Update the product with new aggregates
       await tx.product.update({
@@ -219,7 +219,162 @@ export class ReviewService implements IReviewService {
       return {
         success: true,
         data: review,
-        message: "Review submitted successfully",
+        message: "Review created successfully",
+      };
+    });
+  }
+
+  async updateReview(id: number, userId: number, params: UpdateReviewParams): Promise<ServiceResponseT<Review>> {
+    return await prisma.$transaction(async (tx) => {
+      // 1. Find the existing review
+      const existingReview = await tx.review.findUnique({
+        where: { id },
+      });
+
+      if (!existingReview) {
+        throw createError({
+          message: "Review not found",
+          status: 404,
+          code: errorCode.notFound,
+        });
+      }
+
+      // 2. Check ownership
+      if (existingReview.userId !== userId) {
+        throw createError({
+          message: "You are not authorized to update this review",
+          status: 403,
+          code: errorCode.notAllowed,
+        });
+      }
+
+      // 3. Check published status
+      if (existingReview.isPublish) {
+        throw createError({
+          message: "You can't edit published review",
+          status: 400,
+          code: errorCode.notAllowed,
+        });
+      }
+
+      // 4. If rating is changing, recalculate the product rating
+      if (params.rating !== existingReview.rating) {
+        const product = await tx.product.findUnique({
+          where: { id: existingReview.productId },
+          select: { rating: true, ratingCount: true },
+        });
+
+        if (!product) {
+          throw createError({
+            message: "Product not found",
+            status: 404,
+            code: errorCode.notFound,
+          });
+        }
+
+        const oldAvg = Number(product.rating);
+        const oldCount = product.ratingCount;
+
+        // Recalculate average (count remains the same since it's an update)
+        const newAvg = (oldAvg * oldCount - existingReview.rating + params.rating) / oldCount;
+
+        await tx.product.update({
+          where: { id: existingReview.productId },
+          data: {
+            rating: newAvg,
+          },
+        });
+      }
+
+      // 5. Perform the update
+      const review = await tx.review.update({
+        where: { id },
+        data: {
+          rating: params.rating,
+          content: params.content ?? null,
+        },
+      });
+
+      return {
+        success: true,
+        data: review,
+        message: "Review updated successfully",
+      };
+    });
+  }
+
+  async deleteReview(id: number, userId: number): Promise<ServiceResponseT<null>> {
+    return await prisma.$transaction(async (tx) => {
+      // 1. Find the existing review
+      const existingReview = await tx.review.findUnique({
+        where: { id },
+      });
+
+      if (!existingReview) {
+        throw createError({
+          message: "Review not found",
+          status: 404,
+          code: errorCode.notFound,
+        });
+      }
+
+      // 2. Check ownership
+      if (existingReview.userId !== userId) {
+        throw createError({
+          message: "You are not authorized to delete this review",
+          status: 403,
+          code: errorCode.notAllowed,
+        });
+      }
+
+      // 3. Check published status
+      if (existingReview.isPublish) {
+        throw createError({
+          message: "You can't delete published review",
+          status: 400,
+          code: errorCode.notAllowed,
+        });
+      }
+
+      // 4. Fetch the product to get current rating stats
+      const product = await tx.product.findUnique({
+        where: { id: existingReview.productId },
+        select: { rating: true, ratingCount: true },
+      });
+
+      if (!product) {
+        throw createError({
+          message: "Product not found",
+          status: 404,
+          code: errorCode.notFound,
+        });
+      }
+
+      const oldAvg = Number(product.rating);
+      const oldCount = product.ratingCount;
+
+      // 5. Recalculate rating and count
+      const newCount = oldCount - 1;
+      const newAvg = newCount > 0 ? (oldAvg * oldCount - existingReview.rating) / newCount : 0;
+
+      // 6. Delete the review
+      await tx.review.delete({
+        where: { id },
+      });
+
+      // 7. Update the product with new aggregates
+      await tx.product.update({
+        where: { id: existingReview.productId },
+        data: {
+          rating: newAvg,
+          ratingCount: newCount,
+        },
+      });
+
+      return {
+        success: true,
+        data: null,
+        message: "Review deleted successfully",
       };
     });
   }

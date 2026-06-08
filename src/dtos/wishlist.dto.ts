@@ -1,4 +1,3 @@
-import { ProductCardQueryDataT, ProductCardT } from "../types/product";
 import { WishlistCardQueryData, WishlistCardT } from "../types/wishlist";
 
 export class WishlistDto {
