@@ -11,7 +11,8 @@ export const getHome = async (
 ) => {
   try {
     const userId = req.userId;
-    const result = await homeService.getHomeData(userId);
+    const { gender } = req.query;
+    const result = await homeService.getHomeData(userId, gender as string);
     return res.status(200).json(result);
   } catch (error: any) {
     next(error);

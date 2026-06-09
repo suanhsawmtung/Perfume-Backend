@@ -1,4 +1,4 @@
-import { Gender, InventoryType, PostStatus } from "@prisma/client";
+import { Gender, InventoryType, PostStatus, Prisma } from "@prisma/client";
 import { ProductDto } from "../../dtos/product.dto";
 import { prisma } from "../../lib/prisma";
 import { ServiceResponseT } from "../../types/common";
@@ -9,7 +9,7 @@ import { IHomeService } from "./home.interface";
 export class HomeService implements IHomeService {
   async getHomeData(
     userId?: string | number,
-    gender?: string
+    gender?: string | undefined
   ): Promise<ServiceResponseT<HomeDataT>> {
     const genderFilter = this.buildHomeProductGenderFilter(gender);
 

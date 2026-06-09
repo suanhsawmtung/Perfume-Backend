@@ -86,7 +86,7 @@ export const changePasswordValidation = [
   body("newPassword")
     .notEmpty()
     .withMessage("New password is required.")
-    .isLength({ min: 6 })
+    .isLength({ min: 6, max: 12 })
     .withMessage("New password must be at least 6 characters."),
   body("confirmPassword")
     .notEmpty()
@@ -103,7 +103,7 @@ export const setPasswordValidation = [
   body("newPassword")
     .notEmpty()
     .withMessage("New password is required.")
-    .isLength({ min: 6 })
+    .isLength({ min: 6, max: 12 })
     .withMessage("New password must be at least 6 characters."),
   body("confirmPassword")
     .notEmpty()
