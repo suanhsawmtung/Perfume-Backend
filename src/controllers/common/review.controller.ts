@@ -12,17 +12,17 @@ export const listProductReviews = async (
   next: NextFunction
 ) => {
   try {
-    const { slug } = req.params;
+    const { productId } = req.params;
 
-    if (!slug) {
+    if (!productId) {
       throw createError({
-        message: "Product slug is required",
+        message: "Product ID is required",
         status: 400,
         code: errorCode.invalid,
       });
     }
 
-    const result = await reviewService.listProductReviews(slug);
+    const result = await reviewService.listProductReviews(Number(productId), req.query);
     return res.status(200).json(result);
   } catch (error: any) {
     next(error);
@@ -82,13 +82,22 @@ export const createReview = async (
 ) => {
   try {
     const { userId } = req;
-    const { productId, rating, content } = req.body;
+    const { productId } = req.params;
+    const { rating, content } = req.body;
 
     if (!userId) {
       throw createError({
         message: "Unauthenticated",
         status: 401,
         code: errorCode.unauthenticated,
+      });
+    }
+
+    if (!productId) {
+      throw createError({
+        message: "Product ID is required",
+        status: 400,
+        code: errorCode.invalid,
       });
     }
 
@@ -112,7 +121,7 @@ export const updateReview = async (
 ) => {
   try {
     const { userId } = req;
-    const { id } = req.params;
+    const { productId, id } = req.params;
     const { rating, content } = req.body;
 
     if (!userId) {
@@ -123,7 +132,23 @@ export const updateReview = async (
       });
     }
 
-    const result = await reviewService.updateReview(Number(id), userId, {
+    if (!productId) {
+      throw createError({
+        message: "Product ID is required",
+        status: 400,
+        code: errorCode.invalid,
+      });
+    }
+
+    if (!id) {
+      throw createError({
+        message: "Review ID is required",
+        status: 400,
+        code: errorCode.invalid,
+      });
+    }
+
+    const result = await reviewService.updateReview(Number(id), userId, Number(productId), {
       rating: Number(rating),
       content,
     });
@@ -141,13 +166,29 @@ export const deleteReview = async (
 ) => {
   try {
     const { userId } = req;
-    const { id } = req.params;
+    const { productId, id } = req.params;
 
     if (!userId) {
       throw createError({
         message: "Unauthenticated",
         status: 401,
         code: errorCode.unauthenticated,
+      });
+    }
+
+    if (!productId) {
+      throw createError({
+        message: "Product ID is required",
+        status: 400,
+        code: errorCode.invalid,
+      });
+    }
+
+    if (!id) {
+      throw createError({
+        message: "Review ID is required",
+        status: 400,
+        code: errorCode.invalid,
       });
     }
 

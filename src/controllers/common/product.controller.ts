@@ -25,18 +25,24 @@ export const getProduct = async (
   next: NextFunction
 ) => {
   try {
-    const { slug } = req.params;
-    const { userId } = req;
+    const { slug: productSlug } = req.params;
+    const { variant: variantSlug } = req.query;
+    const userId = req.userId;
 
-    if (!slug) {
+
+    if (!productSlug) {
       throw createError({
-        message: "Slug parameter is required.",
+        message: "Product slug parameter is required.",
         status: 400,
         code: errorCode.invalid,
       });
     }
 
-    const result = await productService.getProductDetail(slug, userId);
+    const result = await productService.getProductDetail({
+      productSlug,
+      variantSlug: typeof variantSlug === "string" ? variantSlug : null,
+      userId: userId ?? null
+    });
     return res.status(200).json(result);
   } catch (error: any) {
     next(error);
@@ -72,7 +78,7 @@ export const selectOptionListProductVariants = async (
     const cursor = req.query.cursor ? parseInt(req.query.cursor as string) : null;
     const search = req.query.search as string | undefined;
 
-    if(!productSlug) {
+    if (!productSlug) {
       throw createError({
         message: "Product slug parameter is required.",
         status: 400,

@@ -12,7 +12,7 @@ import {
   requireSlug,
 } from "./product.helpers";
 import { IProductService } from "./product.interface";
-import { Prisma } from "@prisma/client";
+import { OrderStatus, Prisma } from "@prisma/client";
 
 export class ProductService implements IProductService {
   async listProducts(
@@ -73,14 +73,135 @@ export class ProductService implements IProductService {
     };
   }
 
-  async getProductDetail(
-    slug: string,
-    userId?: string | number
-  ): Promise<ServiceResponseT<ProductDetailT>> {
-    const normalizedSlug = requireSlug(slug);
+  // async getProductDetail(
+  //   slug: string,
+  //   userId?: string | number
+  // ): Promise<ServiceResponseT<ProductDetailT>> {
+  //   const normalizedSlug = requireSlug(slug);
 
-    // Using findProductDetail which already includes variants and images
-    const product = await findProductDetail(normalizedSlug, userId);
+  //   // Using findProductDetail which already includes variants and images
+  //   const product = await findProductDetail(normalizedSlug, userId);
+
+  //   if (!product) {
+  //     throw createError({
+  //       message: "Product not found or unavailable.",
+  //       status: 404,
+  //       code: errorCode.notFound,
+  //     });
+  //   }
+
+  //   // Filter to only active variants for public view
+  //   product.variants = product.variants.filter(v => v.isActive && !v.deletedAt);
+
+  //   return {
+  //     success: true,
+  //     data: product,
+  //     message: null,
+  //   };
+  // }
+
+  async getProductDetail({
+    productSlug,
+    variantSlug,
+    userId
+  }: {
+    productSlug: string;
+    variantSlug: string | null;
+    userId?: number | null;
+  }): Promise<ServiceResponseT<ProductDetailT>> {
+
+    const variantFilter = variantSlug
+      ? { slug: variantSlug }
+      : { isPrimary: true };
+
+    const product = await prisma.product.findFirst({
+      where: {
+        slug: productSlug,
+        isActive: true,
+        deletedAt: null,
+        variants: {
+          some: {
+            ...variantFilter,
+            isActive: true,
+            deletedAt: null,
+          },
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        gender: true,
+        concentration: true,
+        isLimited: true,
+        description: true,
+        rating: true,
+        ratingCount: true,
+        releasedYear: true,
+        brand: {
+          select: {
+            name: true,
+          },
+        },
+        ...(userId && {
+          wishlists: {
+            where: {
+              userId,
+            },
+          },
+          reviews: {
+            where: {
+              userId,
+            }
+          }
+        }),
+        variants: {
+          where: {
+            isActive: true,
+            deletedAt: null
+          },
+          select: {
+            id: true,
+            slug: true,
+            size: true,
+            price: true,
+            discount: true,
+            stock: true,
+            reserved: true,
+            isPrimary: true,
+            ...(userId && {
+              orderItems: {
+                where: {
+                  order: {
+                    userId,
+                    status: OrderStatus.DONE
+                  }
+                },
+                take: 1,
+                orderBy: {
+                  order: {
+                    createdAt: "desc"
+                  }
+                },
+                select: {
+                  id: true,
+                }
+              },
+            }),
+            images: {
+              select: {
+                path: true,
+                isPrimary: true,
+                order: true,
+              },
+              orderBy: {
+                order: "asc",
+              },
+            },
+          }
+        }
+      },
+    });
 
     if (!product) {
       throw createError({
@@ -90,12 +211,26 @@ export class ProductService implements IProductService {
       });
     }
 
-    // Filter to only active variants for public view
-    product.variants = product.variants.filter(v => v.isActive && !v.deletedAt);
+    const selectedVariant = product.variants.find(
+      (v) => variantSlug
+        ? v.slug === variantSlug
+        : v.isPrimary
+    );
+
+    if (!selectedVariant) {
+      throw createError({
+        message: "Product variant not found or unavailable.",
+        status: 404,
+        code: errorCode.notFound,
+      });
+    }
 
     return {
       success: true,
-      data: product,
+      data: ProductDto.toProductDetail({
+        ...product,
+        selectedVariant,
+      }, userId ? Number(userId) : null),
       message: null,
     };
   }

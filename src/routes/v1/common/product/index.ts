@@ -5,8 +5,10 @@ import {
     selectOptionListProducts,
     selectOptionListProductVariants,
 } from "../../../../controllers/common/product.controller";
-import { listProductReviews } from "../../../../controllers/common/review.controller";
-import { tryAuthenticate } from "../../../../middlewares/ensure-authenticated";
+import { createReview, deleteReview, listProductReviews, updateReview } from "../../../../controllers/common/review.controller";
+import { isAuthenticated, tryAuthenticate } from "../../../../middlewares/ensure-authenticated";
+import { createReviewValidation, deleteReviewValidation, updateReviewValidation } from "../../../../validations/review.validation";
+import { handleValidationError } from "../../../../middlewares/error-handler";
 
 const router: Router = express.Router();
 
@@ -22,7 +24,31 @@ router.get(
     getProduct
 );
 
-router.get("/:slug/reviews", listProductReviews);
+router.get("/:productId/reviews", listProductReviews);
+
+router.post(
+    "/:productId/reviews",
+    isAuthenticated,
+    createReviewValidation,
+    handleValidationError,
+    createReview
+);
+
+router.patch(
+    "/:productId/reviews/:id",
+    isAuthenticated,
+    updateReviewValidation,
+    handleValidationError,
+    updateReview
+);
+
+router.delete(
+    "/:productId/reviews/:id",
+    isAuthenticated,
+    deleteReviewValidation,
+    handleValidationError,
+    deleteReview
+);
 
 router.get("/select-options", selectOptionListProducts);
 

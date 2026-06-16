@@ -19,7 +19,7 @@ export interface IAdminProductService {
   createProduct(params: CreateProductParams): Promise<ServiceResponseT<Product>>;
   updateProduct(slug: string, params: UpdateProductNewParams): Promise<ServiceResponseT<Product>>;
   deleteProduct(slug: string): Promise<ServiceResponseT<null>>;
-  
+
   // Product Variant Management
   createVariant(params: CreateProductVariantParams): Promise<ServiceResponseT<ProductVariant>>;
   updateVariant(variantSlug: string, params: UpdateProductVariantParams): Promise<ServiceResponseT<ProductVariant>>;
@@ -29,17 +29,24 @@ export interface IAdminProductService {
 
 export interface IProductService {
   listProducts(params: ListProductsParams): Promise<ServiceResponseT<ListProductResultT>>;
-  getProductDetail(slug: string): Promise<ServiceResponseT<ProductDetailT>>;
+  getProductDetail({
+    productSlug,
+    variantSlug,
+    userId }: {
+      productSlug: string,
+      variantSlug: string | null,
+      userId?: number | null
+    }): Promise<ServiceResponseT<ProductDetailT>>;
   selectOptionListProducts(
     query: { limit?: number; cursor?: number | null; search?: string | undefined }
-  ): Promise<ServiceResponseT<{ 
-    items: { id: number; name: string; slug: string; }[], 
+  ): Promise<ServiceResponseT<{
+    items: { id: number; name: string; slug: string; }[],
     nextCursor: number | null
   }>>;
   selectOptionListProductVariants(
     query: { limit?: number; cursor?: number | null; search?: string | undefined; productSlug: string }
-  ): Promise<ServiceResponseT<{ 
-    items: { id: number; name: string; slug: string; }[], 
+  ): Promise<ServiceResponseT<{
+    items: { id: number; name: string; slug: string; }[],
     nextCursor: number | null
   }>>;
 }

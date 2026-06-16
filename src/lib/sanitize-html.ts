@@ -1,6 +1,6 @@
 import sanitizeHtmlLib from "sanitize-html";
 
-export const cleanHtml = (html: string) => {
+export const cleanHtmlRich = (html: string) => {
     return sanitizeHtmlLib(html, {
         allowedTags: [
             "p",
@@ -26,5 +26,12 @@ export const cleanHtml = (html: string) => {
             a: ["href", "target", "title"],
             img: ["src", "alt"],
         },
+    });
+}
+
+export const cleanHtmlPlain = (html: string) => {
+    return sanitizeHtmlLib(html, {
+        allowedTags: [],
+        allowedAttributes: {},
     });
 }

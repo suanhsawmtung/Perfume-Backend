@@ -3,9 +3,11 @@ import {
   Concentration,
   Gender,
   Image,
+  OrderItem,
   Product,
   ProductVariant,
-  ProductWishlist
+  ProductWishlist,
+  Review
 } from "@prisma/client";
 
 export type ListProductsParams = {
@@ -43,7 +45,7 @@ export type ListProductResultT = {
 };
 
 export type BuildProductWhereParams = {
-  search?: string | undefined;  
+  search?: string | undefined;
   brandSlug?: string | undefined;
   gender?: Gender | undefined;
   concentration?: Concentration | undefined;
@@ -62,13 +64,85 @@ export type AdminProductDetailT = Product & {
   };
 };
 
-export type ProductDetailT = Product & {
-  brand: Brand;
-  variants: (ProductVariant & {
-    images: Pick<Image, "path" | "isPrimary" | "order">[];
-  })[];
-  wishlists: ProductWishlist[];
+export type ProductDetailQueryDataT = Pick<Product,
+  "id" |
+  "name" |
+  "slug" |
+  "description" |
+  "gender" |
+  "concentration" |
+  "isLimited" |
+  "rating" |
+  "ratingCount" |
+  "releasedYear"
+> & {
+  brand: Pick<Brand, "name">;
+  variants: (Pick<ProductVariant,
+    "id" |
+    "slug" |
+    "size" |
+    "price" |
+    "discount" |
+    "stock" |
+    "reserved" |
+    "isPrimary"> & {
+      images: Pick<Image, "path" | "isPrimary" | "order">[];
+      orderItems?: { id: number }[]
+    })[];
+  wishlists?: ProductWishlist[];
+  reviews?: Review[];
+  selectedVariant: Pick<ProductVariant,
+    "id" |
+    "slug" |
+    "size" |
+    "price" |
+    "discount" |
+    "stock" |
+    "reserved" |
+    "isPrimary"> & {
+      images: Pick<Image, "path" | "isPrimary" | "order">[];
+      orderItems?: { id: number }[]
+    };
 };
+
+export type ProductDetailT = {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  gender: Gender;
+  concentration: Concentration;
+  isLimited: boolean;
+  rating: number | null;
+  ratingCount: number;
+  releasedYear: number | null;
+  brand: string;
+  hasReviewed: boolean;
+  variants: {
+    id: number;
+    size: number;
+    slug: string;
+    stock: number;
+    reserved: number;
+  }[];
+  isWishlist: boolean;
+  canReview: boolean;
+  selectedVariant: {
+    id: number;
+    slug: string;
+    size: number;
+    price: number;
+    discount: number;
+    stock: number;
+    reserved: number;
+    isPrimary: boolean;
+    images: {
+      path: string;
+      isPrimary: boolean;
+      order: number;
+    }[];
+  };
+}
 
 export type CreateProductParams = {
   name: string;

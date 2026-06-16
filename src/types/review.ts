@@ -24,7 +24,7 @@ export type ListReviewResultT = {
 };
 
 export type ProductReviewT = Review & {
-  user: Pick<User, "id" | "firstName" | "lastName" | "username" | "email" | "image">;
+  user: Pick<User, "id" | "firstName" | "lastName" | "username" | "email" | "image" | "emailVerifiedAt">;
 };
 
 export type BuildReviewWhereParams = {

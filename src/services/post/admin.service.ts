@@ -24,7 +24,7 @@ import {
   updatePostRecord,
 } from "./post.helpers";
 import { IAdminPostService } from "./post.interface";
-import { cleanHtml } from "../../lib/sanitize-html";
+import { cleanHtmlRich } from "../../lib/sanitize-html";
 
 export class AdminPostService implements IAdminPostService {
   async listPosts(
@@ -145,7 +145,7 @@ export class AdminPostService implements IAdminPostService {
       title: trimmedTitle,
       slug,
       excerpt,
-      content: cleanHtml(content),
+      content: cleanHtmlRich(content),
       status: status || PostStatus.DRAFT,
       publishedAt: status === PostStatus.PUBLISHED ? new Date() : null,
       image: imageFilename || "",
@@ -207,7 +207,7 @@ export class AdminPostService implements IAdminPostService {
       title: trimmedTitle,
       slug: slugValue,
       excerpt,
-      content: cleanHtml(content),
+      content: cleanHtmlRich(content),
       category: { connect: { id: Number(categoryId) } },
     };
 

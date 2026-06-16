@@ -1,5 +1,5 @@
 import { Review } from "@prisma/client";
-import { CursorPaginationParams, ServiceResponseT } from "../../types/common";
+import { CursorPaginationParams, CursorPaginationResultT, ServiceResponseT } from "../../types/common";
 import {
   ListReviewResultT,
   ListReviewsParams,
@@ -17,10 +17,10 @@ export interface IAdminReviewService {
 }
 
 export interface IReviewService {
-  listProductReviews(productSlug: string): Promise<ServiceResponseT<ProductReviewT[]>>;
+  listProductReviews(productId: number, params: CursorPaginationParams): Promise<ServiceResponseT<CursorPaginationResultT<ProductReviewT>>>;
   getReviewDetail(id: number): Promise<ServiceResponseT<ProductReviewT>>;
   listMyReviews(userId: number, params: CursorPaginationParams): Promise<ServiceResponseT<MyReviewsResultT>>;
   createReview(params: CreateReviewParams): Promise<ServiceResponseT<Review>>;
-  updateReview(id: number, userId: number, params: UpdateReviewParams): Promise<ServiceResponseT<Review>>;
+  updateReview(id: number, userId: number, productId: number, params: UpdateReviewParams): Promise<ServiceResponseT<Review>>;
   deleteReview(id: number, userId: number): Promise<ServiceResponseT<null>>;
 }

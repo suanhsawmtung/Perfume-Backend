@@ -120,8 +120,8 @@ export const buildProductWhere = ({
 
   return whereConditions.length > 0
     ? {
-        AND: whereConditions,
-      }
+      AND: whereConditions,
+    }
     : {};
 };
 
@@ -253,10 +253,6 @@ export const findProductDetail = async (slug: string, userId?: string | number) 
         },
       },
       ...(userId && {
-        // ratings: {
-        //   where: { userId: Number(userId) },
-        //   select: { rating: true },
-        // },
         wishlists: {
           where: { userId: Number(userId) },
         },
@@ -625,9 +621,9 @@ export const deleteProductRecord = async (id: number) => {
 
     const images = variantIds.length
       ? await tx.image.findMany({
-          where: { productVariantId: { in: variantIds } },
-          select: { id: true, path: true },
-        })
+        where: { productVariantId: { in: variantIds } },
+        select: { id: true, path: true },
+      })
       : [];
 
     return { variantIds, images };

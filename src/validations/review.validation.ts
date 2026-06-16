@@ -1,7 +1,7 @@
 import { body, param } from "express-validator";
 
 export const createReviewValidation = [
-    body("productId")
+    param("productId")
         .notEmpty()
         .withMessage("Product ID is required.")
         .isInt({ min: 1 })
@@ -19,6 +19,11 @@ export const createReviewValidation = [
 ];
 
 export const updateReviewValidation = [
+    param("productId")
+        .notEmpty()
+        .withMessage("Product ID is required.")
+        .isInt({ min: 1 })
+        .withMessage("Product ID must be a positive integer."),
     param("id")
         .notEmpty()
         .withMessage("Review ID is required.")
@@ -37,6 +42,11 @@ export const updateReviewValidation = [
 ];
 
 export const deleteReviewValidation = [
+    param("productId")
+        .notEmpty()
+        .withMessage("Product ID is required.")
+        .isInt({ min: 1 })
+        .withMessage("Product ID must be a positive integer."),
     param("id")
         .notEmpty()
         .withMessage("Review ID is required.")
