@@ -12,22 +12,28 @@ const refreshTokenAndNext = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction,
-  refreshToken: string
+  refreshToken: string,
 ) => {
   try {
     const { data } = await authService.refreshTokens({ refreshToken });
-    
+
     res.cookie("accessToken", data.accessToken, {
       httpOnly: true,
-      secure: env.appEnv === "production",
-      sameSite: env.appEnv === "production" ? "none" : "strict",
+      secure: env.appEnv === "production" || env.appEnv === "staging",
+      sameSite:
+        env.appEnv === "production" || env.appEnv === "staging"
+          ? "none"
+          : "strict",
       maxAge: 1000 * 60 * 15,
     });
 
     res.cookie("refreshToken", data.refreshToken, {
       httpOnly: true,
-      secure: env.appEnv === "production",
-      sameSite: env.appEnv === "production" ? "none" : "strict",
+      secure: env.appEnv === "production" || env.appEnv === "staging",
+      sameSite:
+        env.appEnv === "production" || env.appEnv === "staging"
+          ? "none"
+          : "strict",
       maxAge: 1000 * 60 * 60 * 24 * 30,
     });
 
@@ -41,7 +47,7 @@ const refreshTokenAndNext = async (
 export const isAuthenticated = async (
   req: CustomRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     // const platform = req.headers["x-platform"];
@@ -66,10 +72,9 @@ export const isAuthenticated = async (
       return await refreshTokenAndNext(req, res, next, refreshToken);
     } else {
       try {
-        const decoded = jwt.verify(
-          accessToken,
-          env.jwt.accessTokenSecret
-        ) as { id: number };
+        const decoded = jwt.verify(accessToken, env.jwt.accessTokenSecret) as {
+          id: number;
+        };
 
         if (!decoded.id || isNaN(decoded.id)) {
           const error = createError({
@@ -103,6 +108,10 @@ export const isAuthenticated = async (
   }
 };
 
-export const tryAuthenticate = (req: CustomRequest, res: Response, next: NextFunction) => {
+export const tryAuthenticate = (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction,
+) => {
   isAuthenticated(req, res, () => next());
 };

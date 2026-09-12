@@ -9,11 +9,16 @@ const authService = new AuthService();
 export const register = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const { email, password, firstName, lastName } = req.body;
 
-  const result = await authService.register({ email, password, firstName, lastName });
+  const result = await authService.register({
+    email,
+    password,
+    firstName,
+    lastName,
+  });
 
   return res.status(200).json(result);
 };
@@ -21,27 +26,31 @@ export const register = async (
 export const verifyUserEmail = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const { email, otp, token } = req.body;
 
-  const { data: { 
-    accessToken, 
-    refreshToken, 
-    userData 
-  }} = await authService.verifyUserEmail({ email, otp, token });
+  const {
+    data: { accessToken, refreshToken, userData },
+  } = await authService.verifyUserEmail({ email, otp, token });
 
   return res
     .cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: env.appEnv === "production",
-      sameSite: env.appEnv === "production" ? "none" : "strict",
+      secure: env.appEnv === "production" || env.appEnv === "staging",
+      sameSite:
+        env.appEnv === "production" || env.appEnv === "staging"
+          ? "none"
+          : "strict",
       maxAge: 1000 * 60 * 15,
     })
     .cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: env.appEnv === "production",
-      sameSite: env.appEnv === "production" ? "none" : "strict",
+      secure: env.appEnv === "production" || env.appEnv === "staging",
+      sameSite:
+        env.appEnv === "production" || env.appEnv === "staging"
+          ? "none"
+          : "strict",
       maxAge: 1000 * 60 * 60 * 24 * 30,
     })
     .status(200)
@@ -55,27 +64,31 @@ export const verifyUserEmail = async (
 export const login = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const { email, password } = req.body;
 
-  const { data: { 
-    accessToken, 
-    refreshToken, 
-    userData 
-  }} = await authService.login({ email, password });
+  const {
+    data: { accessToken, refreshToken, userData },
+  } = await authService.login({ email, password });
 
   return res
     .cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: env.appEnv === "production",
-      sameSite: env.appEnv === "production" ? "none" : "strict",
+      secure: env.appEnv === "production" || env.appEnv === "staging",
+      sameSite:
+        env.appEnv === "production" || env.appEnv === "staging"
+          ? "none"
+          : "strict",
       maxAge: 1000 * 60 * 15,
     })
     .cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: env.appEnv === "production",
-      sameSite: env.appEnv === "production" ? "none" : "strict",
+      secure: env.appEnv === "production" || env.appEnv === "staging",
+      sameSite:
+        env.appEnv === "production" || env.appEnv === "staging"
+          ? "none"
+          : "strict",
       maxAge: 1000 * 60 * 60 * 24 * 30,
     })
     .status(200)
@@ -89,7 +102,7 @@ export const login = async (
 export const logout = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const refreshToken = req.cookies?.refreshToken;
 
@@ -98,13 +111,19 @@ export const logout = async (
   return res
     .clearCookie("accessToken", {
       httpOnly: true,
-      secure: env.appEnv === "production",
-      sameSite: env.appEnv === "production" ? "none" : "strict",
+      secure: env.appEnv === "production" || env.appEnv === "staging",
+      sameSite:
+        env.appEnv === "production" || env.appEnv === "staging"
+          ? "none"
+          : "strict",
     })
     .clearCookie("refreshToken", {
       httpOnly: true,
-      secure: env.appEnv === "production",
-      sameSite: env.appEnv === "production" ? "none" : "strict",
+      secure: env.appEnv === "production" || env.appEnv === "staging",
+      sameSite:
+        env.appEnv === "production" || env.appEnv === "staging"
+          ? "none"
+          : "strict",
     })
     .status(200)
     .json({ message: "Successfully logged out." });
@@ -113,7 +132,7 @@ export const logout = async (
 export const forgotPassword = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const email = req.body.email;
 
@@ -125,7 +144,7 @@ export const forgotPassword = async (
 export const resendOtp = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const { email, type } = req.body;
 
@@ -137,7 +156,7 @@ export const resendOtp = async (
 export const verifyResetPasswordOtp = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const { email, otp, token } = req.body;
 
@@ -153,7 +172,7 @@ export const verifyResetPasswordOtp = async (
 export const resetPassword = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const { email, password, token } = req.body;
 
@@ -165,26 +184,31 @@ export const resetPassword = async (
 export const googleCallback = async (
   req: Request,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ) => {
   const user = req.user as SafeUserT;
 
-  const { data: { 
-    accessToken, 
-    refreshToken,
-  }} = await authService.googleLogin(user);
+  const {
+    data: { accessToken, refreshToken },
+  } = await authService.googleLogin(user);
 
   res
     .cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: env.appEnv === "production",
-      sameSite: env.appEnv === "production" ? "none" : "strict",
+      secure: env.appEnv === "production" || env.appEnv === "staging",
+      sameSite:
+        env.appEnv === "production" || env.appEnv === "staging"
+          ? "none"
+          : "strict",
       maxAge: 1000 * 60 * 15,
     })
     .cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: env.appEnv === "production",
-      sameSite: env.appEnv === "production" ? "none" : "strict",
+      secure: env.appEnv === "production" || env.appEnv === "staging",
+      sameSite:
+        env.appEnv === "production" || env.appEnv === "staging"
+          ? "none"
+          : "strict",
       maxAge: 1000 * 60 * 60 * 24 * 30,
     })
     .redirect(`${env.webUrl}`);
@@ -193,7 +217,7 @@ export const googleCallback = async (
 export const checkAuth = async (
   req: CustomRequest,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ) => {
   const userId = req.userId;
 

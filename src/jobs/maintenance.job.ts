@@ -4,13 +4,15 @@ import { hasCache } from "../utils/cache";
 import { runCommand } from "../utils/run-command";
 
 export const maintenanceJob = cron.schedule("* 5 * * *", async () => {
-  const isMaintenanceMode = hasCache(".maintenance")
+  const isMaintenanceMode = hasCache(".maintenance");
 
   if (isMaintenanceMode) {
     console.log("Running pnpm dev:up at", new Date().toISOString());
 
     const command =
-      env.appEnv === "production" ? "pnpm app:up" : "pnpm dev:up";
+      env.appEnv === "production" || env.appEnv === "staging"
+        ? "pnpm app:up"
+        : "pnpm dev:up";
 
     (async () => {
       try {
