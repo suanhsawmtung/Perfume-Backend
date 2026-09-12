@@ -1,5 +1,9 @@
-import { descriptions } from "jest-config";
-import { ProductCardQueryDataT, ProductCardT, ProductDetailQueryDataT, ProductDetailT } from "../types/product";
+import {
+  ProductCardQueryDataT,
+  ProductCardT,
+  ProductDetailQueryDataT,
+  ProductDetailT,
+} from "../types/product";
 
 export class ProductDto {
   static toProductCard(product: ProductCardQueryDataT): ProductCardT {
@@ -28,7 +32,10 @@ export class ProductDto {
     };
   }
 
-  static toProductDetail(data: ProductDetailQueryDataT, authUserId: number | null): ProductDetailT {
+  static toProductDetail(
+    data: ProductDetailQueryDataT,
+    authUserId: number | null,
+  ): ProductDetailT {
     return {
       id: data.id,
       name: data.name,
@@ -41,7 +48,7 @@ export class ProductDto {
       isLimited: data.isLimited,
       releasedYear: data.releasedYear,
       brand: data.brand.name,
-      variants: data.variants.map(variant => ({
+      variants: data.variants.map((variant) => ({
         id: variant.id,
         size: variant.size,
         slug: variant.slug,
@@ -58,10 +65,15 @@ export class ProductDto {
         reserved: data.selectedVariant.reserved || 0,
         isPrimary: data.selectedVariant.isPrimary,
         images: data.selectedVariant.images,
+        sku: data.selectedVariant.sku,
       },
-      isWishlist: data.wishlists?.some(wishlist => wishlist.userId === authUserId) || false,
-      hasReviewed: data.reviews?.some(review => review.userId === authUserId) || false,
-      canReview: !!authUserId && data.variants.some(v => !!v.orderItems?.length),
+      isWishlist:
+        data.wishlists?.some((wishlist) => wishlist.userId === authUserId) ||
+        false,
+      hasReviewed:
+        data.reviews?.some((review) => review.userId === authUserId) || false,
+      canReview:
+        !!authUserId && data.variants.some((v) => !!v.orderItems?.length),
     };
   }
 }

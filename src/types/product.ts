@@ -3,11 +3,10 @@ import {
   Concentration,
   Gender,
   Image,
-  OrderItem,
   Product,
   ProductVariant,
   ProductWishlist,
-  Review
+  Review,
 } from "@prisma/client";
 
 export type ListProductsParams = {
@@ -19,7 +18,7 @@ export type ListProductsParams = {
   concentration?: Concentration | undefined;
   isActive?: boolean | undefined;
   isLimited?: boolean | undefined;
-}
+};
 
 export type AdminListProductT = Product & {
   brand: Pick<Brand, "name">;
@@ -64,45 +63,51 @@ export type AdminProductDetailT = Product & {
   };
 };
 
-export type ProductDetailQueryDataT = Pick<Product,
-  "id" |
-  "name" |
-  "slug" |
-  "description" |
-  "gender" |
-  "concentration" |
-  "isLimited" |
-  "rating" |
-  "ratingCount" |
-  "releasedYear"
+export type ProductDetailQueryDataT = Pick<
+  Product,
+  | "id"
+  | "name"
+  | "slug"
+  | "description"
+  | "gender"
+  | "concentration"
+  | "isLimited"
+  | "rating"
+  | "ratingCount"
+  | "releasedYear"
 > & {
   brand: Pick<Brand, "name">;
-  variants: (Pick<ProductVariant,
-    "id" |
-    "slug" |
-    "size" |
-    "price" |
-    "discount" |
-    "stock" |
-    "reserved" |
-    "isPrimary"> & {
-      images: Pick<Image, "path" | "isPrimary" | "order">[];
-      orderItems?: { id: number }[]
-    })[];
+  variants: (Pick<
+    ProductVariant,
+    | "id"
+    | "slug"
+    | "size"
+    | "price"
+    | "discount"
+    | "stock"
+    | "reserved"
+    | "isPrimary"
+  > & {
+    images: Pick<Image, "path" | "isPrimary" | "order">[];
+    orderItems?: { id: number }[];
+  })[];
   wishlists?: ProductWishlist[];
   reviews?: Review[];
-  selectedVariant: Pick<ProductVariant,
-    "id" |
-    "slug" |
-    "size" |
-    "price" |
-    "discount" |
-    "stock" |
-    "reserved" |
-    "isPrimary"> & {
-      images: Pick<Image, "path" | "isPrimary" | "order">[];
-      orderItems?: { id: number }[]
-    };
+  selectedVariant: Pick<
+    ProductVariant,
+    | "id"
+    | "slug"
+    | "size"
+    | "price"
+    | "discount"
+    | "stock"
+    | "reserved"
+    | "isPrimary"
+    | "sku"
+  > & {
+    images: Pick<Image, "path" | "isPrimary" | "order">[];
+    orderItems?: { id: number }[];
+  };
 };
 
 export type ProductDetailT = {
@@ -136,13 +141,14 @@ export type ProductDetailT = {
     stock: number;
     reserved: number;
     isPrimary: boolean;
+    sku: string;
     images: {
       path: string;
       isPrimary: boolean;
       order: number;
     }[];
   };
-}
+};
 
 export type CreateProductParams = {
   name: string;
@@ -211,9 +217,22 @@ export type ProductVariantDetailType = ProductVariant & {
   images: Pick<Image, "path" | "isPrimary" | "order">[];
 };
 
-export type ProductCardQueryDataT = Pick<Product, "id" | "name" | "slug" | "rating" | "ratingCount" | "gender" | "concentration" | "isLimited"> & {
+export type ProductCardQueryDataT = Pick<
+  Product,
+  | "id"
+  | "name"
+  | "slug"
+  | "rating"
+  | "ratingCount"
+  | "gender"
+  | "concentration"
+  | "isLimited"
+> & {
   brand: Pick<Brand, "name" | "slug">;
-  variants: (Pick<ProductVariant, "price" | "discount" | "stock" | "reserved"> & {
+  variants: (Pick<
+    ProductVariant,
+    "price" | "discount" | "stock" | "reserved"
+  > & {
     images: Pick<Image, "path">[];
   })[];
 };

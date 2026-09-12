@@ -1,22 +1,28 @@
+import { OrderStatus, Prisma } from "@prisma/client";
 import { errorCode } from "../../config/error-code";
-import { prisma } from "../../lib/prisma";
 import { ProductDto } from "../../dtos/product.dto";
-import { CursorPaginationResultT, SelectOptionT, ServiceResponseT } from "../../types/common";
-import { ListProductResultT, ListProductsParams, ProductDetailT } from "../../types/product";
+import { prisma } from "../../lib/prisma";
+import {
+  CursorPaginationResultT,
+  SelectOptionT,
+  ServiceResponseT,
+} from "../../types/common";
+import {
+  ListProductResultT,
+  ListProductsParams,
+  ProductDetailT,
+} from "../../types/product";
 import { createError } from "../../utils/common";
 import {
   buildProductWhere,
-  findProductDetail,
   getProductCardSelect,
   parseProductQueryParams,
-  requireSlug,
 } from "./product.helpers";
 import { IProductService } from "./product.interface";
-import { OrderStatus, Prisma } from "@prisma/client";
 
 export class ProductService implements IProductService {
   async listProducts(
-    params: ListProductsParams
+    params: ListProductsParams,
   ): Promise<ServiceResponseT<ListProductResultT>> {
     const {
       pageSize,
@@ -103,13 +109,12 @@ export class ProductService implements IProductService {
   async getProductDetail({
     productSlug,
     variantSlug,
-    userId
+    userId,
   }: {
     productSlug: string;
     variantSlug: string | null;
     userId?: number | null;
   }): Promise<ServiceResponseT<ProductDetailT>> {
-
     const variantFilter = variantSlug
       ? { slug: variantSlug }
       : { isPrimary: true };
@@ -152,13 +157,13 @@ export class ProductService implements IProductService {
           reviews: {
             where: {
               userId,
-            }
-          }
+            },
+          },
         }),
         variants: {
           where: {
             isActive: true,
-            deletedAt: null
+            deletedAt: null,
           },
           select: {
             id: true,
@@ -168,24 +173,25 @@ export class ProductService implements IProductService {
             discount: true,
             stock: true,
             reserved: true,
+            sku: true,
             isPrimary: true,
             ...(userId && {
               orderItems: {
                 where: {
                   order: {
                     userId,
-                    status: OrderStatus.DONE
-                  }
+                    status: OrderStatus.DONE,
+                  },
                 },
                 take: 1,
                 orderBy: {
                   order: {
-                    createdAt: "desc"
-                  }
+                    createdAt: "desc",
+                  },
                 },
                 select: {
                   id: true,
-                }
+                },
               },
             }),
             images: {
@@ -198,8 +204,8 @@ export class ProductService implements IProductService {
                 order: "asc",
               },
             },
-          }
-        }
+          },
+        },
       },
     });
 
@@ -211,10 +217,8 @@ export class ProductService implements IProductService {
       });
     }
 
-    const selectedVariant = product.variants.find(
-      (v) => variantSlug
-        ? v.slug === variantSlug
-        : v.isPrimary
+    const selectedVariant = product.variants.find((v) =>
+      variantSlug ? v.slug === variantSlug : v.isPrimary,
     );
 
     if (!selectedVariant) {
@@ -227,17 +231,22 @@ export class ProductService implements IProductService {
 
     return {
       success: true,
-      data: ProductDto.toProductDetail({
-        ...product,
-        selectedVariant,
-      }, userId ? Number(userId) : null),
+      data: ProductDto.toProductDetail(
+        {
+          ...product,
+          selectedVariant,
+        },
+        userId ? Number(userId) : null,
+      ),
       message: null,
     };
   }
 
-  async selectOptionListProducts(
-    query: { limit?: number; cursor?: number | null; search?: string | undefined }
-  ): Promise<ServiceResponseT<CursorPaginationResultT<SelectOptionT>>> {
+  async selectOptionListProducts(query: {
+    limit?: number;
+    cursor?: number | null;
+    search?: string | undefined;
+  }): Promise<ServiceResponseT<CursorPaginationResultT<SelectOptionT>>> {
     const limit = query.limit || 10;
     const cursor = query.cursor;
     const search = query.search;
@@ -251,7 +260,7 @@ export class ProductService implements IProductService {
           mode: "insensitive",
         },
       }),
-    }
+    };
 
     const [items, totalCount] = await Promise.all([
       prisma.product.findMany({
@@ -280,16 +289,19 @@ export class ProductService implements IProductService {
       data: {
         items: items,
         nextCursor,
-        totalCount
+        totalCount,
       },
       success: true,
       message: null,
     };
   }
 
-  async selectOptionListProductVariants(
-    query: { productSlug: string; limit?: number; cursor?: number | null; search?: string | undefined }
-  ): Promise<ServiceResponseT<CursorPaginationResultT<SelectOptionT>>> {
+  async selectOptionListProductVariants(query: {
+    productSlug: string;
+    limit?: number;
+    cursor?: number | null;
+    search?: string | undefined;
+  }): Promise<ServiceResponseT<CursorPaginationResultT<SelectOptionT>>> {
     const limit = query.limit || 10;
     const cursor = query.cursor;
     const search = query.search;
@@ -307,7 +319,7 @@ export class ProductService implements IProductService {
           mode: "insensitive",
         },
       }),
-    }
+    };
 
     const [items, totalCount] = await Promise.all([
       prisma.productVariant.findMany({
